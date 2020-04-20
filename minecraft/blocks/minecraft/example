@@ -1,0 +1,12 @@
+grass_side.png # BACK
+grass_side.png # FRONT
+grass_side.png # LEFT
+grass_side.png # RIGHT
+dirt.png  	   # BOTTOM
+grass_top.png  # TOP
+not_specular.png # BACK
+not_specular.png # FRONT
+not_specular.png # LEFT
+not_specular.png # RIGHT
+not_specular.png # BOTTOM
+not_specular.png # TOP
