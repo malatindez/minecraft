@@ -1,4 +1,4 @@
-#include <glad/glad.h>
+#include "glad.c"
 #include <glfw3.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -16,6 +16,7 @@
 #include "Model.h"
 #include <map>
 #include "Block.h"
+#include "World.h"
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -33,6 +34,7 @@ bool firstMouse = true;
 GLfloat deltaTime, lastFrame = 0, breakingStart = 0;
 bool breaking = false;
 int main() {
+    srand(time(0));
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -126,7 +128,8 @@ int main() {
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float)));
     glEnableVertexAttribArray(3);
-    auto blocks = loadBlocks();
+    TextureLoader loader;
+    auto blocks = loadBlocks(&loader);
     Shader cubeShader("cubeShader.vert", "cubeShader.frag");
     cubeShader.use();
     cubeShader.setInt("diffuseCubeTexture[0]", 0);
@@ -165,6 +168,17 @@ int main() {
     glBindTexture(GL_TEXTURE_2D, hover);
     int prevhoveredx = -1, prevhoveredz = -1;
     glfwSwapInterval(0);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    World w = World::NewWorld(&loader, &blocks, "rzhaka");
+    Chunk*** chunks = new Chunk**[32];
+    for (int i = -16; i < 16; i++) {
+        chunks[16+i] = new Chunk*[32];
+        for (int j = -16; j < 16; j++) {
+            chunks[16+i][16+j] = w.generateChunk(i, j);
+        }
+    }
+    float a = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
         // --------------------
@@ -174,15 +188,15 @@ int main() {
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         cubeShader.use();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
         glm::mat4 view = camera.GetViewMatrix();
         cubeShader.setMat4("projection", projection);
         cubeShader.setMat4("view", view);
 
 
 
-        int hoveredx = -1, hoveredz = -1;
-        for (int i = 0; i < 16; i++) {
+        int hoveredx = 2147483647, hoveredz = 2147483647;
+        for (int i = 0; i < 5; i++) {
 
             glm::vec3 g = camera.Position + glm::vec3(camera.Front.x * i, camera.Front.y * i, camera.Front.z * i);
             int x = std::round(g.x);
@@ -203,69 +217,13 @@ int main() {
 
 
 
-        glm::mat4 model = glm::mat4(1.0f);
-        blocks[0].BindTextures();
-        glBindVertexArray(cubeVAO);
-        for (size_t i = 0; i < 8; i++) {
-            for (size_t j = 0; j < 8; j++) {
-                if ((i * j + 1) % 2 == 0) {
-                    model = glm::mat4(1.0f);
-                    model = ::glm::translate(model, glm::vec3(i, -2, j));
-                    cubeShader.setMat4("model", model);
-                    if (i == hoveredx and j == hoveredz) {
-                        cubeShader.setBool("hovered", 1);
-                        if (int(5.0f * (lastFrame - breakingStart) / blocks[0].hardness) > 10) {
-                            breaking = false;
-                        }
-                        if (breaking) {
-                            glActiveTexture(GL_TEXTURE15);
-                            glBindTexture(GL_TEXTURE_2D, destroy_stage[int(5.0f * (lastFrame - breakingStart) / blocks[0].hardness)]);
-                        }
-
-                        glDrawArrays(GL_TRIANGLES, 0, 36);
-                        cubeShader.setBool("hovered", 0);
-                        if (breaking) {
-                            glActiveTexture(GL_TEXTURE15);
-                            glBindTexture(GL_TEXTURE_2D, destroy_none);
-                        }
-                    }
-                    else {
-                        glDrawArrays(GL_TRIANGLES, 0, 36);
-                    }
-                }
+        for (int i = -16; i < 16; i++) {
+            for (int j = -16; j < 16; j++) {
+                cubeShader.setMat4("model", chunks[16+i][16+j]->getModel());
+                chunks[16+i][16+j]->Draw();
             }
         }
-        
-        blocks[1].BindTextures();
-        for (size_t i = 0; i < 8; i++) {
-            for (size_t j = 0; j <8; j++) {
-                if ((i * j + 1) % 2 == 1) {
-                    model = glm::mat4(1.0f);
-                    model = ::glm::translate(model, glm::vec3(i, -2, j));
-                    cubeShader.setMat4("model", model);
 
-                    if (i == hoveredx and j == hoveredz) {
-                        cubeShader.setBool("hovered", 1);
-                        if (int(5.0f * (lastFrame - breakingStart) / blocks[1].hardness) > 10) {
-                            breaking = false;
-                        }
-                        if (breaking) {
-                            glActiveTexture(GL_TEXTURE15);
-                            glBindTexture(GL_TEXTURE_2D, destroy_stage[int(5.0f * (lastFrame - breakingStart) / blocks[1].hardness)]);
-                        }
-                        glDrawArrays(GL_TRIANGLES, 0, 36);
-                        cubeShader.setBool("hovered", 0);
-                        if (breaking) {
-                            glActiveTexture(GL_TEXTURE15);
-                            glBindTexture(GL_TEXTURE_2D, destroy_none);
-                        }
-                    }
-                    else {
-                        glDrawArrays(GL_TRIANGLES, 0, 36);
-                    }
-                }
-            }
-        }
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
