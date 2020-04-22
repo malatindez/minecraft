@@ -72,15 +72,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <ExecutablePath>G:\assimp-5.0.1\build32\code\Debug;$(VC_ExecutablePath_x86);$(CommonExecutablePath)</ExecutablePath>
-    <IncludePath>G:\gladdebug\include;G:\include\GLEW;G:\include\GLFW;G:\freetype-2.10.1\include;G:\glm\include;G:\assimp-5.0.1\include;G:\assimp-5.0.1\build32\include;$(IncludePath)</IncludePath>
+    <IncludePath>G:\gladdebug\src;G:\gladdebug\include;G:\include\GLEW;G:\include\GLFW;G:\freetype-2.10.1\include;G:\glm\include;G:\assimp-5.0.1\include;G:\assimp-5.0.1\build32\include;$(IncludePath)</IncludePath>
     <LibraryPath>G:\lib\win32\GLEW;G:\lib\win32\GLFW;G:\freetype-2.10.1\build\Debug;G:\glm\build\glm\Debug;G:\assimp-5.0.1\build32\code\Debug;$(LibraryPath)</LibraryPath>
-    <SourcePath>G:\freetype-2.10.1\src;$(SourcePath)</SourcePath>
+    <SourcePath>G:\freetype-2.10.1\src;G:\gladdebug\src;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>G:\glad\src;G:\glad\include;G:\include\GLEW;G:\include\GLFW;G:\assimp-5.0.1\include;G:\freetype-2.10.1\include;G:\assimp-5.0.1\build32\include;G:\glm\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>G:\lib\win32\GLEW;G:\lib\win32\GLFW;G:\freetype-2.10.1\build\Debug;G:\glm\build\glm\Debug;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);G:\assimp-5.0.1\build32\code\Release</LibraryPath>
+    <SourcePath>G:\freetype-2.10.1\src;G:\glad\src;$(VC_SourcePath);</SourcePath>
+    <ExecutablePath>G:\assimp-5.0.1\build32\code\Release;$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -119,12 +123,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>glfw3.lib;freetyped.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -145,7 +151,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="glad.c" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -156,7 +161,9 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="PerlinNoise.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
