@@ -29,14 +29,14 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
     auto prevPosition = Position;
     float velocity = MovementSpeed * deltaTime;
     if (direction == FORWARD)
-        Position += Front * velocity;
+        Position += Front * velocity;// / cos(glm::radians(Pitch));
     if (direction == BACKWARD)
-        Position -= Front * velocity;
+        Position -= Front * velocity;// / cos(glm::radians(Pitch));
     if (direction == LEFT)
         Position -= Right * velocity;
     if (direction == RIGHT)
         Position += Right * velocity;
-    Position.y = prevPosition.y;
+    //Position.y = prevPosition.y;
 
 }
 
