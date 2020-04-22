@@ -7,41 +7,45 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <filesystem>
 #include <fstream>
-class Block {
+#include "TextureLoader.h"
+class UBlock { // universal block
 public:
     uint32_t *diffuseTextures = nullptr;
     uint32_t *specularTextures = nullptr;
-    std::string id; // minecraft:grass, minecraft:stone, etc.
+    std::string str_id; // minecraft:stone, minecraft:grass, etc.
+    uint32_t integer_id; // 1, 2, etc.
     uint8_t hardness;
-    Block(const uint32_t* diffuseTextures, const uint32_t* specularTextures, const std::string id, uint8_t hardness) {
+    UBlock(const uint32_t* diffuseTextures, const uint32_t* specularTextures, const std::string str_id, uint8_t hardness) {
         this->diffuseTextures = new uint32_t[6];
         this->specularTextures = new uint32_t[6];
         memcpy(this->diffuseTextures, diffuseTextures, sizeof(uint32_t) * 6);
         memcpy(this->specularTextures, specularTextures, sizeof(uint32_t) * 6);
-        this->id = id;
+        this->str_id = str_id;
         this->hardness = hardness;
     }
-    Block(const Block& b) {
+    UBlock(const UBlock& b) {
         this->diffuseTextures = new uint32_t[6];
         this->specularTextures = new uint32_t[6];
         memcpy(this->diffuseTextures, b.diffuseTextures, sizeof(uint32_t) * 6);
         memcpy(this->specularTextures, b.specularTextures, sizeof(uint32_t) * 6);
-        this->id = b.id;
+        this->str_id = b.str_id;
         this->hardness = b.hardness;
     }
-    Block(const Block* b) {
+    UBlock(const UBlock* b) {
         this->diffuseTextures = new uint32_t[6];
         this->specularTextures = new uint32_t[6];
         memcpy(this->diffuseTextures, b->diffuseTextures, sizeof(uint32_t) * 6);
         memcpy(this->specularTextures, b->specularTextures, sizeof(uint32_t) * 6);
-        this->id = b->id;
+        this->str_id = b->str_id;
         this->hardness = b->hardness;
     }
-    ~Block() {
-        if (diffuseTextures != nullptr)
-        delete[] diffuseTextures;
-        if (specularTextures != nullptr)
-        delete[] specularTextures;
+    ~UBlock() {
+        if (this->diffuseTextures != nullptr){
+            delete[] this->diffuseTextures;
+        }
+        if (this->specularTextures != nullptr) {
+            delete[] this->specularTextures;
+        }
     }
     void BindTextures() const {
         for (uint8_t i = 0; i < 6; i++) {
@@ -53,10 +57,6 @@ public:
             glBindTexture(GL_TEXTURE_2D, specularTextures[i]);
         }
     }
-};
-struct BlockTexture {
-    unsigned int id;
-    std::string path;
 };
 bool ends_with(std::string str, std::string suffix) {
     if (suffix.size() > str.size()) {
@@ -70,42 +70,24 @@ bool ends_with(std::string str, std::string suffix) {
     return true;
 }
 #include <vector>
-::std::vector<Block> loadBlocks() {
-    ::std::vector<Block> returnValue;
-    ::std::vector<BlockTexture> textures;
+#include <algorithm>
+::std::vector<UBlock> loadBlocks(TextureLoader* loader) {
+    ::std::vector<UBlock> returnValue;
     ::std::string path = "blocks\\minecraft\\";
     uint32_t* diffuseTextures = new uint32_t[6];
     uint32_t* specularTextures = new uint32_t[6];
     for (const auto& entry : ::std::filesystem::directory_iterator(path)) {
         std::string blockPath = entry.path().string();
-        if (ends_with(blockPath,(".block"))) {
+        if (ends_with(blockPath, (".block"))) {
             ::std::ifstream block(blockPath.c_str());
             std::string line;
             for (uint8_t i = 0; i < 12; i++) {
                 getline(block, line);
-                bool flag = false;
-                for (size_t j = 0; j < textures.size(); j++) {
-                    if (textures[j].path == "blocks\\minecraft\\textures\\" + line) {
-                        if (i < 6) {
-                            diffuseTextures[i] = textures[j].id;
-                        } else {
-                            specularTextures[i - 6] = textures[j].id;
-                        }
-                        flag = true;
-                        break;
-                    }
+                if (i < 6) {
+                    diffuseTextures[i] = loader->LoadTexture(("blocks\\minecraft\\textures\\" + line).c_str());
                 }
-                if (not flag) {
-                    BlockTexture t;
-                    t.id = loadTexture(("blocks\\minecraft\\textures\\" + line).c_str());
-                    t.path = "blocks\\minecraft\\textures\\" + line;
-                    textures.push_back(t);
-                    if (i < 6) {
-                        diffuseTextures[i] = t.id;
-                    }
-                    else {
-                        specularTextures[i - 6] = t.id;
-                    }
+                else {
+                    specularTextures[i - 6] = loader->LoadTexture(("blocks\\minecraft\\textures\\" + line).c_str());
                 }
             }
             getline(block, line);
@@ -115,12 +97,37 @@ bool ends_with(std::string str, std::string suffix) {
                 name += blockPath[i];
             }
             std::reverse(name.begin(), name.end());
-            returnValue.push_back(Block(diffuseTextures, specularTextures, "minecraft:" + name, hardness));
-            
+            returnValue.push_back(UBlock(diffuseTextures, specularTextures, "minecraft:" + name, hardness));
+
         }
     }
+    ::std::ifstream blocks_manifest("blocks\\BLOCKS_MANIFEST");
+
+    ::std::string line;
+    ::std::vector<std::pair<int32_t, ::std::string>> lines;
+    while (blocks_manifest.good()) {
+        getline(blocks_manifest, line);
+        size_t i = 0;
+        std::string integer = "";
+        for (; i < line.size() and line[i] != ' '; integer += line[i++]); // getting ' ' location and writing id to integer
+        for (size_t j = 0; j <= i; j++) {
+            line.erase(line.begin());
+        }
+        lines.push_back(std::pair<int32_t, ::std::string>(std::atoi(integer.c_str()), line));
+    }
+    std::vector<UBlock> buf;
+    for (std::vector<std::pair<int32_t, ::std::string>>::iterator itr = lines.begin(); itr != lines.end(); itr++) {
+        for (std::vector<UBlock>::iterator i = returnValue.begin(); i != returnValue.end(); i++) {
+            if ((*itr).second == (*i).str_id) {
+                (*i).integer_id = (*itr).first;
+                buf.push_back((*i));
+                break;
+            }
+        }
+    }
+    blocks_manifest.close();
     delete[] diffuseTextures;
     delete[] specularTextures;
-    return returnValue;
+    return buf;
 }
 #endif
