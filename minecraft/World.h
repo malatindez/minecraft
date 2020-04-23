@@ -348,17 +348,26 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 	void Save() {
 
 	}
-	void PlaceBlock() {
-
+	void PlaceBlock(int32_t x, int32_t y, int32_t z, UBlock* block) {
+		x -= this->x * 16;
+		z -= this->z * 16;
+		if (ChunkBlocks[x][y][z] != nullptr) {
+			delete ChunkBlocks[x][y][z];
+		}
+		ChunkBlocks[x][y][z] = new Block(nullptr, 0, block, Block::Coords(x + this->x * 16, y, z + this->z *16));
+		deleteOptimizedRenderer(y / 16);
+		optimizeRenderer(y / 16);
 	}
 	// returns an item id
 	void BreakBlock(int32_t x, int32_t y, int32_t z) {
-		if (this->ChunkBlocks[x - this->x*16][y][z - this->z * 16] == nullptr) {
+		x -= this->x * 16;
+		z -= this->z * 16;
+		if (this->ChunkBlocks[x][y][z] == nullptr) {
 			throw Exceptions::WRONG_COORDS;
 		}
-		uint32_t returnValue = this->ChunkBlocks[x - this->x * 16][y][z - this->z * 16]->Break();
-		delete this->ChunkBlocks[x - this->x * 16][y][z - this->z * 16];
-		this->ChunkBlocks[x - this->x * 16][y][z - this->z * 16] = nullptr;
+		uint32_t returnValue = this->ChunkBlocks[x][y][z]->Break();
+		delete this->ChunkBlocks[x][y][z];
+		this->ChunkBlocks[x][y][z] = nullptr;
 		deleteOptimizedRenderer(y / 16);
 		optimizeRenderer(y / 16);
 	}
@@ -441,7 +450,10 @@ public:
 		memset(gdata, 0, size);
 		for (uint8_t i = 0; i < 16; i++) {
 			for (uint8_t j = 0; j < 16; j++) {
-				uint32_t height =  30 + 15.0 * noise.noise((double(x) * 16 + i) / 16, 0, (double(z) * 16 + j) / 16);
+				uint32_t height =  30 + 10.0 * noise.noise((double(x) * 16 + i) / 16, 0, (double(z) * 16 + j) / 16);
+				if (height > 255) {
+					height = 255;
+				}
 				uint8_t* data = new uint8_t[height*9];
 				memset(data, 0, height * 9);
 				for (uint8_t k = 0; k < uint8_t(height); k++) {
@@ -451,7 +463,7 @@ public:
 					if (k < 1 + rand() % 2 + rand() % 2 + rand() % 3) {
 						((uint32_t*)(&(data[(k) * 9 + 3])))[0] = 4;
 					}
-					else if (k < height - 7) {
+					else if (k < height - 4) {
 						((uint32_t*)(&(data[(k) * 9 + 3])))[0] = 1;
 					}
 					else if (k < height - 1) {
