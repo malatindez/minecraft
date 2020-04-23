@@ -182,11 +182,10 @@ int main() {
     glActiveTexture(GL_TEXTURE14);
     glBindTexture(GL_TEXTURE_2D, hover);
     int prevhoveredx = -1, prevhoveredy = -1, prevhoveredz = -1;
-    glfwSwapInterval(0);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     World w = World::NewWorld(&loader, &blocks, "rzhaka");
-    uint32_t renderDistance = 4;
+    uint32_t renderDistance = 24;
     Chunk*** chunks = new Chunk**[renderDistance];
     for (int i = 0; i < renderDistance; i++) {
         chunks[i] = new Chunk*[renderDistance];
@@ -239,14 +238,16 @@ int main() {
                             prevhoveredz = hoveredz;
                             breaking = false;
                         }
-                        else if (int(5.0f * (lastFrame - breakingStart) / chunks[x / 16][z / 16]->getBlock(x, y, z)->ref->hardness) >= 10) {
+                        else if (int(5.0f * (lastFrame - breakingStart) * 100 / chunks[x / 16][z / 16]->getBlock(x, y, z)->ref->hardness) >= 10) {
                             breaking = false;
                             glActiveTexture(GL_TEXTURE15);
                             glBindTexture(GL_TEXTURE_2D, destroy_none);
+                            chunks[hoveredx / 16][hoveredz / 16]->BreakBlock(hoveredx, hoveredy, hoveredz);
+                            hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
                         }
                         else {
                             glActiveTexture(GL_TEXTURE15);
-                            glBindTexture(GL_TEXTURE_2D, destroy_stage[int(5.0f * (lastFrame - breakingStart) / chunks[x / 16][z / 16]->getBlock(x, y, z)->ref->hardness)]);
+                            glBindTexture(GL_TEXTURE_2D, destroy_stage[int(5.0f * (lastFrame - breakingStart) * 100 / chunks[x / 16][z / 16]->getBlock(x, y, z)->ref->hardness)]);
                         }
                     }
                     break;

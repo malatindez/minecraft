@@ -104,17 +104,18 @@ class Chunk {
 
 	std::vector<UBlock>* blocks = nullptr;
 	int64_t x, z;
-	float **optimizedVertices = nullptr;
-	UBlock** ovblocks = nullptr;
-	uint32_t *VBO = nullptr;
-	uint32_t *VAO = nullptr;
-	uint32_t *OVSizel = nullptr;
-	uint32_t ovsize;
+	float ***optimizedVertices = nullptr;
+	UBlock*** ovblocks = nullptr;
+	uint32_t **VBO = nullptr;
+	uint32_t **VAO = nullptr;
+	uint32_t **OVSizel = nullptr;
+	uint32_t *ovsize;
 public:
 	glm::mat4 getModel() {
 		glm::mat4 model = glm::mat4(1.0f);
 		return ::glm::translate(model, glm::vec3(x * 16, 0, z * 16));
 	}
+	enum Exceptions {WRONG_COORDS};
 /*
 coordinates inside a chunk(only 1 byte)
 integer_id - id of the block(4 bytes)
@@ -217,17 +218,28 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 		}
 	}
 	void optimizeRenderer() {
+		optimizedVertices = new float**[16];
+		ovblocks = new UBlock**[16];
+		VBO = new uint32_t*[16];
+		VAO = new uint32_t*[16];
+		OVSizel= new uint32_t*[16];
+		ovsize = new uint32_t[16];
+		for (size_t i = 0; i < 16; i++) {
+			optimizeRenderer(i);
+		}
+	}
+	void optimizeRenderer(uint16_t yoffset) {
 		std::vector<std::pair<UBlock*, std::vector<Block*>>> blocks;
 		// second is number of this blocks in chunk
 		for (size_t i = 0; i < 16; i++) {
-			for (size_t j = 0; j < 256; j++) {
+			for (size_t j = 16 * yoffset; j < 16 * (yoffset + 1); j++) {
 				for (size_t k = 0; k < 16; k++) {
 					if (ChunkBlocks[i][j][k] != nullptr) {
 						// if block nearby is minecraft:air - that means that we should process this block
 						// otherwise we just skip it
 						if (
-							((k >= 255) or ChunkBlocks[i][j][k + 1] == nullptr) or
-							((j >= 15)  or ChunkBlocks[i][j + 1][k] == nullptr) or
+							((k >= 15) or ChunkBlocks[i][j][k + 1] == nullptr) or
+							((j >= 255)  or ChunkBlocks[i][j + 1][k] == nullptr) or
 							((i >= 15)  or ChunkBlocks[i + 1][j][k] == nullptr) or
 							((i <= 0)   or ChunkBlocks[i - 1][j][k] == nullptr) or
 							((j <= 0)   or ChunkBlocks[i][j - 1][k] == nullptr) or
@@ -251,12 +263,12 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 				}
 			}
 		}
-		ovsize = blocks.size();
-		OVSizel = new uint32_t[ovsize];
-		optimizedVertices = new float*[ovsize];
-		ovblocks = new UBlock*[ovsize];
-		VBO = new uint32_t[ovsize];
-		VAO = new uint32_t[ovsize];
+		ovsize[yoffset] = blocks.size();
+		OVSizel[yoffset] = new uint32_t[blocks.size()];
+		optimizedVertices[yoffset] = new float*[blocks.size()];
+		ovblocks[yoffset] = new UBlock*[blocks.size()];
+		VBO[yoffset] = new uint32_t[blocks.size()];
+		VAO[yoffset] = new uint32_t[blocks.size()];
 #define PUSH_VERTICES(x, coords) vertices.push_back(std::pair<uint32_t, Block::Coords>(x, coords))
 #define PUSH_ALL_VERTICES(offset, coords) PUSH_VERTICES(6 * offset, coords);  PUSH_VERTICES(6*offset+1, coords);  PUSH_VERTICES(6 * offset + 2, coords); \
 									PUSH_VERTICES(6 * offset + 3, coords); PUSH_VERTICES(6 * offset + 4, coords); PUSH_VERTICES(6 * offset + 5, coords);
@@ -292,16 +304,16 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 					x[i * 9 + j] = this->vertices[9 * vertices[i].first + j];
 				}
 			}
-			OVSizel[m] = vertices.size() * 9;
-			optimizedVertices[m] = x;
-			ovblocks[m] = a->first;
-			glGenVertexArrays(1, &(VAO[m]));
-			glGenBuffers(1, &(VBO[m]));
+			OVSizel[yoffset][m] = vertices.size() * 9;
+			optimizedVertices[yoffset][m] = x;
+			ovblocks[yoffset][m] = a->first;
+			glGenVertexArrays(1, &(VAO[yoffset][m]));
+			glGenBuffers(1, &(VBO[yoffset][m]));
 
-			glBindBuffer(GL_ARRAY_BUFFER, VBO[m]);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO[yoffset][m]);
 			glBufferData(GL_ARRAY_BUFFER, vertices.size() * 9 * sizeof(float), x, GL_STATIC_DRAW);
 
-			glBindVertexArray(VAO[m]);
+			glBindVertexArray(VAO[yoffset][m]);
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
 			glEnableVertexAttribArray(0);
 			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -313,11 +325,19 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 		}
 
 	}
+	void deleteOptimizedRenderer(uint16_t yoffset) {
+		for (size_t i = 0; i < ovsize[yoffset]; i++) {
+			glDeleteVertexArrays(1, &(VAO[yoffset][i]));
+			glDeleteBuffers(1, &(VBO[yoffset][i]));
+			delete[] optimizedVertices[yoffset][i];
+		}
+		delete[] VAO[yoffset];
+		delete[] VBO[yoffset];
+		delete[] optimizedVertices[yoffset];
+	}
 	void deleteOptimizedRenderer() {
-		for (size_t i = 0; i < ovsize; i++) {
-			glDeleteVertexArrays(1,&(VAO[i]));
-			glDeleteBuffers(1,&(VBO[i]));
-			delete[] optimizedVertices[i];
+		for (size_t j = 0; j < 16; j++) {
+			deleteOptimizedRenderer(j);
 		}
 		delete[] VAO;
 		delete[] VBO;
@@ -331,14 +351,24 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 	void PlaceBlock() {
 
 	}
-	void BreakBlock() {
-
+	// returns an item id
+	void BreakBlock(int32_t x, int32_t y, int32_t z) {
+		if (this->ChunkBlocks[x - this->x*16][y][z - this->z * 16] == nullptr) {
+			throw Exceptions::WRONG_COORDS;
+		}
+		uint32_t returnValue = this->ChunkBlocks[x - this->x * 16][y][z - this->z * 16]->Break();
+		delete this->ChunkBlocks[x - this->x * 16][y][z - this->z * 16];
+		this->ChunkBlocks[x - this->x * 16][y][z - this->z * 16] = nullptr;
+		deleteOptimizedRenderer(y / 16);
+		optimizeRenderer(y / 16);
 	}
 	void Draw() {
-		for (size_t i = 0; i < ovsize; i++) {
-			ovblocks[i]->BindTextures();
-			glBindVertexArray(VAO[i]);
-			glDrawArrays(GL_TRIANGLES, 0, OVSizel[i]);
+		for (size_t j = 0; j < 16; j++) {
+			for (size_t i = 0; i < ovsize[j]; i++) {
+				ovblocks[j][i]->BindTextures();
+				glBindVertexArray(VAO[j][i]);
+				glDrawArrays(GL_TRIANGLES, 0, OVSizel[j][i]);
+			}
 		}
 	}
 	Block* getBlock(uint8_t x, uint8_t y, uint8_t z) {
