@@ -162,6 +162,19 @@ int main() {
 
 
     hoverShader.use();
+    hoverShader.setInt("diffuseCubeTexture[0]", 0);
+    hoverShader.setInt("diffuseCubeTexture[1]", 1);
+    hoverShader.setInt("diffuseCubeTexture[2]", 2);
+    hoverShader.setInt("diffuseCubeTexture[3]", 3);
+    hoverShader.setInt("diffuseCubeTexture[4]", 4);
+    hoverShader.setInt("diffuseCubeTexture[5]", 5);
+
+    hoverShader.setInt("specularCubeTexture[0]", 6);
+    hoverShader.setInt("specularCubeTexture[1]", 7);
+    hoverShader.setInt("specularCubeTexture[2]", 8);
+    hoverShader.setInt("specularCubeTexture[3]", 9);
+    hoverShader.setInt("specularCubeTexture[4]", 10);
+    hoverShader.setInt("specularCubeTexture[5]", 11);
     hoverShader.setInt("hover", 14);
     hoverShader.setInt("destruction", 15);
     glActiveTexture(GL_TEXTURE15);
