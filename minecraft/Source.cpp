@@ -223,7 +223,7 @@ int main() {
         }
         int hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
         int prevHoveredBufx = 2147483647, prevHoveredBufy = 2147483647, prevHoveredBufz = 2147483647;
-        for (int i = 0; i < 5; i++) {
+        for (float i = 0; i < 5; i+= 0.01) {
 
             glm::vec3 g = camera.Position + glm::vec3(camera.Front.x * i, camera.Front.y * i, camera.Front.z * i);
             int x = std::round(g.x);
@@ -233,8 +233,8 @@ int main() {
                 if (chunks[x / 16][z / 16]->getBlock(x, y, z) != nullptr) {
 
                     if (i > 2 and (prevHoveredBufx >= 0 and prevHoveredBufx < 16 * renderDistance and prevHoveredBufz >= 0 and prevHoveredBufz < 16 * renderDistance) and (placement)) {
-                        if (lastFrame - placementStart > 0.1) {
-                            placement = false;
+                        if (lastFrame - placementStart > 0) {
+                            placementStart = lastFrame + 0.1;
                             chunks[prevHoveredBufx / 16][prevHoveredBufz / 16]->PlaceBlock(prevHoveredBufx, prevHoveredBufy, prevHoveredBufz, &(blocks[1]));
                             hoveredx = prevHoveredBufx;
                             hoveredy = prevHoveredBufy;
@@ -325,6 +325,9 @@ void processInput(GLFWwindow* window)
             placement = true;
             placementStart = lastFrame;
         }
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
+        placement = false;
+    }
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
         breaking = false;
 }
