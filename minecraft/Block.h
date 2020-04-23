@@ -29,6 +29,7 @@ public:
         memcpy(this->diffuseTextures, b.diffuseTextures, sizeof(uint32_t) * 6);
         memcpy(this->specularTextures, b.specularTextures, sizeof(uint32_t) * 6);
         this->str_id = b.str_id;
+        this->integer_id = b.integer_id;
         this->hardness = b.hardness;
     }
     UBlock(const UBlock* b) {
@@ -37,6 +38,7 @@ public:
         memcpy(this->diffuseTextures, b->diffuseTextures, sizeof(uint32_t) * 6);
         memcpy(this->specularTextures, b->specularTextures, sizeof(uint32_t) * 6);
         this->str_id = b->str_id;
+        this->integer_id = b->integer_id;
         this->hardness = b->hardness;
     }
     ~UBlock() {
