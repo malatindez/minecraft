@@ -131,6 +131,7 @@ int main() {
     TextureLoader loader;
     auto blocks = loadBlocks(&loader);
     Shader cubeShader("cubeShader.vert", "cubeShader.frag");
+    Shader hoverShader("cubeShader.vert", "hoverShader.frag");
     cubeShader.use();
     cubeShader.setInt("diffuseCubeTexture[0]", 0);
     cubeShader.setInt("diffuseCubeTexture[1]", 1);
@@ -159,26 +160,29 @@ int main() {
     }, destroy_none = loadTexture("blocks\\minecraft\\textures\\destroy_none.png"), 
         hover = loadTexture("blocks\\minecraft\\textures\\hover.png");
 
-    cubeShader.setInt("destroy_stage", 15);
-    cubeShader.setInt("hover", 14);
 
+    hoverShader.use();
+    hoverShader.setInt("hover", 14);
+    hoverShader.setInt("destruction", 15);
     glActiveTexture(GL_TEXTURE15);
     glBindTexture(GL_TEXTURE_2D, destroy_none);
     glActiveTexture(GL_TEXTURE14);
     glBindTexture(GL_TEXTURE_2D, hover);
-    int prevhoveredx = -1, prevhoveredz = -1;
+    int prevhoveredx = -1, prevhoveredy = -1, prevhoveredz = -1;
     glfwSwapInterval(0);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     World w = World::NewWorld(&loader, &blocks, "rzhaka");
-    Chunk*** chunks = new Chunk**[32];
-    for (int i = -16; i < 16; i++) {
-        chunks[16+i] = new Chunk*[32];
-        for (int j = -16; j < 16; j++) {
-            chunks[16+i][16+j] = w.generateChunk(i, j);
+    uint32_t renderDistance = 4;
+    Chunk*** chunks = new Chunk**[renderDistance];
+    for (int i = 0; i < renderDistance; i++) {
+        chunks[i] = new Chunk*[renderDistance];
+        for (int j = 0; j < renderDistance; j++) {
+            chunks[i][j] = w.generateChunk(i, j);
         }
     }
     float a = glfwGetTime();
+    bool state = false;
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
         // --------------------
@@ -192,36 +196,63 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         cubeShader.setMat4("projection", projection);
         cubeShader.setMat4("view", view);
-
-
-
-        int hoveredx = 2147483647, hoveredz = 2147483647;
+        for (int i = 0; i < renderDistance; i++) {
+            for (int j = 0; j < renderDistance; j++) {
+                cubeShader.setMat4("model", chunks[i][j]->getModel());
+                chunks[i][j]->Draw();
+            }
+        }
+        if (state and not breaking) {
+            glActiveTexture(GL_TEXTURE15);
+            glBindTexture(GL_TEXTURE_2D, destroy_none);
+        }
+        int hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
         for (int i = 0; i < 5; i++) {
 
             glm::vec3 g = camera.Position + glm::vec3(camera.Front.x * i, camera.Front.y * i, camera.Front.z * i);
             int x = std::round(g.x);
             int y = std::round(g.y);
             int z = std::round(g.z);
-            if (y == -2) {
-                hoveredx = x;
-                hoveredz = z;
-                break;
+            if (x >= 0 and x < 16 * renderDistance and z >= 0 and z < 16 * renderDistance) {
+                if (chunks[x / 16][z / 16]->getBlock(x, y, z) != nullptr) {
+                    hoveredx = x;
+                    hoveredy = y;
+                    hoveredz = z;
+                    if (breaking) {
+                        state = true;
+                        if (prevhoveredx != hoveredx or prevhoveredy != hoveredy or prevhoveredz != hoveredz) {
+                            prevhoveredx = hoveredx;
+                            prevhoveredy = hoveredy;
+                            prevhoveredz = hoveredz;
+                            breaking = false;
+                        }
+                        else if (int(5.0f * (lastFrame - breakingStart) / chunks[x / 16][z / 16]->getBlock(x, y, z)->ref->hardness) >= 10) {
+                            breaking = false;
+                            glActiveTexture(GL_TEXTURE15);
+                            glBindTexture(GL_TEXTURE_2D, destroy_none);
+                        }
+                        else {
+                            glActiveTexture(GL_TEXTURE15);
+                            glBindTexture(GL_TEXTURE_2D, destroy_stage[int(5.0f * (lastFrame - breakingStart) / chunks[x / 16][z / 16]->getBlock(x, y, z)->ref->hardness)]);
+                        }
+                    }
+                    break;
+
+                }
             }
         }
-        if (hoveredx != prevhoveredx or hoveredz != prevhoveredz) {
-            breaking = false;
-            prevhoveredx = hoveredx;
-            prevhoveredz = hoveredz;
-        }
+        hoverShader.use();
+        hoverShader.setMat4("projection", projection);
+        hoverShader.setMat4("view", view);
+        glm::mat4 model(1.0f);
+        if (hoveredx >= 0 and hoveredx < 16 * renderDistance and hoveredz >= 0 and hoveredz < 16 * renderDistance) {
+            chunks[hoveredx / 16][hoveredz / 16]->getBlock(hoveredx, hoveredy, hoveredz)->ref->BindTextures();
 
-
-
-
-        for (int i = -16; i < 16; i++) {
-            for (int j = -16; j < 16; j++) {
-                cubeShader.setMat4("model", chunks[16+i][16+j]->getModel());
-                chunks[16+i][16+j]->Draw();
-            }
+            model = glm::translate(model, glm::vec3(hoveredx, hoveredy, hoveredz));
+            model = glm::scale(model, glm::vec3(1.0001));
+            glBindVertexArray(cubeVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            hoverShader.setMat4("model", model);
         }
 
         glfwSwapBuffers(window);
