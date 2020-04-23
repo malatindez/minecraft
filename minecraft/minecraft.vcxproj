@@ -169,6 +169,7 @@
   <ItemGroup>
     <None Include="cubeShader.frag" />
     <None Include="cubeShader.vert" />
+    <None Include="hoverShader.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

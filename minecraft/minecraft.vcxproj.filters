@@ -64,5 +64,8 @@
     <None Include="cubeShader.frag">
       <Filter>Исходные файлы</Filter>
     </None>
+    <None Include="hoverShader.frag">
+      <Filter>Исходные файлы</Filter>
+    </None>
   </ItemGroup>
 </Project>
