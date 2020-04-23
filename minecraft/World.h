@@ -172,7 +172,6 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 			uint16_t block_data_size = 0;
 			memcpy(&block_data_size, &(data[offset]), 2);
 			offset += 2;
-			
 			ChunkBlocks[x][y][z] = new Block(&(data[offset]), block_data_size, &((*blocks)[id]), Block::Coords(x + this->x * 16,y,z + this->z * 16));
 		}
 		optimizeRenderer();
@@ -226,12 +225,13 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 					if (ChunkBlocks[i][j][k] != nullptr) {
 						// if block nearby is minecraft:air - that means that we should process this block
 						// otherwise we just skip it
-						if (ChunkBlocks[i][j][k + 1] == nullptr or
-							ChunkBlocks[i][j + 1][k] == nullptr or
-							ChunkBlocks[i + 1][j][k] == nullptr or
-							ChunkBlocks[i - 1][j][k] == nullptr or
-							ChunkBlocks[i][j - 1][k] == nullptr or
-							ChunkBlocks[i][j][k - 1] == nullptr)
+						if (
+							((k >= 255) or ChunkBlocks[i][j][k + 1] == nullptr) or
+							((j >= 15)  or ChunkBlocks[i][j + 1][k] == nullptr) or
+							((i >= 15)  or ChunkBlocks[i + 1][j][k] == nullptr) or
+							((i <= 0)   or ChunkBlocks[i - 1][j][k] == nullptr) or
+							((j <= 0)   or ChunkBlocks[i][j - 1][k] == nullptr) or
+							((k <= 0)   or ChunkBlocks[i][j][k - 1] == nullptr))
 						{
 							bool flag = false;
 							for (auto itr = blocks.begin(); itr != blocks.end(); itr++) {
@@ -342,7 +342,7 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 		}
 	}
 	Block* getBlock(uint8_t x, uint8_t y, uint8_t z) {
-		return ChunkBlocks[x][y][z];
+		return ChunkBlocks[x - this->x * 16][y][z - this->z * 16];
 	}
 	~Chunk() {
 		deleteOptimizedRenderer();
@@ -406,20 +406,41 @@ public:
 		return returnValue;
 	}
 	Chunk* generateChunk(int32_t x, int32_t z) {
-
-		uint8_t* data = new uint8_t[16 * 16 * 9];
-		memset(data, 0, 16*16*9);
+		uint32_t size = 16 * 16 * 9;
+		uint8_t* gdata = new uint8_t[size];
+		memset(gdata, 0, size);
 		for (uint8_t i = 0; i < 16; i++) {
 			for (uint8_t j = 0; j < 16; j++) {
-				double n = noise.noise((double(x)*16 + i) / 16,0, (double(z)*16 + j) / 16);
-				data[(i * 16 + j) * 9 + 0] = i;
-				data[(i * 16 + j) * 9 + 1] = n * 25;
-				data[(i * 16 + j) * 9 + 2] = j;
-				((uint32_t*)(&(data[(i * 16 + j) * 9 + 3])))[0] = 2;
+				uint32_t height =  30 + 15.0 * noise.noise((double(x) * 16 + i) / 16, 0, (double(z) * 16 + j) / 16);
+				uint8_t* data = new uint8_t[height*9];
+				memset(data, 0, height * 9);
+				for (uint8_t k = 0; k < uint8_t(height); k++) {
+					data[(k) * 9 + 0] = i;
+					data[(k) * 9 + 1] = k;
+					data[(k) * 9 + 2] = j;
+					if (k < 1 + rand() % 2 + rand() % 2 + rand() % 3) {
+						((uint32_t*)(&(data[(k) * 9 + 3])))[0] = 4;
+					}
+					else if (k < height - 7) {
+						((uint32_t*)(&(data[(k) * 9 + 3])))[0] = 1;
+					}
+					else if (k < height - 1) {
+						((uint32_t*)(&(data[(k) * 9 + 3])))[0] = 2;
+					}
+					else {
+						((uint32_t*)(&(data[(k) * 9 + 3])))[0] = 3;
+					}
+				}
+				uint8_t* buf = new uint8_t[size + height * 9];
+				memcpy(buf, gdata, size);
+				memcpy(buf + size, data, height * 9);
+				size = size + height * 9;
+				delete[] gdata;
+				gdata = buf;
 			}
 		}
-		Chunk* returnValue = new Chunk(data, 16 * 16 * 9, blocks, x, z);
-		delete[] data;
+		Chunk* returnValue = new Chunk(gdata, size, blocks, x, z);
+		delete[] gdata;
 		return returnValue;
 	}
 	static World NewWorld(TextureLoader *t, std::vector<UBlock>* blocks, std::string name) {
