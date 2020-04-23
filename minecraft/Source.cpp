@@ -31,8 +31,9 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
-GLfloat deltaTime, lastFrame = 0, breakingStart = 0;
+GLfloat deltaTime, lastFrame = 0, breakingStart = 0, placementStart = 0;
 bool breaking = false;
+bool placement = false;
 int main() {
     srand(time(0));
     glfwInit();
@@ -185,7 +186,8 @@ int main() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     World w = World::NewWorld(&loader, &blocks, "rzhaka");
-    uint32_t renderDistance = 24;
+    uint32_t renderDistance = 8;
+    camera.Position = glm::vec3(renderDistance * 8, 65, renderDistance * 8);
     Chunk*** chunks = new Chunk**[renderDistance];
     for (int i = 0; i < renderDistance; i++) {
         chunks[i] = new Chunk*[renderDistance];
@@ -193,6 +195,7 @@ int main() {
             chunks[i][j] = w.generateChunk(i, j);
         }
     }
+    glfwSwapInterval(0);
     float a = glfwGetTime();
     bool state = false;
     while (!glfwWindowShouldClose(window)) {
@@ -219,6 +222,7 @@ int main() {
             glBindTexture(GL_TEXTURE_2D, destroy_none);
         }
         int hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
+        int prevHoveredBufx = 2147483647, prevHoveredBufy = 2147483647, prevHoveredBufz = 2147483647;
         for (int i = 0; i < 5; i++) {
 
             glm::vec3 g = camera.Position + glm::vec3(camera.Front.x * i, camera.Front.y * i, camera.Front.z * i);
@@ -227,6 +231,16 @@ int main() {
             int z = std::round(g.z);
             if (x >= 0 and x < 16 * renderDistance and z >= 0 and z < 16 * renderDistance) {
                 if (chunks[x / 16][z / 16]->getBlock(x, y, z) != nullptr) {
+
+                    if (i > 2 and (prevHoveredBufx >= 0 and prevHoveredBufx < 16 * renderDistance and prevHoveredBufz >= 0 and prevHoveredBufz < 16 * renderDistance) and (placement)) {
+                        if (lastFrame - placementStart > 0.1) {
+                            placement = false;
+                            chunks[prevHoveredBufx / 16][prevHoveredBufz / 16]->PlaceBlock(prevHoveredBufx, prevHoveredBufy, prevHoveredBufz, &(blocks[1]));
+                            hoveredx = prevHoveredBufx;
+                            hoveredy = prevHoveredBufy;
+                            hoveredz = prevHoveredBufz;
+                        }
+                    }
                     hoveredx = x;
                     hoveredy = y;
                     hoveredz = z;
@@ -254,6 +268,9 @@ int main() {
 
                 }
             }
+            prevHoveredBufx = x;
+            prevHoveredBufy = y;
+            prevHoveredBufz = z;
         }
         hoverShader.use();
         hoverShader.setMat4("projection", projection);
@@ -302,6 +319,11 @@ void processInput(GLFWwindow* window)
         if (breaking == false) {
             breaking = true;
             breakingStart = lastFrame;
+        }
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+        if (placement == false) {
+            placement = true;
+            placementStart = lastFrame;
         }
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
         breaking = false;
