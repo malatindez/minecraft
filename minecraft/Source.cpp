@@ -195,7 +195,7 @@ int main() {
             chunks[i][j] = w.generateChunk(i, j);
         }
     }
-    glfwSwapInterval(1.0f / 120);
+    glfwSwapInterval(1.0f / 60);
     float a = glfwGetTime();
     bool state = false;
     while (!glfwWindowShouldClose(window)) {
