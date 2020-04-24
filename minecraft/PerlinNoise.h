@@ -51,7 +51,7 @@ PerlinNoise::PerlinNoise(uint64_t seed) {
 	std::iota(p.begin(), p.end(), 0);
 
 	// Initialize a random engine with seed
-	std::default_random_engine engine(seed);
+	std::mt19937_64 engine(seed);
 
 	// Suffle  using the above random engine
 	std::shuffle(p.begin(), p.end(), engine);
