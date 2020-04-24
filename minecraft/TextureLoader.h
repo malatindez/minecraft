@@ -14,21 +14,21 @@ public:
 	std::vector<Texture> textures;
 	TextureLoader() {}
 	~TextureLoader() {
-		for (int i = 0; i < textures.size(); i++) {
+		for (size_t i = 0; i < textures.size(); i++) {
 			glDeleteTextures(1, &textures[i].id);
 		}
 	}
-	unsigned int LoadTexture(std::string path) {
-        for (int i = 0; i < textures.size(); i++) {
+	uint32_t LoadTexture(std::string path) {
+        for (size_t i = 0; i < textures.size(); i++) {
             if (textures[i].path == path) {
                 return textures[i].id;
             }
         }
-        unsigned int textureID;
+        uint32_t textureID;
         glGenTextures(1, &textureID);
 
-        int width, height, nrComponents;
-        unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
+        int32_t width, height, nrComponents;
+        uint8_t* data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
         if (data) {
             GLenum format = GL_RED;
             if (nrComponents == 1)
