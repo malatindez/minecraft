@@ -29,14 +29,17 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
     auto prevPosition = Position;
     float velocity = MovementSpeed * deltaTime;
     if (direction == FORWARD)
-        Position += Front * velocity;// / cos(glm::radians(Pitch));
+        Position += glm::vec3(Front.x / cos(glm::radians(Pitch)), 0, Front.z / cos(glm::radians(Pitch))) * velocity;
     if (direction == BACKWARD)
-        Position -= Front * velocity;// / cos(glm::radians(Pitch));
+        Position -= glm::vec3(Front.x / cos(glm::radians(Pitch)), 0, Front.z / cos(glm::radians(Pitch))) * velocity;
     if (direction == LEFT)
         Position -= Right * velocity;
     if (direction == RIGHT)
         Position += Right * velocity;
-    //Position.y = prevPosition.y;
+    if (direction == DOWN)
+        Position -= glm::vec3(0, 1, 0) * velocity;
+    if (direction == UP)
+        Position += glm::vec3(0, 1, 0) * velocity;
 
 }
 
@@ -50,10 +53,10 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constr
 
     // Make sure that when pitch is out of bounds, screen doesn't get flipped
     if (constrainPitch) {
-        if (Pitch > 89.0f)
-            Pitch = 89.0f;
-        if (Pitch < -89.0f)
-            Pitch = -89.0f;
+        if (Pitch > 89.9f)
+            Pitch = 89.9f;
+        if (Pitch < -89.9f)
+            Pitch = -89.9f;
     }
 
     // Update Front, Right and Up Vectors using the updated Euler angles
