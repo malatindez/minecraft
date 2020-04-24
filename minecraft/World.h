@@ -103,7 +103,7 @@ class Chunk {
 	};
 
 	std::vector<UBlock>* blocks = nullptr;
-	int64_t x, z;
+	int32_t x, z;
 	float ***optimizedVertices = nullptr;
 	UBlock*** ovblocks = nullptr;
 	uint32_t **VBO = nullptr;
@@ -148,7 +148,7 @@ file data:
 Blocks, not included in this file(by x y z coordinates) are counted as minecraft:air(id is 0).
 */
 	Block**** ChunkBlocks;
-	Chunk(uint8_t* data, uint32_t data_size, std::vector<UBlock>* blocks, int64_t x, int64_t z) {
+	Chunk(uint8_t* data, uint32_t data_size, std::vector<UBlock>* blocks, int32_t x, int32_t z) {
 		this->blocks = blocks;
 		this->x = x;
 		this->z = z;
@@ -173,7 +173,7 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 			uint16_t block_data_size = 0;
 			memcpy(&block_data_size, &(data[offset]), 2);
 			offset += 2;
-			ChunkBlocks[x][y][z] = new Block(&(data[offset]), block_data_size, &((*blocks)[id]), Block::Coords(x + this->x * 16,y,z + this->z * 16));
+			ChunkBlocks[x][y][z] = new Block(&(data[offset]), block_data_size, &((*blocks)[id]), Block::Coords(this->x * 16 + x,y,this->z * 16 + z));
 		}
 		optimizeRenderer();
 	}
@@ -224,16 +224,16 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 		VAO = new uint32_t*[16];
 		OVSizel= new uint32_t*[16];
 		ovsize = new uint32_t[16];
-		for (size_t i = 0; i < 16; i++) {
+		for (uint16_t i = 0; i < 16; i++) {
 			optimizeRenderer(i);
 		}
 	}
 	void optimizeRenderer(uint16_t yoffset) {
 		std::vector<std::pair<UBlock*, std::vector<Block*>>> blocks;
 		// second is number of this blocks in chunk
-		for (size_t i = 0; i < 16; i++) {
-			for (size_t j = 16 * yoffset; j < 16 * (yoffset + 1); j++) {
-				for (size_t k = 0; k < 16; k++) {
+		for (int32_t i = 0; i < 16; i++) {
+			for (int32_t j = 16 * yoffset; j < 16 * (yoffset + 1); j++) {
+				for (int32_t k = 0; k < 16; k++) {
 					if (ChunkBlocks[i][j][k] != nullptr) {
 						// if block nearby is minecraft:air - that means that we should process this block
 						// otherwise we just skip it
@@ -336,7 +336,7 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 		delete[] optimizedVertices[yoffset];
 	}
 	void deleteOptimizedRenderer() {
-		for (size_t j = 0; j < 16; j++) {
+		for (uint16_t j = 0; j < 16; j++) {
 			deleteOptimizedRenderer(j);
 		}
 		delete[] VAO;
@@ -433,7 +433,7 @@ public:
 		x /= 16; z /= 16;
 		std::string chunk_name = std::to_string(x) +  "," + std::to_string(z) + ".chunk";
 		::std::ifstream chunk("saves\\" + name + "\\chunks\\" + chunk_name, std::ifstream::binary | std::ifstream::ate);
-		uint32_t chunk_size = chunk.tellg();
+		uint32_t chunk_size = (uint32_t)chunk.tellg();
 		if (chunk_size > 16777216) { // chunk size is over 16 MB, that means that chunk is probably corrupted
 			throw Exceptions::CHUNK_SIZE_OVER_16MB;
 		}
@@ -450,7 +450,7 @@ public:
 		memset(gdata, 0, size);
 		for (uint8_t i = 0; i < 16; i++) {
 			for (uint8_t j = 0; j < 16; j++) {
-				uint32_t height =  30 + 10.0 * noise.noise((double(x) * 16 + i) / 16, 0, (double(z) * 16 + j) / 16);
+				uint32_t height = (uint32_t)(30 + 10.0 * noise.noise((double(x) * 16 + i) / 16, 0, (double(z) * 16 + j) / 16));
 				if (height > 255) {
 					height = 255;
 				}
