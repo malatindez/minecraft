@@ -34,6 +34,10 @@ bool firstMouse = true;
 GLfloat deltaTime, lastFrame = 0, breakingStart = 0, placementStart = 0;
 bool breaking = false;
 bool placement = false;
+enum current_state {
+    CS_INTERFACE,
+    CS_CAMERA
+};
 int main() {
     srand(time(0));
     glfwInit();
@@ -148,18 +152,18 @@ int main() {
     cubeShader.setInt("specularCubeTexture[4]", 10);
     cubeShader.setInt("specularCubeTexture[5]", 11);
     unsigned int destroy_stage[10] = {
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_0.png"),
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_1.png"),
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_2.png"),
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_3.png"),
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_4.png"),
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_5.png"),
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_6.png"),
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_7.png"),
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_8.png"),
-        loadTexture("blocks\\minecraft\\textures\\destroy_stage_9.png")
-    }, destroy_none = loadTexture("blocks\\minecraft\\textures\\destroy_none.png"), 
-        hover = loadTexture("blocks\\minecraft\\textures\\hover.png");
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_0.png"),
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_1.png"),
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_2.png"),
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_3.png"),
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_4.png"),
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_5.png"),
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_6.png"),
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_7.png"),
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_8.png"),
+        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_9.png")
+    }, destroy_none = loadTexture("resources\\minecraft\\gui\\blocks\\destroy_none.png"), 
+        hover = loadTexture("resources\\minecraft\\gui\\blocks\\hover.png");
 
 
     hoverShader.use();
@@ -186,7 +190,7 @@ int main() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     World w = World::NewWorld(&loader, &blocks, "rzhaka");
-    uint32_t renderDistance = 8;
+    uint32_t renderDistance = 4;
     camera.Position = glm::vec3(renderDistance * 8, 65, renderDistance * 8);
     Chunk*** chunks = new Chunk**[renderDistance];
     for (int i = 0; i < renderDistance; i++) {
@@ -195,7 +199,7 @@ int main() {
             chunks[i][j] = w.generateChunk(i, j);
         }
     }
-    glfwSwapInterval(1.0f / 60);
+    glfwSwapInterval(1);
     float a = glfwGetTime();
     bool state = false;
     while (!glfwWindowShouldClose(window)) {
