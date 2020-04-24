@@ -75,7 +75,7 @@ bool ends_with(std::string str, std::string suffix) {
 #include <algorithm>
 ::std::vector<UBlock> loadBlocks(TextureLoader* loader) {
     ::std::vector<UBlock> returnValue;
-    ::std::string path = "blocks\\minecraft\\";
+    ::std::string path = "resources\\minecraft\\";
     uint32_t* diffuseTextures = new uint32_t[6];
     uint32_t* specularTextures = new uint32_t[6];
     for (const auto& entry : ::std::filesystem::directory_iterator(path)) {
@@ -86,10 +86,10 @@ bool ends_with(std::string str, std::string suffix) {
             for (uint8_t i = 0; i < 12; i++) {
                 getline(block, line);
                 if (i < 6) {
-                    diffuseTextures[i] = loader->LoadTexture(("blocks\\minecraft\\textures\\" + line).c_str());
+                    diffuseTextures[i] = loader->LoadTexture(("resources\\minecraft\\blocks\\" + line).c_str());
                 }
                 else {
-                    specularTextures[i - 6] = loader->LoadTexture(("blocks\\minecraft\\textures\\" + line).c_str());
+                    specularTextures[i - 6] = loader->LoadTexture(("resources\\minecraft\\blocks\\" + line).c_str());
                 }
             }
             getline(block, line);
@@ -103,7 +103,7 @@ bool ends_with(std::string str, std::string suffix) {
 
         }
     }
-    ::std::ifstream blocks_manifest("blocks\\BLOCKS_MANIFEST");
+    ::std::ifstream blocks_manifest("resources\\BLOCKS_MANIFEST");
 
     ::std::string line;
     ::std::vector<std::pair<int32_t, ::std::string>> lines;
