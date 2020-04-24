@@ -239,10 +239,10 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 						// otherwise we just skip it
 						if (
 							((k >= 15) or ChunkBlocks[i][j][k + 1] == nullptr) or
-							((j >= 255)  or ChunkBlocks[i][j + 1][k] == nullptr) or
+							((j >= ((16 * (yoffset+1)) - 1))  or ChunkBlocks[i][j + 1][k] == nullptr) or
 							((i >= 15)  or ChunkBlocks[i + 1][j][k] == nullptr) or
 							((i <= 0)   or ChunkBlocks[i - 1][j][k] == nullptr) or
-							((j <= 0)   or ChunkBlocks[i][j - 1][k] == nullptr) or
+							((j <= (16 * yoffset))   or ChunkBlocks[i][j - 1][k] == nullptr) or
 							((k <= 0)   or ChunkBlocks[i][j][k - 1] == nullptr))
 						{
 							bool flag = false;
