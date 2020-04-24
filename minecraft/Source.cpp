@@ -195,7 +195,7 @@ int main() {
             chunks[i][j] = w.generateChunk(i, j);
         }
     }
-    glfwSwapInterval(0);
+    glfwSwapInterval(1.0f / 120);
     float a = glfwGetTime();
     bool state = false;
     while (!glfwWindowShouldClose(window)) {
@@ -234,7 +234,7 @@ int main() {
 
                     if (i > 2 and (prevHoveredBufx >= 0 and prevHoveredBufx < 16 * renderDistance and prevHoveredBufz >= 0 and prevHoveredBufz < 16 * renderDistance) and (placement)) {
                         if (lastFrame - placementStart > 0) {
-                            placementStart = lastFrame + 0.1;
+                            placementStart = lastFrame + 0.25;
                             chunks[prevHoveredBufx / 16][prevHoveredBufz / 16]->PlaceBlock(prevHoveredBufx, prevHoveredBufy, prevHoveredBufz, &(blocks[1]));
                             hoveredx = prevHoveredBufx;
                             hoveredy = prevHoveredBufy;
@@ -315,6 +315,10 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        camera.ProcessKeyboard(UP, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        camera.ProcessKeyboard(DOWN, deltaTime);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         if (breaking == false) {
             breaking = true;
