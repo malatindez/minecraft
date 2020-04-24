@@ -36,11 +36,11 @@ public:
     glm::vec3 Right;
     glm::vec3 WorldUp;
     // Euler Angles
-    float Yaw;
-    float Pitch;
+    double Yaw;
+    double Pitch;
     // Camera options
-    float MovementSpeed;
-    float MouseSensitivity;
+    double MovementSpeed;
+    double MouseSensitivity;
     float Zoom;
 
     // Constructor with vectors
@@ -54,7 +54,7 @@ public:
     void ProcessKeyboard(Camera_Movement direction, float deltaTime);
 
     // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
+    void ProcessMouseMovement(double xoffset, double yoffset, GLboolean constrainPitch = true);
     // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
     void ProcessMouseScroll(float yoffset);
 

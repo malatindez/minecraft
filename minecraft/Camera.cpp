@@ -27,7 +27,7 @@ glm::mat4 Camera::GetViewMatrix() {
 // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
 void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
     auto prevPosition = Position;
-    float velocity = MovementSpeed * deltaTime;
+    float velocity = (float)MovementSpeed * deltaTime;
     if (direction == FORWARD)
         Position += glm::vec3(Front.x / cos(glm::radians(Pitch)), 0, Front.z / cos(glm::radians(Pitch))) * velocity;
     if (direction == BACKWARD)
@@ -44,7 +44,7 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
 }
 
 // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch) {
+void Camera::ProcessMouseMovement(double xoffset, double yoffset, GLboolean constrainPitch) {
     xoffset *= MouseSensitivity * Zoom / ZOOM;
     yoffset *= MouseSensitivity * Zoom / ZOOM;
 
@@ -75,9 +75,9 @@ void Camera::ProcessMouseScroll(float yoffset) {
 void Camera::updateCameraVectors() {
     // Calculate the new Front vector
     glm::vec3 front;
-    front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    front.y = sin(glm::radians(Pitch));
-    front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+    front.x = cos(glm::radians((float)Yaw)) * cos(glm::radians((float)Pitch));
+    front.y = sin(glm::radians((float)Pitch));
+    front.z = sin(glm::radians((float)Yaw)) * cos(glm::radians((float)Pitch));
     Front = glm::normalize(front);
     // Also re-calculate the Right and Up vector
     Right = glm::normalize(glm::cross(Front, WorldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
