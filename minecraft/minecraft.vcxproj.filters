@@ -56,6 +56,9 @@
     <ClInclude Include="PerlinNoise.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="Interface.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cubeShader.vert">
