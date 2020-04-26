@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -168,9 +168,11 @@
     <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cubeShader.frag" />
-    <None Include="cubeShader.vert" />
-    <None Include="hoverShader.frag" />
+    <None Include="shaders\cubeShader.frag" />
+    <None Include="shaders\cubeShader.vert" />
+    <None Include="shaders\hoverShader.frag" />
+    <None Include="shaders\inventoryShader.frag" />
+    <None Include="shaders\inventoryShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
