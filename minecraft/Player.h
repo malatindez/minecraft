@@ -1,71 +1,80 @@
 #ifndef PLAYER_H
 #define PLAYER_H
-#include "Input.h"
 #include "Camera.h"
 #include "World.h"
 #include <glfw3.h>
 class Player {
     GLFWwindow* window = nullptr;
     World* world = nullptr;
-    Input<Player> input;
-    KeySequence forward, backward, left, right, up, down;
+    Input *input;
+    KeySequence *forward, *backward, *left, *right, *up, *down;
     double* deltaTime; // pointer to location where is deltatime updating
 public:
     Camera cam;
-    Player(GLFWwindow* window, World *world, double* deltaTimeLocation) : input(window) {
-        input.ref = this;
+    Player(GLFWwindow* window, World *world, double* deltaTimeLocation, Input* input) {
+        this->input = input;
         this->deltaTime = deltaTimeLocation;
         this->window = window;
         this->world = world;
-        forward = KeySequence(GLFW_KEY_W);
-        backward = KeySequence(GLFW_KEY_S);
-        left = KeySequence(GLFW_KEY_A);
-        right = KeySequence(GLFW_KEY_D);
-        up = KeySequence(GLFW_KEY_SPACE);
-        down = KeySequence(GLFW_KEY_LEFT_CONTROL);
-        input.addKeyCallback(&Player::processMovement, forward, 7);
-        input.addKeyCallback(&Player::processMovement, backward, 7);
-        input.addKeyCallback(&Player::processMovement, left, 7);
-        input.addKeyCallback(&Player::processMovement, right, 7);
-        input.addKeyCallback(&Player::processMovement, up, 7);
-        input.addKeyCallback(&Player::processMovement, down, 7);
+        input->addCheckingKey(GLFW_KEY_W);
+        input->addCheckingKey(GLFW_KEY_A);
+        input->addCheckingKey(GLFW_KEY_S);
+        input->addCheckingKey(GLFW_KEY_D);
+        input->addCheckingKey(GLFW_KEY_SPACE);
+        input->addCheckingKey(GLFW_KEY_LEFT_CONTROL);
+        input->addCheckingKey(GLFW_MOUSE_BUTTON_LEFT);
+        input->addCheckingKey(GLFW_MOUSE_BUTTON_RIGHT);
+        forward = new KeySequence(GLFW_KEY_W);
+        backward = new  KeySequence(GLFW_KEY_S);
+        left = new KeySequence(GLFW_KEY_A);
+        right = new KeySequence(GLFW_KEY_D);
+        up = new KeySequence(GLFW_KEY_SPACE);
+        down = new KeySequence(GLFW_KEY_LEFT_CONTROL);
     }
-    void processMovement(int state, KeySequence seq) {
-        if (seq == forward) {
-            cam.ProcessKeyboard(Camera::Movement::FORWARD, (*deltaTime));
-        }
-        else if (seq == backward) {
-            cam.ProcessKeyboard(Camera::Movement::BACKWARD, (*deltaTime));
-        }
-        else if (seq == left) {
-            cam.ProcessKeyboard(Camera::Movement::LEFT, (*deltaTime));
-        }
-        else if (seq == right) {
-            cam.ProcessKeyboard(Camera::Movement::RIGHT, (*deltaTime));
-        }
-        else if (seq == up) {
-            cam.ProcessKeyboard(Camera::Movement::UP, (*deltaTime));
-        }
-        else if (seq == down) {
-            cam.ProcessKeyboard(Camera::Movement::DOWN, (*deltaTime));
-        }
+    ~Player() {
+        delete forward;
+        delete backward;
+        delete left;
+        delete right;
+        delete up;
+        delete down;
     }
 private:
     double lastX = 0, lastY = 0;
     bool firstMouse = true;
 public:
-    void processMouse(double xpos, double ypos) {
+    void update() {
+        if (input->checkSequence((*forward))) {
+            cam.ProcessKeyboard(Camera::Movement::FORWARD, (*deltaTime));
+        }
+        if (input->checkSequence((*backward))) {
+            cam.ProcessKeyboard(Camera::Movement::BACKWARD, (*deltaTime));
+        }
+        if (input->checkSequence((*left))) {
+            cam.ProcessKeyboard(Camera::Movement::LEFT, (*deltaTime));
+        }
+        if (input->checkSequence((*right))) {
+            cam.ProcessKeyboard(Camera::Movement::RIGHT, (*deltaTime));
+        }
+        if (input->checkSequence((*up))) {
+            cam.ProcessKeyboard(Camera::Movement::UP, (*deltaTime));
+        }
+        if (input->checkSequence((*down))) {
+            cam.ProcessKeyboard(Camera::Movement::DOWN, (*deltaTime));
+        }
+        std::pair<double, double> pos = input->getMousePosition();
+        
         if (firstMouse) {
-            lastX = xpos;
-            lastY = ypos;
+            lastX = pos.first;
+            lastY = pos.second;
             firstMouse = false;
         }
 
-        double xoffset = xpos - lastX;
-        double yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+        double xoffset = pos.first - lastX;
+        double yoffset = lastY - pos.second; // reversed since y-coordinates go from bottom to top
 
-        lastX = xpos;
-        lastY = ypos;
+        lastX = pos.first;
+        lastY = pos.second;
 
         cam.ProcessMouseMovement(xoffset, yoffset);
     }
