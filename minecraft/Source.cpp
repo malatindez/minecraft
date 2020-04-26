@@ -28,10 +28,10 @@ const unsigned int SCR_HEIGHT = 1080;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
+double lastX = SCR_WIDTH / 2.0f;
+double lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
-GLfloat deltaTime, lastFrame = 0, breakingStart = 0, placementStart = 0;
+double deltaTime, lastFrame = 0, breakingStart = 0, placementStart = 0;
 bool breaking = false;
 bool placement = false;
 enum current_state {
@@ -39,7 +39,7 @@ enum current_state {
     CS_CAMERA
 };
 int main() {
-    srand(time(0));
+    srand((uint32_t)time(0));
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -135,8 +135,8 @@ int main() {
     glEnableVertexAttribArray(3);
     TextureLoader loader;
     auto blocks = loadBlocks(&loader);
-    Shader cubeShader("cubeShader.vert", "cubeShader.frag");
-    Shader hoverShader("cubeShader.vert", "hoverShader.frag");
+    Shader cubeShader("shaders\\cubeShader.vert", "shaders\\cubeShader.frag");
+    Shader hoverShader("shaders\\cubeShader.vert", "shaders\\hoverShader.frag");
     cubeShader.use();
     cubeShader.setInt("diffuseCubeTexture[0]", 0);
     cubeShader.setInt("diffuseCubeTexture[1]", 1);
@@ -193,19 +193,21 @@ int main() {
     uint32_t renderDistance = 4;
     camera.Position = glm::vec3(renderDistance * 8, 65, renderDistance * 8);
     Chunk*** chunks = new Chunk**[renderDistance];
-    for (int i = 0; i < renderDistance; i++) {
+    for (uint32_t i = 0; i < renderDistance; i++) {
         chunks[i] = new Chunk*[renderDistance];
-        for (int j = 0; j < renderDistance; j++) {
+        for (uint32_t j = 0; j < renderDistance; j++) {
             chunks[i][j] = w.generateChunk(i, j);
         }
     }
     glfwSwapInterval(1);
-    float a = glfwGetTime();
+    double a = glfwGetTime();
     bool state = false;
+#include "Interface.h"
+    Interface gui(&loader);
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
         // --------------------
-        float currentFrame = glfwGetTime();
+        double  currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         processInput(window);
@@ -215,8 +217,8 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         cubeShader.setMat4("projection", projection);
         cubeShader.setMat4("view", view);
-        for (int i = 0; i < renderDistance; i++) {
-            for (int j = 0; j < renderDistance; j++) {
+        for (uint32_t i = 0; i < renderDistance; i++) {
+            for (uint32_t j = 0; j < renderDistance; j++) {
                 cubeShader.setMat4("model", chunks[i][j]->getModel());
                 chunks[i][j]->Draw();
             }
@@ -225,18 +227,17 @@ int main() {
             glActiveTexture(GL_TEXTURE15);
             glBindTexture(GL_TEXTURE_2D, destroy_none);
         }
-        int hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
-        int prevHoveredBufx = 2147483647, prevHoveredBufy = 2147483647, prevHoveredBufz = 2147483647;
-        for (float i = 0; i < 5; i+= 0.01) {
-
+        int32_t hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
+        int32_t prevHoveredBufx = 2147483647, prevHoveredBufy = 2147483647, prevHoveredBufz = 2147483647;
+        for (double i = 0; i < 5; i+= 0.01) {
             glm::vec3 g = camera.Position + glm::vec3(camera.Front.x * i, camera.Front.y * i, camera.Front.z * i);
-            int x = std::round(g.x);
-            int y = std::round(g.y);
-            int z = std::round(g.z);
-            if (x >= 0 and x < 16 * renderDistance and z >= 0 and z < 16 * renderDistance) {
+            int32_t x = (int32_t)std::round(g.x);
+            int32_t y = (int32_t)std::round(g.y);
+            int32_t z = (int32_t)std::round(g.z);
+            if (x >= 0 and x < (int32_t)(16 * renderDistance) and z >= 0 and z < (int32_t)(16 * renderDistance)) {
                 if (chunks[x / 16][z / 16]->getBlock(x, y, z) != nullptr) {
 
-                    if (i > 2 and (prevHoveredBufx >= 0 and prevHoveredBufx < 16 * renderDistance and prevHoveredBufz >= 0 and prevHoveredBufz < 16 * renderDistance) and (placement)) {
+                    if (i > 2 and (prevHoveredBufx >= 0 and prevHoveredBufx < (int32_t)(16 * renderDistance) and prevHoveredBufz >= 0 and prevHoveredBufz < (int32_t)(16 * renderDistance)) and (placement)) {
                         if (lastFrame - placementStart > 0) {
                             placementStart = lastFrame + 0.25;
                             chunks[prevHoveredBufx / 16][prevHoveredBufz / 16]->PlaceBlock(prevHoveredBufx, prevHoveredBufy, prevHoveredBufz, &(blocks[1]));
@@ -280,16 +281,21 @@ int main() {
         hoverShader.setMat4("projection", projection);
         hoverShader.setMat4("view", view);
         glm::mat4 model(1.0f);
-        if (hoveredx >= 0 and hoveredx < 16 * renderDistance and hoveredz >= 0 and hoveredz < 16 * renderDistance) {
+        if (hoveredx >= 0 and hoveredx < (int32_t)(16 * renderDistance) and hoveredz >= 0 and hoveredz < (int32_t)(16 * renderDistance)) {
+
+            glActiveTexture(GL_TEXTURE14);
+            glBindTexture(GL_TEXTURE_2D, hover);
             chunks[hoveredx / 16][hoveredz / 16]->getBlock(hoveredx, hoveredy, hoveredz)->ref->BindTextures();
 
             model = glm::translate(model, glm::vec3(hoveredx, hoveredy, hoveredz));
-            model = glm::scale(model, glm::vec3(1.0001));
+            model = glm::scale(model, glm::vec3(1.0001f));
+            hoverShader.setMat4("model", model);
             glBindVertexArray(cubeVAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
-            hoverShader.setMat4("model", model);
         }
+        gui.DrawInterface(Interface::INVENTORY_WIDGET, SCR_WIDTH, SCR_HEIGHT);
 
+        gui.DrawInterface(Interface::CURSOR, SCR_WIDTH, SCR_HEIGHT);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -312,17 +318,17 @@ void processInput(GLFWwindow* window)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
+        camera.ProcessKeyboard(FORWARD, (float)deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
+        camera.ProcessKeyboard(BACKWARD, (float)deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
+        camera.ProcessKeyboard(LEFT, (float)deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
+        camera.ProcessKeyboard(RIGHT, (float)deltaTime);
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        camera.ProcessKeyboard(UP, deltaTime);
+        camera.ProcessKeyboard(UP, (float)deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        camera.ProcessKeyboard(DOWN, deltaTime);
+        camera.ProcessKeyboard(DOWN, (float)deltaTime);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         if (breaking == false) {
             breaking = true;
@@ -360,8 +366,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    double xoffset = xpos - lastX;
+    double yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
     lastX = xpos;
     lastY = ypos;
@@ -373,7 +379,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.ProcessMouseScroll(yoffset);
+    camera.ProcessMouseScroll((float)yoffset);
 }
 
 // utility function for loading a 2D texture from file
