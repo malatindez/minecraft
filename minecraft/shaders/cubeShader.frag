@@ -8,4 +8,5 @@ flat in int TextureSide;
 void main() {
 
     FragColor = texture(diffuseCubeTexture[TextureSide], TexCoords);
+    FragColor.a = 1.0;
 }
