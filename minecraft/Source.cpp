@@ -17,20 +17,16 @@
 #include <map>
 #include "Block.h"
 #include "World.h"
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow* window);
-
+#include "Input.h"
+#include "Interface.h"
+#include "Player.h"
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
-// camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-double lastX = SCR_WIDTH / 2.0f;
-double lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
 double deltaTime, lastFrame = 0, breakingStart = 0, placementStart = 0;
 bool breaking = false;
 bool placement = false;
@@ -54,8 +50,6 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -188,10 +182,11 @@ int main() {
     glBindTexture(GL_TEXTURE_2D, hover);
     int prevhoveredx = -1, prevhoveredy = -1, prevhoveredz = -1;
     glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glCullFace(GL_BACK);
     World w = World::NewWorld(&loader, &blocks, "rzhaka");
     uint32_t renderDistance = 4;
-    camera.Position = glm::vec3(renderDistance * 8, 65, renderDistance * 8);
     Chunk*** chunks = new Chunk**[renderDistance];
     for (uint32_t i = 0; i < renderDistance; i++) {
         chunks[i] = new Chunk*[renderDistance];
@@ -202,19 +197,22 @@ int main() {
     glfwSwapInterval(1);
     double a = glfwGetTime();
     bool state = false;
-#include "Interface.h"
     Interface gui(&loader);
+    Input input(window);
+    Player player(window, &w, &deltaTime, &input);
+    player.cam.Position = glm::vec3(renderDistance * 8, 65, renderDistance * 8);
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
         // --------------------
         double  currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        processInput(window);
+        input.update();
+        player.update();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         cubeShader.use();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
-        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(player.cam.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
+        glm::mat4 view = player.cam.GetViewMatrix();
         cubeShader.setMat4("projection", projection);
         cubeShader.setMat4("view", view);
         for (uint32_t i = 0; i < renderDistance; i++) {
@@ -230,7 +228,7 @@ int main() {
         int32_t hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
         int32_t prevHoveredBufx = 2147483647, prevHoveredBufy = 2147483647, prevHoveredBufz = 2147483647;
         for (double i = 0; i < 5; i+= 0.01) {
-            glm::vec3 g = camera.Position + glm::vec3(camera.Front.x * i, camera.Front.y * i, camera.Front.z * i);
+            glm::vec3 g = player.cam.Position + glm::vec3(player.cam.Front.x * i, player.cam.Front.y * i, player.cam.Front.z * i);
             int32_t x = (int32_t)std::round(g.x);
             int32_t y = (int32_t)std::round(g.y);
             int32_t z = (int32_t)std::round(g.z);
@@ -293,9 +291,9 @@ int main() {
             glBindVertexArray(cubeVAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-        gui.DrawInterface(Interface::INVENTORY_WIDGET, SCR_WIDTH, SCR_HEIGHT);
+        gui.DrawInterface(Interface::TYPE::INVENTORY_WIDGET, SCR_WIDTH, SCR_HEIGHT);
 
-        gui.DrawInterface(Interface::CURSOR, SCR_WIDTH, SCR_HEIGHT);
+        gui.DrawInterface(Interface::TYPE::CURSOR, SCR_WIDTH, SCR_HEIGHT);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -309,78 +307,3 @@ int main() {
     glfwTerminate();
     return 0;
 }
-
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, (float)deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, (float)deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, (float)deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, (float)deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        camera.ProcessKeyboard(UP, (float)deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        camera.ProcessKeyboard(DOWN, (float)deltaTime);
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-        if (breaking == false) {
-            breaking = true;
-            breakingStart = lastFrame;
-        }
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-        if (placement == false) {
-            placement = true;
-            placementStart = lastFrame;
-        }
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
-        placement = false;
-    }
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
-        breaking = false;
-}
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
-}
-
-
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    double xoffset = xpos - lastX;
-    double yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.ProcessMouseMovement(xoffset, yoffset);
-}
-
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    camera.ProcessMouseScroll((float)yoffset);
-}
-
-// utility function for loading a 2D texture from file
-// ---------------------------------------------------
