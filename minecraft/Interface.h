@@ -19,7 +19,7 @@ class Interface {
 public:
 
 #define INTERFACE_TYPE_LEN 3
-	enum INTERFACE_TYPE {
+	enum class TYPE {
 		INVENTORY = 0,
 		INVENTORY_WIDGET = 1,
 		CURSOR = 2
@@ -77,11 +77,11 @@ public:
 		}
 		return second_vertices;
 	}
-	void LoadInterface(TextureLoader* tl, uint32_t TYPE, std::string texturePath, float textureFromx, float textureFromy, float textureTox, float textureToy, float textureSizex, float textureSizey,
+	void LoadInterface(TextureLoader* tl, TYPE TYPE, std::string texturePath, float textureFromx, float textureFromy, float textureTox, float textureToy, float textureSizex, float textureSizey,
 		float scalex, float scaley, float movex, float movey) {
-		interfaceVertices[TYPE] = moveVertices(textureFromx, textureFromy, textureTox, textureToy, textureSizex, textureSizey,
+		interfaceVertices[int(TYPE)] = moveVertices(textureFromx, textureFromy, textureTox, textureToy, textureSizex, textureSizey,
 			scalex, scaley, movex, movey);
-		interfaces[TYPE] = Load(tl, texturePath, interfaceVertices[TYPE], VAOs[TYPE], VBOs[TYPE]);
+		interfaces[int(TYPE)] = Load(tl, texturePath, interfaceVertices[int(TYPE)], VAOs[int(TYPE)], VBOs[int(TYPE)]);
 	}
 	Interface(TextureLoader* tl) {
 		inventoryShader = new Shader("shaders\\inventoryShader.vert", "shaders\\inventoryShader.frag");
@@ -91,19 +91,19 @@ public:
 		VAOs = new uint32_t[INTERFACE_TYPE_LEN];
 		interfaces = new uint32_t[INTERFACE_TYPE_LEN];
 		VBOs = new uint32_t[INTERFACE_TYPE_LEN];
-		LoadInterface(tl, INVENTORY, "resources\\minecraft\\gui\\container\\inventory.png", 1.0f, 1.0f, 352.0f, 332.0f, 512.0f, 512.0f, 1, 1, 0, 0);
-		LoadInterface(tl, INVENTORY_WIDGET, "resources\\minecraft\\gui\\widgets.png", 1.0f, 1.0f, 364.0f, 44.0f, 512.0f, 512.0f, 1, 1, 0, -0.5);
-		LoadInterface(tl, CURSOR, "resources\\minecraft\\gui\\icons.png", 6.0f, 6.0f, 24.0f, 24.0f, 512.0f, 512.0f, 0.75, 0.75, 0, 0);
+		LoadInterface(tl, TYPE::INVENTORY, "resources\\minecraft\\gui\\container\\inventory.png", 1.0f, 1.0f, 352.0f, 332.0f, 512.0f, 512.0f, 1, 1, 0, 0);
+		LoadInterface(tl, TYPE::INVENTORY_WIDGET, "resources\\minecraft\\gui\\widgets.png", 1.0f, 1.0f, 364.0f, 44.0f, 512.0f, 512.0f, 1, 1, 0, -0.5);
+		LoadInterface(tl, TYPE::CURSOR, "resources\\minecraft\\gui\\icons.png", 6.0f, 6.0f, 24.0f, 24.0f, 512.0f, 512.0f, 0.75, 0.75, 0, 0);
 	}
 
-	void DrawInterface(INTERFACE_TYPE type, uint32_t SCR_WIDTH, uint32_t SCR_HEIGHT) {
+	void DrawInterface(TYPE type, uint32_t SCR_WIDTH, uint32_t SCR_HEIGHT) {
 		glDisable(GL_DEPTH_TEST);
 		glActiveTexture(GL_TEXTURE13);
 		float aspect = (float)SCR_WIDTH / (float)SCR_HEIGHT;
 		this->inventoryShader->use();
 		this->inventoryShader->setMat4("projection", glm::ortho(-1.0f, 1.0f, -1.0f / aspect, 1.0f / aspect, 0.1f, 10000.0f));
-		glBindTexture(GL_TEXTURE_2D, interfaces[type]);
-		glBindVertexArray(VAOs[type]);
+		glBindTexture(GL_TEXTURE_2D, interfaces[int(type)]);
+		glBindVertexArray(VAOs[int(type)]);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glEnable(GL_DEPTH_TEST);
 	}
