@@ -61,14 +61,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="cubeShader.vert">
-      <Filter>Исходные файлы</Filter>
-    </None>
-    <None Include="cubeShader.frag">
-      <Filter>Исходные файлы</Filter>
-    </None>
-    <None Include="hoverShader.frag">
-      <Filter>Исходные файлы</Filter>
-    </None>
+    <None Include="shaders\cubeShader.frag" />
+    <None Include="shaders\cubeShader.vert" />
+    <None Include="shaders\hoverShader.frag" />
+    <None Include="shaders\inventoryShader.frag" />
+    <None Include="shaders\inventoryShader.vert" />
   </ItemGroup>
 </Project>
