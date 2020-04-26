@@ -25,20 +25,20 @@ glm::mat4 Camera::GetViewMatrix() {
 }
 
 // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
+void Camera::ProcessKeyboard(Movement direction, float deltaTime) {
     auto prevPosition = Position;
     float velocity = (float)MovementSpeed * deltaTime;
-    if (direction == FORWARD)
+    if (direction == Movement::FORWARD)
         Position += glm::vec3(Front.x / cos(glm::radians(Pitch)), 0, Front.z / cos(glm::radians(Pitch))) * velocity;
-    if (direction == BACKWARD)
+    if (direction == Movement::BACKWARD)
         Position -= glm::vec3(Front.x / cos(glm::radians(Pitch)), 0, Front.z / cos(glm::radians(Pitch))) * velocity;
-    if (direction == LEFT)
+    if (direction == Movement::LEFT)
         Position -= Right * velocity;
-    if (direction == RIGHT)
+    if (direction == Movement::RIGHT)
         Position += Right * velocity;
-    if (direction == DOWN)
+    if (direction == Movement::DOWN)
         Position -= glm::vec3(0, 1, 0) * velocity;
-    if (direction == UP)
+    if (direction == Movement::UP)
         Position += glm::vec3(0, 1, 0) * velocity;
 
 }
