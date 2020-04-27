@@ -7,7 +7,7 @@ class Player {
     GLFWwindow* window = nullptr;
     World* world = nullptr;
     Input *input;
-    KeySequence *forward, *backward, *left, *right, *up, *down;
+    KeySequence *forward, *backward, *left, *right, *up, *down, *breakSeq, *placeSeq;
     double* deltaTime; // pointer to location where is deltatime updating
 public:
     Camera cam;
@@ -30,6 +30,8 @@ public:
         right = new KeySequence(GLFW_KEY_D);
         up = new KeySequence(GLFW_KEY_SPACE);
         down = new KeySequence(GLFW_KEY_LEFT_CONTROL);
+        breakSeq = new KeySequence((uint16_t)GLFW_MOUSE_BUTTON_LEFT);
+        placeSeq = new KeySequence(GLFW_MOUSE_BUTTON_RIGHT);
     }
     ~Player() {
         delete forward;
@@ -38,11 +40,21 @@ public:
         delete right;
         delete up;
         delete down;
+        delete breakSeq;
+        delete placeSeq;
     }
 private:
     double lastX = 0, lastY = 0;
     bool firstMouse = true;
+    void Breaking() {
+        //breaking = true;
+    }
+    void Placing() {
+        
+    }
 public:
+    int32_t hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
+    uint16_t breakingStage;
     void update() {
         if (input->checkSequence((*forward))) {
             cam.ProcessKeyboard(Camera::Movement::FORWARD, (*deltaTime));
@@ -62,6 +74,12 @@ public:
         if (input->checkSequence((*down))) {
             cam.ProcessKeyboard(Camera::Movement::DOWN, (*deltaTime));
         }
+        if (input->checkSequence((*breakSeq))) {
+            Breaking();
+        }
+        if (input->checkSequence((*placeSeq))) {
+            Placing();
+        }
         std::pair<double, double> pos = input->getMousePosition();
         
         if (firstMouse) {
@@ -77,6 +95,13 @@ public:
         lastY = pos.second;
 
         cam.ProcessMouseMovement(xoffset, yoffset);
+
+        for (double i = 0; i < 5; i += 0.01) {
+            glm::vec3 g = cam.Position + glm::vec3(cam.Front.x * i, cam.Front.y * i, cam.Front.z * i);
+            int32_t x = (int32_t)std::round(g.x);
+            int32_t y = (int32_t)std::round(g.y);
+            int32_t z = (int32_t)std::round(g.z);
+        }
     }
 };
 
