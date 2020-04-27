@@ -72,8 +72,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <ExecutablePath>G:\assimp-5.0.1\build32\code\Debug;$(VC_ExecutablePath_x86);$(CommonExecutablePath)</ExecutablePath>
-    <IncludePath>G:\gladdebug\src;G:\gladdebug\include;G:\include\GLEW;G:\include\GLFW;G:\freetype-2.10.1\include;G:\glm\include;G:\assimp-5.0.1\include;G:\assimp-5.0.1\build32\include;$(IncludePath)</IncludePath>
-    <LibraryPath>G:\lib\win32\GLEW;G:\lib\win32\GLFW;G:\freetype-2.10.1\build\Debug;G:\glm\build\glm\Debug;G:\assimp-5.0.1\build32\code\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files (x86)\Visual Leak Detector\include;G:\gladdebug\src;G:\gladdebug\include;G:\include\GLEW;G:\include\GLFW;G:\freetype-2.10.1\include;G:\glm\include;G:\assimp-5.0.1\include;G:\assimp-5.0.1\build32\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\Visual Leak Detector\lib\Win32;G:\lib\win32\GLEW;G:\lib\win32\GLFW;G:\freetype-2.10.1\build\Debug;G:\glm\build\glm\Debug;G:\assimp-5.0.1\build32\code\Debug;$(LibraryPath)</LibraryPath>
     <SourcePath>G:\freetype-2.10.1\src;G:\gladdebug\src;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -156,7 +156,6 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Source.cpp" />
-    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Block.h" />
