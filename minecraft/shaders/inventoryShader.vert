@@ -6,8 +6,8 @@ out vec3 FragPos;
 out vec2 TexCoords;
 
 uniform mat4 projection;
-
+uniform float offset;
 void main() {
-	gl_Position = projection * vec4(aPos, -1.0, 1.0);
+	gl_Position = projection * vec4(aPos, offset, 1.0);
     TexCoords = aTexCoords;
 }
