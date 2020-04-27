@@ -186,12 +186,21 @@ int main() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glCullFace(GL_BACK);
     World w = World::NewWorld(&loader, &blocks, "rzhaka");
-    uint32_t renderDistance = 4;
-    Chunk*** chunks = new Chunk**[renderDistance];
-    for (uint32_t i = 0; i < renderDistance; i++) {
-        chunks[i] = new Chunk*[renderDistance];
+    int32_t renderDistance = 8;
+    for (int32_t i = 0; i < renderDistance; i++) {
         for (uint32_t j = 0; j < renderDistance; j++) {
-            chunks[i][j] = w.generateChunk(i, j);
+            w.generateChunk(i, j);
+        }
+    }
+    for (int32_t i = 0; i < renderDistance; i++) {
+        for (int32_t j = 0; j < renderDistance; j++) {
+            Chunk** chunks = new Chunk*[4];
+            chunks[0] = w.getChunk(i - 1, j);
+            chunks[1] = w.getChunk(i, j - 1);
+            chunks[2] = w.getChunk(i + 1, j);
+            chunks[3] = w.getChunk(i, j + 1);
+            w.getChunk(i, j)->optimizeRenderer(chunks);
+            delete[] chunks;
         }
     }
     glfwSwapInterval(1);
@@ -215,11 +224,9 @@ int main() {
         glm::mat4 view = player.cam.GetViewMatrix();
         cubeShader.setMat4("projection", projection);
         cubeShader.setMat4("view", view);
-        for (uint32_t i = 0; i < renderDistance; i++) {
-            for (uint32_t j = 0; j < renderDistance; j++) {
-                cubeShader.setMat4("model", chunks[i][j]->getModel());
-                chunks[i][j]->Draw();
-            }
+        for (auto itr = w.chunks.begin(); itr != w.chunks.end(); itr++) {
+            cubeShader.setMat4("model", (*itr)->getModel());
+            (*itr)->Draw();
         }
         if (state and not breaking) {
             glActiveTexture(GL_TEXTURE15);
@@ -227,18 +234,19 @@ int main() {
         }
         int32_t hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
         int32_t prevHoveredBufx = 2147483647, prevHoveredBufy = 2147483647, prevHoveredBufz = 2147483647;
-        for (double i = 0; i < 5; i+= 0.01) {
+        
+        for (double i = 0; i < 5; i+= 1) {
             glm::vec3 g = player.cam.Position + glm::vec3(player.cam.Front.x * i, player.cam.Front.y * i, player.cam.Front.z * i);
             int32_t x = (int32_t)std::round(g.x);
             int32_t y = (int32_t)std::round(g.y);
             int32_t z = (int32_t)std::round(g.z);
             if (x >= 0 and x < (int32_t)(16 * renderDistance) and z >= 0 and z < (int32_t)(16 * renderDistance)) {
-                if (chunks[x / 16][z / 16]->getBlock(x, y, z) != nullptr) {
+                if (w.getBlock(x, y, z) != nullptr) {
 
                     if (i > 2 and (prevHoveredBufx >= 0 and prevHoveredBufx < (int32_t)(16 * renderDistance) and prevHoveredBufz >= 0 and prevHoveredBufz < (int32_t)(16 * renderDistance)) and (placement)) {
                         if (lastFrame - placementStart > 0) {
                             placementStart = lastFrame + 0.25;
-                            chunks[prevHoveredBufx / 16][prevHoveredBufz / 16]->PlaceBlock(prevHoveredBufx, prevHoveredBufy, prevHoveredBufz, &(blocks[1]));
+                            w.placeBlock(prevHoveredBufx, prevHoveredBufy, prevHoveredBufz, &(blocks[1]));
                             hoveredx = prevHoveredBufx;
                             hoveredy = prevHoveredBufy;
                             hoveredz = prevHoveredBufz;
@@ -255,16 +263,16 @@ int main() {
                             prevhoveredz = hoveredz;
                             breaking = false;
                         }
-                        else if (int(5.0f * (lastFrame - breakingStart) * 100 / chunks[x / 16][z / 16]->getBlock(x, y, z)->ref->hardness) >= 10) {
+                        else if (int(5.0f * (lastFrame - breakingStart) * 100 / w.getBlock(x, y, z)->ref->hardness) >= 10) {
                             breaking = false;
                             glActiveTexture(GL_TEXTURE15);
                             glBindTexture(GL_TEXTURE_2D, destroy_none);
-                            chunks[hoveredx / 16][hoveredz / 16]->BreakBlock(hoveredx, hoveredy, hoveredz);
+                            w.breakBlock(hoveredx, hoveredy, hoveredz);
                             hoveredx = 2147483647, hoveredy = 2147483647, hoveredz = 2147483647;
                         }
                         else {
                             glActiveTexture(GL_TEXTURE15);
-                            glBindTexture(GL_TEXTURE_2D, destroy_stage[int(5.0f * (lastFrame - breakingStart) * 100 / chunks[x / 16][z / 16]->getBlock(x, y, z)->ref->hardness)]);
+                            glBindTexture(GL_TEXTURE_2D, destroy_stage[int(5.0f * (lastFrame - breakingStart) * 100 / w.getBlock(x, y, z)->ref->hardness)]);
                         }
                     }
                     break;
@@ -283,7 +291,7 @@ int main() {
 
             glActiveTexture(GL_TEXTURE14);
             glBindTexture(GL_TEXTURE_2D, hover);
-            chunks[hoveredx / 16][hoveredz / 16]->getBlock(hoveredx, hoveredy, hoveredz)->ref->BindTextures();
+            w.getBlock(hoveredx, hoveredy, hoveredz)->ref->BindTextures();
 
             model = glm::translate(model, glm::vec3(hoveredx, hoveredy, hoveredz));
             model = glm::scale(model, glm::vec3(1.0001f));
