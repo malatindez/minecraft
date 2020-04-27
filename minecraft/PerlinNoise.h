@@ -1,7 +1,5 @@
+#pragma once
 #include <vector>
-#ifndef PERLINNOISE_H
-#define PERLINNOISE_H
-
 class PerlinNoise {
 	// The permutation vector
 	std::vector<int> p;
@@ -104,4 +102,3 @@ double PerlinNoise::grad(int hash, double x, double y, double z) {
 		v = h < 4 ? y : h == 12 || h == 14 ? x : z;
 	return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
 }
-#endif
