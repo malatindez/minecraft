@@ -75,7 +75,8 @@ class Chunk {
 	uint32_t **VBO = nullptr;
 	uint32_t **VAO = nullptr;
 	uint32_t **OVSizel = nullptr;
-	uint32_t *ovsize;
+	uint32_t *ovsize = nullptr;
+	bool optimized = false;
 public:
 	const int32_t x, z;
 	std::pair<int32_t, int32_t> getCoords() {
@@ -167,7 +168,7 @@ public:
 	void breakBlock(int32_t x, int32_t y, int32_t z) {
 		for (std::vector<Chunk*>::iterator itr = chunks.begin(); itr != chunks.end(); itr++) {
 			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
-				(*itr)->BreakBlock(x, y, z);
+				//(*itr)->BreakBlock(x, y, z);
 			}
 		}
 	}
@@ -175,7 +176,7 @@ public:
 	void placeBlock(int32_t x, int32_t y, int32_t z, UBlock* block) {
 		for (std::vector<Chunk*>::iterator itr = chunks.begin(); itr != chunks.end(); itr++) {
 			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
-				(*itr)->PlaceBlock(x, y, z, block);
+				//(*itr)->PlaceBlock(x, y, z, block);
 
 			}
 		}
@@ -186,6 +187,7 @@ public:
 				return (*itr);
 			}
 		}
+		return nullptr;
 	}
 	void loadChunk(int32_t x, int32_t z) {
 		x /= 16; z /= 16;
@@ -394,7 +396,8 @@ void Chunk::optimizeRenderer(Chunk **nearby) {
 //Chunk[2] - Chunk[x+1][z]
 //Chunk[3] - Chunk[x][z+1]
 void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
-	std::vector<std::pair<UBlock*, std::vector<Block*>>> blocks;
+	optimized = true;
+	std::vector<std::pair<UBlock*, std::vector<std::pair<Block*, bool*>>>> blocks;
 	// second is number of this blocks in chunk
 	for (int32_t i = 0; i < 16; i++) {
 		for (int32_t j = 16 * yoffset; j < 16 * (yoffset + 1); j++) {
@@ -402,58 +405,31 @@ void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
 				if (ChunkBlocks[i][j][k] != nullptr) {
 					// if block nearby is minecraft:air - that means that we should process this block
 					// otherwise we just skip it
-					bool statement = false;
-					if (k < 15) {
-						statement |= (ChunkBlocks[i][j][k + 1] == nullptr);
-					}
-					else {
-						statement |= (nearby[3] == nullptr or (nearby[3]->ChunkBlocks[i][j][0] == nullptr));
-					}
-					if (j < 255) {
-						statement |= (ChunkBlocks[i][j + 1][k] == nullptr);
-					}
-					else {
-						statement |= true;
-					}
-					if (j > 0) {
-						statement |= (ChunkBlocks[i][j - 1][k] == nullptr);
-					}
-					else {
-						statement |= true;
-					}
-					if (i < 15) {
-						statement |= (ChunkBlocks[i + 1][j][k] == nullptr);
-					}
-					else {
-						statement |= (nearby[2] == nullptr or (nearby[2]->ChunkBlocks[0][j][k] == nullptr));
-					}
-					if (i > 0) {
-						statement |= (ChunkBlocks[i - 1][j][k] == nullptr);
-					}
-					else {
-						statement |= (nearby[0] == nullptr or (nearby[0]->ChunkBlocks[15][j][k] == nullptr));
-					}
-					if (k > 0) {
-						statement |= (ChunkBlocks[i][j][k - 1] == nullptr);
-					}
-					else {
-						statement |= (nearby[1] == nullptr or (nearby[1]->ChunkBlocks[i][j][15] == nullptr));
-					}
-					if (statement)
-					{
+					bool *statements = new bool[6]{
+							(((k > 0) and (ChunkBlocks[i][j][k - 1] == nullptr)) or (nearby[1] == nullptr or (nearby[1]->ChunkBlocks[i][j][15] == nullptr))),
+							(((k < 15) and (ChunkBlocks[i][j][k + 1] == nullptr)) or (nearby[3] == nullptr or (nearby[3]->ChunkBlocks[i][j][0] == nullptr))),
+							(((i > 0) and (ChunkBlocks[i - 1][j][k] == nullptr)) or (nearby[0] == nullptr or (nearby[0]->ChunkBlocks[15][j][k] == nullptr))),
+							(((i < 15) and (ChunkBlocks[i + 1][j][k] == nullptr)) or (nearby[2] == nullptr or (nearby[2]->ChunkBlocks[0][j][k] == nullptr))),
+							(((j > 0) and (ChunkBlocks[i][j - 1][k] == nullptr)) or true),
+							(((j < 255) and (ChunkBlocks[i][j + 1][k] == nullptr)) or true)
+					}; // tiles which we should render
+					if (statements[0] or statements[1] or statements[2] or statements[3] or statements[4] or statements[5]) {
 						bool flag = false;
 						for (auto itr = blocks.begin(); itr != blocks.end(); itr++) {
 							if ((*itr).first->integer_id == ChunkBlocks[i][j][k]->ref->integer_id) {
-								(*itr).second.push_back(ChunkBlocks[i][j][k]);
+								(*itr).second.push_back(std::pair<Block*, bool*>(ChunkBlocks[i][j][k], statements));
 								flag = true;
 								break;
 							}
 						}
 						if (not flag) {
-							blocks.push_back(std::pair<UBlock*, std::vector<Block*>>(
-								ChunkBlocks[i][j][k]->ref, std::vector<Block*>()));
-							blocks[blocks.size() - 1].second.push_back(ChunkBlocks[i][j][k]);
+							blocks.push_back(std::pair<UBlock*, std::vector<std::pair<Block*, bool*>>>(
+								ChunkBlocks[i][j][k]->ref, std::vector<std::pair<Block*, bool*>>()));
+							blocks[blocks.size() - 1].second.push_back(std::pair<Block*, bool*>(ChunkBlocks[i][j][k], statements));
 						}
+					}
+					else {
+						delete[] statements;
 					}
 				}
 			}
@@ -472,32 +448,21 @@ void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
 	for (auto a = blocks.begin(); a != blocks.end(); a++, m++) {
 		std::vector<std::pair<uint32_t, Block::Coords>> vertices; // this->vertices[vertices[i]] -> this->vertices[vertices[i] + 9] - vertice data
 		for (auto blockItr = (*a).second.begin(); blockItr != (*a).second.end(); blockItr++) {
-			if ((*blockItr)->coords.z - this->z * 16 <= 0 or ChunkBlocks[(*blockItr)->coords.x - this->x * 16][(*blockItr)->coords.y][(*blockItr)->coords.z - this->z * 16 - 1] == nullptr) {
-				PUSH_ALL_VERTICES(0, (*blockItr)->coords);
+			for (size_t i = 0; i < 6; i++) {
+				if ((*blockItr).second[i]) {
+					PUSH_ALL_VERTICES(i, (*blockItr).first->coords);
+				}
 			}
-			if ((*blockItr)->coords.z - this->z * 16 >= 15 or ChunkBlocks[(*blockItr)->coords.x - this->x * 16][(*blockItr)->coords.y][(*blockItr)->coords.z - this->z * 16 + 1] == nullptr) {
-				PUSH_ALL_VERTICES(1, (*blockItr)->coords);
-			}
-			if ((*blockItr)->coords.x - this->x * 16 <= 0 or ChunkBlocks[(*blockItr)->coords.x - this->x * 16 - 1][(*blockItr)->coords.y][(*blockItr)->coords.z - this->z * 16] == nullptr) {
-				PUSH_ALL_VERTICES(2, (*blockItr)->coords);
-			}
-			if ((*blockItr)->coords.x - this->x * 16 >= 15 or ChunkBlocks[(*blockItr)->coords.x - this->x * 16 + 1][(*blockItr)->coords.y][(*blockItr)->coords.z - this->z * 16] == nullptr) {
-				PUSH_ALL_VERTICES(3, (*blockItr)->coords);
-			}
-			if ((*blockItr)->coords.y <= 0 or ChunkBlocks[(*blockItr)->coords.x - this->x * 16][(*blockItr)->coords.y - 1][(*blockItr)->coords.z - this->z * 16] == nullptr) {
-				PUSH_ALL_VERTICES(4, (*blockItr)->coords);
-			}
-			if ((*blockItr)->coords.y >= 255 or ChunkBlocks[(*blockItr)->coords.x - this->x * 16][(*blockItr)->coords.y + 1][(*blockItr)->coords.z - this->z * 16] == nullptr) {
-				PUSH_ALL_VERTICES(5, (*blockItr)->coords);
-			}
+			delete[](*blockItr).second;
 		}
 		float* x = new float[vertices.size() * 9];
-		for (size_t i = 0; i < vertices.size(); i++) {
-			x[i * 9] = this->vertices[9 * vertices[i].first] + vertices[i].second.x - this->x * 16;
-			x[i * 9 + 1] = this->vertices[9 * vertices[i].first + 1] + vertices[i].second.y;
-			x[i * 9 + 2] = this->vertices[9 * vertices[i].first + 2] + vertices[i].second.z - this->z * 16;
+		int i = 0;
+		for (auto itr = vertices.begin(); itr != vertices.end(); itr++, i++) {
+			x[i * 9] = this->vertices[9 * (*itr).first] + (*itr).second.x - this->x * 16;
+			x[i * 9 + 1] = this->vertices[9 * (*itr).first + 1] + (*itr).second.y;
+			x[i * 9 + 2] = this->vertices[9 * (*itr).first + 2] + (*itr).second.z - this->z * 16;
 			for (size_t j = 3; j < 9; j++) {
-				x[i * 9 + j] = this->vertices[9 * vertices[i].first + j];
+				x[i * 9 + j] = this->vertices[9 * (*itr).first + j];
 			}
 		}
 		OVSizel[yoffset][m] = vertices.size() * 9;
@@ -568,11 +533,13 @@ void Chunk::BreakBlock(int32_t x, int32_t y, int32_t z, Chunk** nearby) {
 	optimizeRenderer(y / 16, nearby);
 }
 void Chunk::Draw() {
-	for (size_t j = 0; j < 16; j++) {
-		for (size_t i = 0; i < ovsize[j]; i++) {
-			ovblocks[j][i]->BindTextures();
-			glBindVertexArray(VAO[j][i]);
-			glDrawArrays(GL_TRIANGLES, 0, OVSizel[j][i]);
+	if (optimized) {
+		for (size_t j = 0; j < 16; j++) {
+			for (size_t i = 0; i < ovsize[j]; i++) {
+				ovblocks[j][i]->BindTextures();
+				glBindVertexArray(VAO[j][i]);
+				glDrawArrays(GL_TRIANGLES, 0, OVSizel[j][i]);
+			}
 		}
 	}
 }
