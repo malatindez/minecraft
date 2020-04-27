@@ -243,6 +243,7 @@ public:
 				memcpy(buf + size, data, height * 9);
 				size = size + height * 9;
 				delete[] gdata;
+				delete[] data;
 				gdata = buf;
 			}
 		}
@@ -345,6 +346,8 @@ Chunk::Chunk(uint8_t* data, uint32_t data_size, std::vector<UBlock>* blocks, int
 		memcpy(&block_data_size, &(data[offset]), 2);
 		offset += 2;
 		ChunkBlocks[x][y][z] = new Block(&(data[offset]), block_data_size, &((*blocks)[id]), Block::Coords(this->x * 16 + x, y, this->z * 16 + z));
+	//	delete ChunkBlocks[x][y][z];
+	//	ChunkBlocks[x][y][z] = nullptr;
 	}
 }
 Chunk::Chunk(const Chunk& b) : x(b.x), z(b.z) {
@@ -382,6 +385,32 @@ Chunk::Chunk(const Chunk* b) : x(x), z(z) {
 			}
 		}
 	}
+}
+
+Chunk::~Chunk() {
+	deleteOptimizedRenderer();
+	if (ChunkBlocks == nullptr) {
+		return;
+	}
+	for (size_t i = 0; i < 16; i++) {
+		for (size_t j = 0; j < 256; j++) {
+			for (size_t k = 0; k < 16; k++) {
+				if (ChunkBlocks[i][j][k] != nullptr) {
+					delete ChunkBlocks[i][j][k];
+				}
+			}
+		}
+	}
+	for (size_t i = 0; i < 16; i++) {
+		for (size_t j = 0; j < 256; j++) {
+			delete[] ChunkBlocks[i][j];
+		}
+	}
+	for (size_t i = 0; i < 16; i++) {
+		delete[] ChunkBlocks[i];
+	}
+	delete[] ChunkBlocks;
+	ChunkBlocks = nullptr;
 }
 void Chunk::optimizeRenderer(Chunk **nearby) {
 	optimizedVertices = new float** [16];
@@ -473,10 +502,6 @@ void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
 	ovsize[yoffset] = blocks.size();
 	OVSizel[yoffset] = new uint32_t[blocks.size()];
 	optimizedVertices[yoffset] = new float* [blocks.size()];
-	ovblocks[yoffset] = new UBlock * [blocks.size()];
-	VBO[yoffset] = new uint32_t[blocks.size()];
-	VAO[yoffset] = new uint32_t[blocks.size()];
-	EBO[yoffset] = new uint32_t[blocks.size()];
 #define PUSH_VERTICES(x, coords) vertices.push_back(std::pair<uint32_t, Block::Coords>(x, coords))
 #define PUSH_ALL_VERTICES(offset, coords) PUSH_VERTICES(6 * offset, coords);  PUSH_VERTICES(6*offset+1, coords);  PUSH_VERTICES(6 * offset + 2, coords); \
 									PUSH_VERTICES(6 * offset + 3, coords); PUSH_VERTICES(6 * offset + 4, coords); PUSH_VERTICES(6 * offset + 5, coords);
@@ -503,45 +528,26 @@ void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
 		}
 		OVSizel[yoffset][m] = vertices.size() * 9;
 		optimizedVertices[yoffset][m] = x;
-		ovblocks[yoffset][m] = a->first;
-		glGenVertexArrays(1, &(VAO[yoffset][m]));
-		glGenBuffers(1, &(VBO[yoffset][m]));
-
-		glBindBuffer(GL_ARRAY_BUFFER, VBO[yoffset][m]);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * 9 * sizeof(float), x, GL_STATIC_DRAW);
-
-		glBindVertexArray(VAO[yoffset][m]);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float)));
-		glEnableVertexAttribArray(3);
 	}
 
 }
 void Chunk::deleteOptimizedRenderer(uint16_t yoffset) {
 	for (size_t i = 0; i < ovsize[yoffset]; i++) {
-		glDeleteVertexArrays(1, &(VAO[yoffset][i]));
-		glDeleteBuffers(1, &(VBO[yoffset][i]));
 		delete[] optimizedVertices[yoffset][i];
 	}
-	delete[] VAO[yoffset];
-	delete[] VBO[yoffset];
 	delete[] optimizedVertices[yoffset];
 }
 void Chunk::deleteOptimizedRenderer() {
-	for (uint16_t j = 0; j < 16; j++) {
-		deleteOptimizedRenderer(j);
+	if (optimized) {
+		for (uint16_t j = 0; j < 16; j++) {
+			deleteOptimizedRenderer(j);
+		}
+		delete[] VAO;
+		delete[] VBO;
+		delete[] OVSizel;
+		delete[] optimizedVertices;
+		optimized = false;
 	}
-	delete[] VAO;
-	delete[] VBO;
-	delete[] EBO;
-	delete[] OVSizel;
-	delete[] optimizedVertices;
-	delete[] ovblocks;
 }
 void Chunk::Save() {
 
@@ -584,31 +590,6 @@ Block* Chunk::getBlock(int32_t x, int32_t y, int32_t z) {
 	return ChunkBlocks[x - this->x * 16][y][z - this->z * 16];
 	return ChunkBlocks[x - this->x * 16][y][z - this->z * 16];
 }
-Chunk::~Chunk() {
-	deleteOptimizedRenderer();
-	if (blocks == nullptr) {
-		return;
-	}
-	for (size_t i = 0; i < 16; i++) {
-		for (size_t j = 0; j < 256; j++) {
-			for (size_t k = 0; k < 16; k++) {
-				if (ChunkBlocks[i][j][k] != nullptr) {
-					delete ChunkBlocks[i][j][k];
-				}
-			}
-		}
-	}
-	for (size_t i = 0; i < 16; i++) {
-		for (size_t j = 0; j < 256; j++) {
-			delete[] ChunkBlocks[i][j];
-		}
-	} 
-	for (size_t i = 0; i < 16; i++) {
-		delete[] ChunkBlocks[i];
-	}
-	delete[] ChunkBlocks;
-	ChunkBlocks = nullptr;
-}	
 #endif
 // 0 0 0  
 // 1 1 1
