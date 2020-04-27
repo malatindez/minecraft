@@ -1,5 +1,6 @@
 #include "glad.c"
 #include <glfw3.h>
+#include <vld.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -186,15 +187,41 @@ int main() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glCullFace(GL_BACK);
     World w = World::NewWorld(&loader, &blocks, "rzhaka");
-    int32_t renderDistance = 8;
+    int32_t renderDistance = 1000000;
     for (int32_t i = 0; i < renderDistance; i++) {
         for (uint32_t j = 0; j < renderDistance; j++) {
             w.generateChunk(i, j);
+            delete w.getChunk(i, j);
+        }
+    }
+    for (size_t i = 0; i < renderDistance; i++) {
+        for (int32_t i = 0; i < renderDistance; i++) {
+            for (int32_t j = 0; j < renderDistance; j++) {
+                Chunk** chunks = new Chunk * [4];
+                chunks[0] = w.getChunk(i - 1, j);
+                chunks[1] = w.getChunk(i, j - 1);
+                chunks[2] = w.getChunk(i + 1, j);
+                chunks[3] = w.getChunk(i, j + 1);
+                w.getChunk(i, j)->optimizeRenderer(chunks);
+                delete[] chunks;
+            }
+        }
+
+        for (int32_t i = 0; i < renderDistance; i++) {
+            for (int32_t j = 0; j < renderDistance; j++) {
+                Chunk** chunks = new Chunk * [4];
+                chunks[0] = w.getChunk(i - 1, j);
+                chunks[1] = w.getChunk(i, j - 1);
+                chunks[2] = w.getChunk(i + 1, j);
+                chunks[3] = w.getChunk(i, j + 1);
+                w.getChunk(i, j)->deleteOptimizedRenderer();
+                delete[] chunks;
+            }
         }
     }
     for (int32_t i = 0; i < renderDistance; i++) {
         for (int32_t j = 0; j < renderDistance; j++) {
-            Chunk** chunks = new Chunk*[4];
+            Chunk** chunks = new Chunk * [4];
             chunks[0] = w.getChunk(i - 1, j);
             chunks[1] = w.getChunk(i, j - 1);
             chunks[2] = w.getChunk(i + 1, j);
