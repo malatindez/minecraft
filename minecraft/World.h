@@ -71,9 +71,11 @@ class Chunk {
 
 	std::vector<UBlock>* blocks = nullptr;
 	float ***optimizedVertices = nullptr;
+	uint32_t ***optimizedIndexes = nullptr;
 	UBlock*** ovblocks = nullptr;
 	uint32_t **VBO = nullptr;
 	uint32_t **VAO = nullptr;
+	uint32_t **EBO = nullptr;
 	uint32_t **OVSizel = nullptr;
 	uint32_t *ovsize = nullptr;
 	bool optimized = false;
@@ -136,7 +138,7 @@ Blocks, not included in this file(by x y z coordinates) are counted as minecraft
 	// returns an item id
 	void BreakBlock(int32_t x, int32_t y, int32_t z, Chunk** nearby);
 	void Draw();
-	Block* getBlock(uint8_t x, uint8_t y, uint8_t z);
+	Block* getBlock(int32_t x, int32_t y, int32_t z);
 	~Chunk();
 };
 // std::pow(2, 32) - 1
@@ -159,6 +161,9 @@ private:
 	}
 public:
 	Block* getBlock(int32_t x, int32_t y, int32_t z) {
+		if (y < 0 or y > 255) {
+			return nullptr;
+		}
 		for (std::vector<Chunk*>::iterator itr = chunks.begin(); itr != chunks.end(); itr++) {
 			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
 				return (*itr)->getBlock(x, y, z);
@@ -383,6 +388,7 @@ void Chunk::optimizeRenderer(Chunk **nearby) {
 	ovblocks = new UBlock * *[16];
 	VBO = new uint32_t * [16];
 	VAO = new uint32_t * [16];
+	EBO = new uint32_t * [16];
 	OVSizel = new uint32_t * [16];
 	ovsize = new uint32_t[16];
 	for (uint16_t i = 0; i < 16; i++) {
@@ -405,14 +411,43 @@ void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
 				if (ChunkBlocks[i][j][k] != nullptr) {
 					// if block nearby is minecraft:air - that means that we should process this block
 					// otherwise we just skip it
-					bool *statements = new bool[6]{
-							(((k > 0) and (ChunkBlocks[i][j][k - 1] == nullptr)) or (nearby[1] == nullptr or (nearby[1]->ChunkBlocks[i][j][15] == nullptr))),
-							(((k < 15) and (ChunkBlocks[i][j][k + 1] == nullptr)) or (nearby[3] == nullptr or (nearby[3]->ChunkBlocks[i][j][0] == nullptr))),
-							(((i > 0) and (ChunkBlocks[i - 1][j][k] == nullptr)) or (nearby[0] == nullptr or (nearby[0]->ChunkBlocks[15][j][k] == nullptr))),
-							(((i < 15) and (ChunkBlocks[i + 1][j][k] == nullptr)) or (nearby[2] == nullptr or (nearby[2]->ChunkBlocks[0][j][k] == nullptr))),
-							(((j > 0) and (ChunkBlocks[i][j - 1][k] == nullptr)) or true),
-							(((j < 255) and (ChunkBlocks[i][j + 1][k] == nullptr)) or true)
-					}; // tiles which we should render
+					bool* statements = new bool[6]; // tiles which we should render
+					if (k > 0) {
+						statements[0] = (ChunkBlocks[i][j][k - 1] == nullptr);
+					}
+					else {
+						statements[0] = (nearby[1] == nullptr or (nearby[1]->ChunkBlocks[i][j][15] == nullptr));
+					}
+					if (k < 15) {
+						statements[1] = (ChunkBlocks[i][j][k + 1] == nullptr);
+					}
+					else {
+						statements[1] = (nearby[3] == nullptr or (nearby[3]->ChunkBlocks[i][j][0] == nullptr));
+					}
+					if (i > 0) {
+						statements[2] = (ChunkBlocks[i - 1][j][k] == nullptr);
+					}
+					else {
+						statements[2] = (nearby[0] == nullptr or (nearby[0]->ChunkBlocks[15][j][k] == nullptr));
+					}
+					if (i < 15) {
+						statements[3] = (ChunkBlocks[i + 1][j][k] == nullptr);
+					}
+					else {
+						statements[3] = (nearby[2] == nullptr or (nearby[2]->ChunkBlocks[0][j][k] == nullptr));
+					}
+					if (j > 0) {
+						statements[4] = (ChunkBlocks[i][j - 1][k] == nullptr);
+					}
+					else {
+						statements[4] = true;
+					}
+					if (j < 255) {
+						statements[5] = (ChunkBlocks[i][j + 1][k] == nullptr);
+					}
+					else {
+						statements[5] = true;
+					}
 					if (statements[0] or statements[1] or statements[2] or statements[3] or statements[4] or statements[5]) {
 						bool flag = false;
 						for (auto itr = blocks.begin(); itr != blocks.end(); itr++) {
@@ -441,6 +476,7 @@ void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
 	ovblocks[yoffset] = new UBlock * [blocks.size()];
 	VBO[yoffset] = new uint32_t[blocks.size()];
 	VAO[yoffset] = new uint32_t[blocks.size()];
+	EBO[yoffset] = new uint32_t[blocks.size()];
 #define PUSH_VERTICES(x, coords) vertices.push_back(std::pair<uint32_t, Block::Coords>(x, coords))
 #define PUSH_ALL_VERTICES(offset, coords) PUSH_VERTICES(6 * offset, coords);  PUSH_VERTICES(6*offset+1, coords);  PUSH_VERTICES(6 * offset + 2, coords); \
 									PUSH_VERTICES(6 * offset + 3, coords); PUSH_VERTICES(6 * offset + 4, coords); PUSH_VERTICES(6 * offset + 5, coords);
@@ -502,6 +538,7 @@ void Chunk::deleteOptimizedRenderer() {
 	}
 	delete[] VAO;
 	delete[] VBO;
+	delete[] EBO;
 	delete[] OVSizel;
 	delete[] optimizedVertices;
 	delete[] ovblocks;
@@ -543,7 +580,8 @@ void Chunk::Draw() {
 		}
 	}
 }
-Block* Chunk::getBlock(uint8_t x, uint8_t y, uint8_t z) {
+Block* Chunk::getBlock(int32_t x, int32_t y, int32_t z) {
+	return ChunkBlocks[x - this->x * 16][y][z - this->z * 16];
 	return ChunkBlocks[x - this->x * 16][y][z - this->z * 16];
 }
 Chunk::~Chunk() {
