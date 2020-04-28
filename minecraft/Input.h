@@ -1,6 +1,6 @@
 #ifndef INPUT_H
 #define INPUT_H
-#include <glfw3.h>
+#include <GLFW/glfw3.h>
 #include <functional>
 #include <thread>
 #include <mutex>
