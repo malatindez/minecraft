@@ -2,7 +2,7 @@
 #define PLAYER_H
 #include "Camera.h"
 #include "World.h"
-#include <glfw3.h>
+#include <GLFW/glfw3.h>
 class Player {
     GLFWwindow* window = nullptr;
     World* world = nullptr;
