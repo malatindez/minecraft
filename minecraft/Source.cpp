@@ -1,6 +1,5 @@
 #include "glad.c"
 #include <GLFW/glfw3.h>
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -186,7 +185,7 @@ int main() {
     glCullFace(GL_BACK);
     int32_t renderDistance = 16;
     World w = World::NewWorld(&loader, &blocks, "rzhaka", renderDistance);
-    w.startThreads(1);
+
     glfwSwapInterval(1);
     double a = glfwGetTime();
     bool state = false;
@@ -194,12 +193,15 @@ int main() {
     Input input(window);
     Player player(window, &w, &deltaTime, &input);
     player.cam.Position = glm::vec3(renderDistance * 8, 65, renderDistance * 8);
+    w.updatePlayerCoords(Block::Coords(player.cam.Position.x, player.cam.Position.y, player.cam.Position.z));
+#include <thread>
+    w.startThreads(std::thread::hardware_concurrency());
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
         // --------------------
         double  currentFrame = glfwGetTime();
         if (currentFrame > 2) {
-            w.dynamicOptimization();
+            w.updateVertices();
         }
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -212,6 +214,7 @@ int main() {
         cubeShader.setMat4("projection", projection);
         cubeShader.setMat4("view", view);
         w.Draw(&cubeShader);
+        w.updatePlayerCoords(Block::Coords(player.cam.Position.x, player.cam.Position.y, player.cam.Position.z));
         if (state and not breaking) {
             glActiveTexture(GL_TEXTURE15);
             glBindTexture(GL_TEXTURE_2D, destroy_none);
