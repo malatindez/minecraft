@@ -1,7 +1,6 @@
 #ifndef TEXTURE_LOADER_H
 #define TEXTURE_LOADER_H
 #include <vector>
-#include "Model.h"
 class TextureLoader {
 public:
 	struct Texture {
