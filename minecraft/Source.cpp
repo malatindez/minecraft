@@ -1,6 +1,5 @@
 #include "glad.c"
-#include <glfw3.h>
-#include <vld.h>
+#include <GLFW/glfw3.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -14,7 +13,6 @@
 
 #include <iostream>
 #include <iostream>
-#include "Model.h"
 #include <map>
 #include "Block.h"
 #include "World.h"
@@ -147,18 +145,18 @@ int main() {
     cubeShader.setInt("specularCubeTexture[4]", 10);
     cubeShader.setInt("specularCubeTexture[5]", 11);
     unsigned int destroy_stage[10] = {
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_0.png"),
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_1.png"),
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_2.png"),
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_3.png"),
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_4.png"),
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_5.png"),
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_6.png"),
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_7.png"),
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_8.png"),
-        loadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_9.png")
-    }, destroy_none = loadTexture("resources\\minecraft\\gui\\blocks\\destroy_none.png"), 
-        hover = loadTexture("resources\\minecraft\\gui\\blocks\\hover.png");
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_0.png"),
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_1.png"),
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_2.png"),
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_3.png"),
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_4.png"),
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_5.png"),
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_6.png"),
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_7.png"),
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_8.png"),
+        loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_stage_9.png")
+    }, destroy_none = loader.LoadTexture("resources\\minecraft\\gui\\blocks\\destroy_none.png"),
+        hover = loader.LoadTexture("resources\\minecraft\\gui\\blocks\\hover.png");
 
 
     hoverShader.use();
@@ -186,50 +184,9 @@ int main() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glCullFace(GL_BACK);
-    World w = World::NewWorld(&loader, &blocks, "rzhaka");
-    int32_t renderDistance = 1000000;
-    for (int32_t i = 0; i < renderDistance; i++) {
-        for (uint32_t j = 0; j < renderDistance; j++) {
-            w.generateChunk(i, j);
-            delete w.getChunk(i, j);
-        }
-    }
-    for (size_t i = 0; i < renderDistance; i++) {
-        for (int32_t i = 0; i < renderDistance; i++) {
-            for (int32_t j = 0; j < renderDistance; j++) {
-                Chunk** chunks = new Chunk * [4];
-                chunks[0] = w.getChunk(i - 1, j);
-                chunks[1] = w.getChunk(i, j - 1);
-                chunks[2] = w.getChunk(i + 1, j);
-                chunks[3] = w.getChunk(i, j + 1);
-                w.getChunk(i, j)->optimizeRenderer(chunks);
-                delete[] chunks;
-            }
-        }
-
-        for (int32_t i = 0; i < renderDistance; i++) {
-            for (int32_t j = 0; j < renderDistance; j++) {
-                Chunk** chunks = new Chunk * [4];
-                chunks[0] = w.getChunk(i - 1, j);
-                chunks[1] = w.getChunk(i, j - 1);
-                chunks[2] = w.getChunk(i + 1, j);
-                chunks[3] = w.getChunk(i, j + 1);
-                w.getChunk(i, j)->deleteOptimizedRenderer();
-                delete[] chunks;
-            }
-        }
-    }
-    for (int32_t i = 0; i < renderDistance; i++) {
-        for (int32_t j = 0; j < renderDistance; j++) {
-            Chunk** chunks = new Chunk * [4];
-            chunks[0] = w.getChunk(i - 1, j);
-            chunks[1] = w.getChunk(i, j - 1);
-            chunks[2] = w.getChunk(i + 1, j);
-            chunks[3] = w.getChunk(i, j + 1);
-            w.getChunk(i, j)->optimizeRenderer(chunks);
-            delete[] chunks;
-        }
-    }
+    int32_t renderDistance = 16;
+    World w = World::NewWorld(&loader, &blocks, "rzhaka", renderDistance);
+    w.startThreads(1);
     glfwSwapInterval(1);
     double a = glfwGetTime();
     bool state = false;
@@ -241,6 +198,9 @@ int main() {
         // per-frame time logic
         // --------------------
         double  currentFrame = glfwGetTime();
+        if (currentFrame > 2) {
+            w.dynamicOptimization();
+        }
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         input.update();
@@ -251,10 +211,7 @@ int main() {
         glm::mat4 view = player.cam.GetViewMatrix();
         cubeShader.setMat4("projection", projection);
         cubeShader.setMat4("view", view);
-        for (auto itr = w.chunks.begin(); itr != w.chunks.end(); itr++) {
-            cubeShader.setMat4("model", (*itr)->getModel());
-            (*itr)->Draw();
-        }
+        w.Draw(&cubeShader);
         if (state and not breaking) {
             glActiveTexture(GL_TEXTURE15);
             glBindTexture(GL_TEXTURE_2D, destroy_none);
@@ -318,13 +275,15 @@ int main() {
 
             glActiveTexture(GL_TEXTURE14);
             glBindTexture(GL_TEXTURE_2D, hover);
-            w.getBlock(hoveredx, hoveredy, hoveredz)->ref->BindTextures();
-
-            model = glm::translate(model, glm::vec3(hoveredx, hoveredy, hoveredz));
-            model = glm::scale(model, glm::vec3(1.0001f));
-            hoverShader.setMat4("model", model);
-            glBindVertexArray(cubeVAO);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            Block* x = w.getBlock(hoveredx, hoveredy, hoveredz);
+            if (x != nullptr and x->ref != nullptr) {
+                x->ref->BindTextures();
+                model = glm::translate(model, glm::vec3(hoveredx, hoveredy, hoveredz));
+                model = glm::scale(model, glm::vec3(1.0001f));
+                hoverShader.setMat4("model", model);
+                glBindVertexArray(cubeVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
         }
         gui.DrawInterface(Interface::TYPE::INVENTORY_WIDGET, SCR_WIDTH, SCR_HEIGHT);
 
