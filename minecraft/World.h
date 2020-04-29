@@ -371,16 +371,15 @@ private:
 				}
 				this->chunksMutex.unlock();
 			}
-			if (i % 500 == 0) {
+			if (i % 200 == 0) {
 				std::vector<std::pair<int32_t, int32_t>> pairs;
 				for (auto itr = loadedChunks.begin(); itr != loadedChunks.end(); itr++) {
-					pairs.push_back((*itr));
-					pairs.push_back((*itr));
 					if (std::find(checked.begin(), checked.end(), (*itr)) == checked.end()) {
 						pairs.push_back((*itr));
 						checked.push_back((*itr));
 					}
 					else if (std::find(doubleChecked.begin(), doubleChecked.end(), (*itr)) == doubleChecked.end()) {
+						pairs.push_back((*itr));
 						doubleChecked.push_back((*itr));
 					}
 				}
@@ -1081,7 +1080,6 @@ void Chunk::deleteOptimizedRenderer(uint16_t yoffset) {
 	for (size_t i = 0; i < ovsize[yoffset]; i++) {
 		delete[] optimizedVertices[yoffset][i];
 	}
-	delete[] OVSizel[yoffset];
 
 	if (optimized2) {
 		this->VAO_VBOmutex->lock();
@@ -1089,6 +1087,7 @@ void Chunk::deleteOptimizedRenderer(uint16_t yoffset) {
 		this->VBODeleteList->push(std::pair<uint32_t*, uint32_t>((VBO[yoffset]), ovsize[yoffset]));
 		this->VAO_VBOmutex->unlock();
 	}
+	delete[] OVSizel[yoffset];
 	delete[] ovblocks[yoffset];
 	delete[] optimizedVertices[yoffset];
 }
@@ -1102,6 +1101,7 @@ void Chunk::deleteOptimizedRenderer() {
 		delete[] VBO;
 		delete[] OVSizel;
 		delete[] optimizedVertices;
+		delete[] ovblocks;
 	}
 	optimized = false;
 	this->optimizeMutex.unlock();
