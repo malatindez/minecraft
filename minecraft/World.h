@@ -6,7 +6,9 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include <algorithm>
 #include "Camera.h"
+#include <vld.h>
 class Block {
 public:
 	uint8_t* metadata = nullptr;
@@ -127,7 +129,10 @@ file data:
 Blocks, not included in this file(by x y z coordinates) are counted as minecraft:air(id is 0).
 */
 	Block**** ChunkBlocks;
-	Chunk(uint8_t* data, uint32_t data_size, std::vector<UBlock>* blocks, int32_t x, int32_t z);
+	std::queue<std::pair<uint32_t*, uint32_t>>* VAODeleteList = nullptr;
+	std::queue<std::pair<uint32_t*, uint32_t>>* VBODeleteList = nullptr;
+	std::mutex* VAO_VBOmutex;
+	Chunk(uint8_t* data, uint32_t data_size, std::vector<UBlock>* blocks, int32_t x, int32_t z, std::queue<std::pair<uint32_t*, uint32_t>>*, std::queue<std::pair<uint32_t*, uint32_t>>*, std::mutex*);
 	Chunk(const Chunk& b);
 	Chunk(const Chunk* b);
 	bool isOptimized() {
@@ -178,33 +183,48 @@ private:
 		this->blocks = blocks;
 		this->renderDistance = renderDistance;
 	}
+	bool stopThreads = false;
+	std::mutex loadedChunksMutex;
+	std::vector<std::pair<int32_t, int32_t>> loadedChunks;
 
 	std::mutex generationQueueMutex;
-	std::queue<std::pair<int32_t, int32_t>> generationQueue;
+	std::vector<std::pair<int32_t, int32_t>> generationQueue;
 	void dynamicGenerationThread() {
-		while (true) {
+		while (not stopThreads) {
 			while (generationQueue.empty()) {
 				Sleep(250);
+				if (stopThreads) {
+					return;
+				}
 			}
 			generationQueueMutex.lock();
 			if (generationQueue.empty()) {
 				generationQueueMutex.unlock();
 				continue;
 			}
-			std::pair<int32_t, int32_t> coords = generationQueue.front(); generationQueue.pop();
+			std::pair<int32_t, int32_t> coords = generationQueue.front(); generationQueue.erase(generationQueue.begin());
 			generationQueueMutex.unlock();
+			//loadedChunksMutex.lock();
+			//if (std::find(loadedChunks.begin(), loadedChunks.end(), coords) == loadedChunks.end()) {
+		//		loadedChunksMutex.unlock();
+		//		continue;
+		//	}
+		//	loadedChunksMutex.unlock();
 			this->loadChunk(coords.first, coords.second);
 			optimizationQueueMutex.lock();
-			optimizationQueue.push(std::pair<int32_t, int32_t>(coords.first, coords.second));
+			optimizationQueue.push_back(std::pair<int32_t, int32_t>(coords.first, coords.second));
 			optimizationQueueMutex.unlock();
 		}
 	}
 	std::mutex deletionQueueMutex;
 	std::vector<std::pair<int32_t, int32_t>> deletionQueue;
 	void dynamicDeletionThread() {
-		while (true) {
+		while (not stopThreads) {
 			while (deletionQueue.empty()) {
 				Sleep(250);
+				if (stopThreads) {
+					return;
+				}
 			}
 			deletionQueueMutex.lock();
 			if (deletionQueue.empty()) {
@@ -214,7 +234,8 @@ private:
 			std::pair<int32_t, int32_t> coords = (*deletionQueue.begin());
 			deletionQueue.erase(deletionQueue.begin());
 			deletionQueueMutex.unlock();
-			if (not this->deleteChunk(coords.first, coords.second)) {
+			this->deleteChunk(coords.first, coords.second);
+			/*if (not  this->deleteChunk(coords.first, coords.second)) {
 				deletionQueueMutex.lock(); 
 				bool flag = false;
 				for (auto itr2 = deletionQueue.begin(); itr2 != deletionQueue.end(); itr2++) {
@@ -226,39 +247,53 @@ private:
 					deletionQueue.push_back(std::pair<int32_t, int32_t>(coords.first, coords.second));
 				}
 				deletionQueueMutex.unlock();
-			}
+			}*/
+			
 		}
 	}
 
 	std::mutex optimizationQueueMutex;
-	std::queue<std::pair<int32_t, int32_t>> optimizationQueue;
+	std::vector<std::pair<int32_t, int32_t>> optimizationQueue;
 	void dynamicOptimizationThread() {
-		while (true) {
+		while (not stopThreads) {
 			while (optimizationQueue.empty()) {
 				Sleep(250);
+				if (stopThreads) {
+					return;
+				}
 			}
 			optimizationQueueMutex.lock();
 			if (optimizationQueue.empty()) {
 				optimizationQueueMutex.unlock();
 				continue;
 			}
-			std::pair<int32_t, int32_t> coords = optimizationQueue.front(); optimizationQueue.pop();
+			std::pair<int32_t, int32_t> coords = optimizationQueue.front(); optimizationQueue.erase(optimizationQueue.begin());
 			optimizationQueueMutex.unlock();
+			loadedChunksMutex.lock();
+			if (std::find(loadedChunks.begin(), loadedChunks.end(), coords) == loadedChunks.end()) {
+				loadedChunksMutex.unlock();
+				continue;
+			}
+			loadedChunksMutex.unlock();
 			if (not this->optimizeRenderer(coords.first, coords.second)) {
 				optimizationQueueMutex.lock();
-				optimizationQueue.push(coords);
+				optimizationQueue.push_back(coords);
 				optimizationQueueMutex.unlock();
 			}
 		}
 	}
 	void threadManipulator() {
 		auto previous_coords = playerCoords;
-		std::vector<std::pair<int32_t, int32_t>> loadedChunks;
-		while (true) {
+		uint32_t i = 0;
+		std::vector<std::pair<int32_t, int32_t>> doubleChecked;
+		std::vector<std::pair<int32_t, int32_t>> checked;
+		while (not stopThreads) {
 			Sleep(25);
 			playerCoordsMutex.lock();
 			auto current_coords = playerCoords;
 			playerCoordsMutex.unlock();
+			std::vector<std::pair<int32_t, int32_t>> localloadedChunks;
+			std::vector<std::pair<int32_t, int32_t>> localgenerationQueue;
 			for (int32_t i = -renderDistance + current_coords.x / 16; i < renderDistance + current_coords.x / 16; i++) {
 				for (int32_t j = -renderDistance + current_coords.z / 16; j < renderDistance + current_coords.z / 16; j++) {
 					bool flag = false;
@@ -269,37 +304,123 @@ private:
 						}
 					}
 					if (not flag) {
-						loadedChunks.push_back(std::pair<int32_t, int32_t>(i, j));
-						generationQueueMutex.lock();
-						generationQueue.push(std::pair<int32_t, int32_t>(i, j));
-						generationQueueMutex.unlock();
+						localloadedChunks.push_back(std::pair<int32_t, int32_t>(i, j));
+						localgenerationQueue.push_back(std::pair<int32_t, int32_t>(i, j));
 					}
 				}
 			}
-			for (auto itr = loadedChunks.begin(); itr != loadedChunks.end(); itr++) {
-				if ((*itr).first  < -renderDistance + current_coords.x / 16 or
-					(*itr).first  > renderDistance  + current_coords.x  / 16 or
-					(*itr).second < -renderDistance + current_coords.z / 16 or
-					(*itr).second > renderDistance  + current_coords.z / 16) {
-					deletionQueueMutex.lock();
-					bool flag = false;
-					for (auto itr2 = deletionQueue.begin(); itr2 != deletionQueue.end(); itr2++) {
-						if ((*itr).first == (*itr2).first and (*itr).second == (*itr2).second) {
-							flag = true; break;
+
+			if (localgenerationQueue.size() > 0) {
+				generationQueueMutex.lock();
+				generationQueue.insert(generationQueue.end(), localgenerationQueue.begin(), localgenerationQueue.end());
+				generationQueueMutex.unlock();
+			}
+
+			if (localloadedChunks.size() > 0) {
+				loadedChunksMutex.lock();
+				loadedChunks.insert(loadedChunks.end(), localloadedChunks.begin(), localloadedChunks.end());
+				loadedChunksMutex.unlock();
+			}
+			
+			if (i % 10 == 0) {
+				std::vector<std::pair<int32_t, int32_t>> newLoadedChunks;
+				bool flag = false;
+				for (auto itr = loadedChunks.begin(); itr != loadedChunks.end(); itr++) {
+					if ((*itr).first  < -renderDistance + current_coords.x / 16 or
+						(*itr).first  > renderDistance + current_coords.x / 16 or
+						(*itr).second < -renderDistance + current_coords.z / 16 or
+						(*itr).second > renderDistance + current_coords.z / 16) {
+						deletionQueueMutex.lock();
+						bool flag2 = false;
+						for (auto itr2 = deletionQueue.begin(); itr2 != deletionQueue.end(); itr2++) {
+							if ((*itr).first == (*itr2).first and (*itr).second == (*itr2).second) {
+								flag2 = true; break;
+							}
 						}
+						if (not flag2) {
+							deletionQueue.push_back((*itr));
+							std::remove(checked.begin(), checked.end(), (*itr));
+							std::remove(doubleChecked.begin(), doubleChecked.end(), (*itr));
+							flag = true;
+						}
+						deletionQueueMutex.unlock();
 					}
-					if (not flag) {
-						deletionQueue.push_back(std::pair<int32_t, int32_t>((*itr).first, (*itr).second));
+					else {
+						newLoadedChunks.push_back(std::pair<int32_t, int32_t>((*itr).first, (*itr).second));
 					}
-					deletionQueueMutex.unlock();
-					loadedChunks.erase(itr);
-					itr = loadedChunks.begin();
+				}
+				if (flag) {
+					loadedChunksMutex.lock();
+					loadedChunks = newLoadedChunks;
+					loadedChunksMutex.unlock();
 				}
 			}
+			if (i % 100 == 0) {
+				this->chunksMutex.lock();
+				for (auto itr = this->chunks.begin(); itr != this->chunks.end(); itr++) {
+					if (std::find(loadedChunks.begin(), loadedChunks.end(), std::pair<int32_t, int32_t>((*itr)->x, (*itr)->z)) == loadedChunks.end()) {
+						deletionQueueMutex.lock();
+						deletionQueue.push_back(std::pair<int32_t, int32_t>((*itr)->x, (*itr)->z));
+						loadedChunksMutex.lock();
+						std::remove(loadedChunks.begin(), loadedChunks.end(), std::pair<int32_t, int32_t>((*itr)->x, (*itr)->z));
+						std::remove(checked.begin(), checked.end(), std::pair<int32_t, int32_t>((*itr)->x, (*itr)->z));
+						std::remove(doubleChecked.begin(), doubleChecked.end(), std::pair<int32_t, int32_t>((*itr)->x, (*itr)->z));
+						loadedChunksMutex.unlock();
+						deletionQueueMutex.unlock();
+					}
+				}
+				this->chunksMutex.unlock();
+			}
+			if (i % 500 == 0) {
+				std::vector<std::pair<int32_t, int32_t>> pairs;
+				for (auto itr = loadedChunks.begin(); itr != loadedChunks.end(); itr++) {
+					pairs.push_back((*itr));
+					pairs.push_back((*itr));
+					if (std::find(checked.begin(), checked.end(), (*itr)) == checked.end()) {
+						pairs.push_back((*itr));
+						checked.push_back((*itr));
+					}
+					else if (std::find(doubleChecked.begin(), doubleChecked.end(), (*itr)) == doubleChecked.end()) {
+						doubleChecked.push_back((*itr));
+					}
+				}
+				if (pairs.size() > 0) {
+					optimizationQueueMutex.lock();
+					optimizationQueue.insert(optimizationQueue.end(), pairs.begin(), pairs.end());
+					optimizationQueueMutex.unlock();
+				}
+			}
+			i++;
 		}
 	}
-	std::thread *manipulator, *generation, *deletion, *optimization;
+	std::thread *manipulator = nullptr, *generation = nullptr, *deletion = nullptr, *optimization = nullptr;
+	uint32_t numberOfThreads = 0;
+	std::queue<std::pair<uint32_t*, uint32_t>> deleteVAOs;
+	std::queue<std::pair<uint32_t*, uint32_t>> deleteVBOs;
+	std::mutex VAO_VBOmutex;
 public:
+	~World() {
+		stopThreads = true;
+		if (manipulator != nullptr) {
+			manipulator->join();
+		}
+		
+		for (size_t i = 0; i < numberOfThreads; i++) {
+			if (generation != nullptr) {
+				generation[i].join();
+			}
+			if (deletion != nullptr) {
+				deletion[i].join();
+			}
+			if (optimization != nullptr) {
+				optimization[i].join();
+			}
+		}
+		for (std::vector<Chunk*>::iterator itr = chunks.begin(); itr != chunks.end(); itr++) {
+			delete (*itr);
+			chunks.erase(itr);
+		}
+	}
 	bool optimizeRenderer(int32_t x, int32_t z) {
 		Chunk* chunk = nullptr;
 		Chunk** chunks = new Chunk * [4];
@@ -340,6 +461,20 @@ public:
 		}
 		chunksMutex.unlock();
 		bool returnValue = (chunk != nullptr);
+		if (returnValue and (chunks[0] == nullptr or chunks[1] == nullptr and chunks[2] == nullptr or chunks[3] == nullptr)) {
+			playerCoordsMutex.lock();
+			auto current_coords = playerCoords;
+			playerCoordsMutex.unlock();
+			if (chunk->x > -renderDistance + current_coords.x / 16 or
+				chunk->x < renderDistance + current_coords.x / 16 or
+				chunk->z > -renderDistance + current_coords.z / 16 or
+				chunk->z < renderDistance + current_coords.z / 16) {
+				returnValue = true;
+			}
+			else {
+				returnValue = false;
+			}
+		}
 		if (returnValue) {
 			chunk->deleteOptimizedRenderer();
 			chunk->optimizeRenderer(chunks);
@@ -367,8 +502,21 @@ public:
 			}
 		}
 		chunksMutex.unlock();
+		if (not deleteVAOs.empty()) {
+			VAO_VBOmutex.lock();
+			auto vao = deleteVAOs.front();  deleteVAOs.pop();
+			auto vbo = deleteVBOs.front();  deleteVBOs.pop();
+			VAO_VBOmutex.unlock();
+			for (size_t i = 0; i < vao.second; i++) {
+				glDeleteVertexArrays(1, vao.first);
+				glDeleteBuffers(1, vao.first);
+			}
+			delete[] vao.first;
+			delete[] vbo.first;
+		}
 	}
 	void startThreads(uint32_t numberOfThreads) {
+		this->numberOfThreads = numberOfThreads;
 		manipulator = new std::thread(&World::threadManipulator, this);
 		generation = new std::thread[numberOfThreads];
 		optimization = new std::thread[numberOfThreads];
@@ -413,6 +561,7 @@ public:
 		//Chunk[1] - Chunk[x][z-1]
 		//Chunk[2] - Chunk[x+1][z]
 		//Chunk[3] - Chunk[x][z+1]
+		/*
 		Chunk** cs = new Chunk*[4];
 		cs[0] = cs[1] = cs[2] = cs[3] = nullptr;
 		Chunk* cref = nullptr;
@@ -454,13 +603,14 @@ public:
 		}
 		optimizationQueue.push(std::pair<int32_t, int32_t>(cref->x, cref->z));
 		optimizationQueueMutex.unlock();
-		delete[] cs;
+		delete[] cs;*/
 		chunksMutex.unlock();
 		return true;
 	}
 
 	bool placeBlock(int32_t x, int32_t y, int32_t z, UBlock* block) {
 		chunksMutex.lock();
+		/*
 		//Chunk[0] - Chunk[x-1][z]
 		//Chunk[1] - Chunk[x][z-1]
 		//Chunk[2] - Chunk[x+1][z]
@@ -502,7 +652,7 @@ public:
 		}
 		optimizationQueue.push(std::pair<int32_t, int32_t>(cref->x, cref->z));
 		optimizationQueueMutex.unlock();
-		delete[] cs;
+		delete[] cs;*/
 		chunksMutex.unlock();
 		return true;
 	}
@@ -578,7 +728,7 @@ public:
 				gdata = buf;
 			}
 		}
-		Chunk* returnValue = new Chunk(gdata, size, blocks, x, z);
+		Chunk* returnValue = new Chunk(gdata, size, blocks, x, z, &deleteVAOs, &deleteVBOs, &VAO_VBOmutex);
 		delete[] gdata;
 		chunksMutex.lock();
 		chunks.push_back(returnValue);
@@ -597,7 +747,7 @@ public:
 			uint8_t* data = new uint8_t[chunk_size];
 			chunk.get((char*)data, chunk_size);
 			chunk.close();
-			returnValue = new Chunk(data, chunk_size, blocks, x, z);
+			returnValue = new Chunk(data, chunk_size, blocks, x, z, &deleteVAOs, &deleteVBOs, &VAO_VBOmutex);
 			delete[] data;
 		} else {
 			generateChunk(x, z);
@@ -677,8 +827,11 @@ uint32_t Block::Break() { // returns an item id which should be dropped
 	return ref->integer_id;
 }
 
-Chunk::Chunk(uint8_t* data, uint32_t data_size, std::vector<UBlock>* blocks, int32_t x, int32_t z) : x(x), z(z) {
+Chunk::Chunk(uint8_t* data, uint32_t data_size, std::vector<UBlock>* blocks, int32_t x, int32_t z, std::queue<std::pair<uint32_t*, uint32_t>>* vaos, std::queue<std::pair<uint32_t*, uint32_t>>* vbos, std::mutex* mutex) : x(x), z(z) {
 	this->blocks = blocks;
+	this->VAODeleteList = vaos;
+	this->VBODeleteList = vbos;
+	this->VAO_VBOmutex = mutex;
 	uint32_t offset = 0;
 	ChunkBlocks = new Block * **[16];
 	for (size_t i = 0; i < 16; i++) {
@@ -705,6 +858,9 @@ Chunk::Chunk(uint8_t* data, uint32_t data_size, std::vector<UBlock>* blocks, int
 }
 Chunk::Chunk(const Chunk& b) : x(b.x), z(b.z) {
 	this->blocks = b.blocks;
+	this->VAODeleteList = b.VAODeleteList;
+	this->VBODeleteList = b.VBODeleteList;
+	this->VAO_VBOmutex = b.VAO_VBOmutex;
 	ChunkBlocks = new Block * **[16];
 	for (size_t i = 0; i < 16; i++) {
 		ChunkBlocks[i] = new Block * *[256];
@@ -723,6 +879,9 @@ Chunk::Chunk(const Chunk& b) : x(b.x), z(b.z) {
 }
 Chunk::Chunk(const Chunk* b) : x(x), z(z) {
 	this->blocks = b->blocks;
+	this->VAODeleteList = b->VAODeleteList;
+	this->VBODeleteList = b->VBODeleteList;
+	this->VAO_VBOmutex = b->VAO_VBOmutex;
 	ChunkBlocks = new Block * **[16];
 	for (size_t i = 0; i < 16; i++) {
 		ChunkBlocks[i] = new Block * *[256];
@@ -766,10 +925,11 @@ Chunk::~Chunk() {
 	ChunkBlocks = nullptr;
 }
 void Chunk::optimizeRenderer(Chunk **nearby) {
+	optimizeMutex.lock();
 	if (optimized) {
+		optimizeMutex.unlock();
 		return;
 	}
-	optimizeMutex.lock();
 	optimizedVertices = new float** [16];
 	ovblocks = new UBlock * *[16];
 	VBO = new uint32_t * [16];
@@ -919,17 +1079,22 @@ void Chunk::loadVerticesToVideoMemory() {
 }
 void Chunk::deleteOptimizedRenderer(uint16_t yoffset) {
 	for (size_t i = 0; i < ovsize[yoffset]; i++) {
-		if (optimized2) {
-			glDeleteVertexArrays(1, &(VAO[yoffset][i]));
-			glDeleteBuffers(1, &(VBO[yoffset][i]));
-		}
 		delete[] optimizedVertices[yoffset][i];
 	}
+	delete[] OVSizel[yoffset];
+
+	if (optimized2) {
+		this->VAO_VBOmutex->lock();
+		this->VAODeleteList->push(std::pair<uint32_t*, uint32_t>((VAO[yoffset]), ovsize[yoffset]));
+		this->VBODeleteList->push(std::pair<uint32_t*, uint32_t>((VBO[yoffset]), ovsize[yoffset]));
+		this->VAO_VBOmutex->unlock();
+	}
+	delete[] ovblocks[yoffset];
 	delete[] optimizedVertices[yoffset];
 }
 void Chunk::deleteOptimizedRenderer() {
+	this->optimizeMutex.lock();
 	if (optimized) {
-		optimized = false;
 		for (uint16_t j = 0; j < 16; j++) {
 			deleteOptimizedRenderer(j);
 		}
@@ -938,6 +1103,8 @@ void Chunk::deleteOptimizedRenderer() {
 		delete[] OVSizel;
 		delete[] optimizedVertices;
 	}
+	optimized = false;
+	this->optimizeMutex.unlock();
 	if (optimized2) {
 		optimized2 = false;
 	}
@@ -971,6 +1138,7 @@ void Chunk::BreakBlock(int32_t x, int32_t y, int32_t z, Chunk** nearby) {
 
 }
 void Chunk::Draw() {
+	this->optimizeMutex.lock();
 	if (optimized and optimized2) {
 		for (size_t j = 0; j < 16; j++) {
 			for (size_t i = 0; i < ovsize[j]; i++) {
@@ -980,6 +1148,7 @@ void Chunk::Draw() {
 			}
 		}
 	}
+	this->optimizeMutex.unlock();
 }
 Block* Chunk::getBlock(int32_t x, int32_t y, int32_t z) {
 	return ChunkBlocks[x - this->x * 16][y][z - this->z * 16];
