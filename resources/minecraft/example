@@ -10,3 +10,4 @@ not_specular.png # LEFT
 not_specular.png # RIGHT
 not_specular.png # BOTTOM
 not_specular.png # TOP
+123 # HARDNESS ( up to 2^16 )
