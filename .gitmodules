@@ -1,0 +1,20 @@
+[submodule "libs/glad"]
+	path = libs/glad
+	url = https://github.com/malatindez/glad
+[submodule "libs/glfw"]
+	path = libs/glfw
+	url = https://github.com/glfw/glfw/
+	branch = 3.3-stable
+[submodule "libs/stb/include/stb"]
+	path = libs/stb/include/stb
+	url = https://github.com/nothings/stb
+[submodule "libs/googletest"]
+	path = libs/googletest
+	url = https://github.com/google/googletest
+	branch = 32546A73C75F4DB5BAAF643E38EF6A0E
+[submodule "libs/freetype"]
+	path = libs/freetype
+	url = https://github.com/freetype/freetype
+[submodule "libs/glm"]
+	path = libs/glm
+	url = https://github.com/g-truc/glm
