@@ -1,7 +1,6 @@
-#include "glad.c"
 #include <GLFW/glfw3.h>
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "stb/stb_image.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -215,7 +214,7 @@ int main() {
         cubeShader.setMat4("view", view);
         w.Draw(&cubeShader);
         w.updatePlayerCoords(Block::Coords(player.cam.Position.x, player.cam.Position.y, player.cam.Position.z));
-        if (state and not breaking) {
+        if (state && !breaking) {
             glActiveTexture(GL_TEXTURE15);
             glBindTexture(GL_TEXTURE_2D, destroy_none);
         }
@@ -227,10 +226,10 @@ int main() {
             int32_t x = (int32_t)std::round(g.x);
             int32_t y = (int32_t)std::round(g.y);
             int32_t z = (int32_t)std::round(g.z);
-            if (x >= 0 and x < (int32_t)(16 * renderDistance) and z >= 0 and z < (int32_t)(16 * renderDistance)) {
+            if (x >= 0 && x < (int32_t)(16 * renderDistance) && z >= 0 && z < (int32_t)(16 * renderDistance)) {
                 if (w.getBlock(x, y, z) != nullptr) {
 
-                    if (i > 2 and (prevHoveredBufx >= 0 and prevHoveredBufx < (int32_t)(16 * renderDistance) and prevHoveredBufz >= 0 and prevHoveredBufz < (int32_t)(16 * renderDistance)) and (placement)) {
+                    if (i > 2 && (prevHoveredBufx >= 0 && prevHoveredBufx < (int32_t)(16 * renderDistance) && prevHoveredBufz >= 0 && prevHoveredBufz < (int32_t)(16 * renderDistance)) && (placement)) {
                         if (lastFrame - placementStart > 0) {
                             placementStart = lastFrame + 0.25;
                             w.placeBlock(prevHoveredBufx, prevHoveredBufy, prevHoveredBufz, &(blocks[1]));
@@ -244,7 +243,7 @@ int main() {
                     hoveredz = z;
                     if (breaking) {
                         state = true;
-                        if (prevhoveredx != hoveredx or prevhoveredy != hoveredy or prevhoveredz != hoveredz) {
+                        if (prevhoveredx != hoveredx || prevhoveredy != hoveredy || prevhoveredz != hoveredz) {
                             prevhoveredx = hoveredx;
                             prevhoveredy = hoveredy;
                             prevhoveredz = hoveredz;
@@ -274,12 +273,12 @@ int main() {
         hoverShader.setMat4("projection", projection);
         hoverShader.setMat4("view", view);
         glm::mat4 model(1.0f);
-        if (hoveredx >= 0 and hoveredx < (int32_t)(16 * renderDistance) and hoveredz >= 0 and hoveredz < (int32_t)(16 * renderDistance)) {
+        if (hoveredx >= 0 && hoveredx < (int32_t)(16 * renderDistance) && hoveredz >= 0 && hoveredz < (int32_t)(16 * renderDistance)) {
 
             glActiveTexture(GL_TEXTURE14);
             glBindTexture(GL_TEXTURE_2D, hover);
             Block* x = w.getBlock(hoveredx, hoveredy, hoveredz);
-            if (x != nullptr and x->ref != nullptr) {
+            if (x != nullptr && x->ref != nullptr) {
                 x->ref->BindTextures();
                 model = glm::translate(model, glm::vec3(hoveredx, hoveredy, hoveredz));
                 model = glm::scale(model, glm::vec3(1.0001f));

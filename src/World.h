@@ -3,12 +3,12 @@
 #include "PerlinNoise.h"
 #include "Block.h"
 #include <direct.h>
+#include <chrono>
 #include <thread>
 #include <mutex>
 #include <queue>
 #include <algorithm>
 #include "Camera.h"
-#include <vld.h>
 class Block {
 public:
 	uint8_t* metadata = nullptr;
@@ -126,7 +126,7 @@ file data:
 ...                                                  }
 00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00 }
 
-Blocks, not included in this file(by x y z coordinates) are counted as minecraft:air(id is 0).
+Blocks, !included in this file(by x y z coordinates) are counted as minecraft:air(id is 0).
 */
 	Block**** ChunkBlocks;
 	std::queue<std::pair<uint32_t*, uint32_t>>* VAODeleteList = nullptr;
@@ -190,9 +190,9 @@ private:
 	std::mutex generationQueueMutex;
 	std::vector<std::pair<int32_t, int32_t>> generationQueue;
 	void dynamicGenerationThread() {
-		while (not stopThreads) {
+		while (!stopThreads) {
 			while (generationQueue.empty()) {
-				Sleep(250);
+				std::this_thread::sleep_for(std::chrono::milliseconds(250));
 				if (stopThreads) {
 					return;
 				}
@@ -219,9 +219,9 @@ private:
 	std::mutex deletionQueueMutex;
 	std::vector<std::pair<int32_t, int32_t>> deletionQueue;
 	void dynamicDeletionThread() {
-		while (not stopThreads) {
+		while (!stopThreads) {
 			while (deletionQueue.empty()) {
-				Sleep(250);
+				std::this_thread::sleep_for(std::chrono::milliseconds(250));
 				if (stopThreads) {
 					return;
 				}
@@ -235,15 +235,15 @@ private:
 			deletionQueue.erase(deletionQueue.begin());
 			deletionQueueMutex.unlock();
 			this->deleteChunk(coords.first, coords.second);
-			/*if (not  this->deleteChunk(coords.first, coords.second)) {
+			/*if (! this->deleteChunk(coords.first, coords.second)) {
 				deletionQueueMutex.lock(); 
 				bool flag = false;
 				for (auto itr2 = deletionQueue.begin(); itr2 != deletionQueue.end(); itr2++) {
-					if (coords.first == (*itr2).first and coords.second == (*itr2).second) {
+					if (coords.first == (*itr2).first && coords.second == (*itr2).second) {
 						flag = true; break;
 					}
 				}
-				if (not flag) {
+				if (!flag) {
 					deletionQueue.push_back(std::pair<int32_t, int32_t>(coords.first, coords.second));
 				}
 				deletionQueueMutex.unlock();
@@ -255,9 +255,9 @@ private:
 	std::mutex optimizationQueueMutex;
 	std::vector<std::pair<int32_t, int32_t>> optimizationQueue;
 	void dynamicOptimizationThread() {
-		while (not stopThreads) {
+		while (!stopThreads) {
 			while (optimizationQueue.empty()) {
-				Sleep(250);
+				std::this_thread::sleep_for(std::chrono::milliseconds(250));
 				if (stopThreads) {
 					return;
 				}
@@ -275,7 +275,7 @@ private:
 				continue;
 			}
 			loadedChunksMutex.unlock();
-			if (not this->optimizeRenderer(coords.first, coords.second)) {
+			if (!this->optimizeRenderer(coords.first, coords.second)) {
 				optimizationQueueMutex.lock();
 				optimizationQueue.push_back(coords);
 				optimizationQueueMutex.unlock();
@@ -287,8 +287,8 @@ private:
 		uint32_t i = 0;
 		std::vector<std::pair<int32_t, int32_t>> doubleChecked;
 		std::vector<std::pair<int32_t, int32_t>> checked;
-		while (not stopThreads) {
-			Sleep(25);
+		while (!stopThreads) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(25));
 			playerCoordsMutex.lock();
 			auto current_coords = playerCoords;
 			playerCoordsMutex.unlock();
@@ -298,12 +298,12 @@ private:
 				for (int32_t j = -renderDistance + current_coords.z / 16; j < renderDistance + current_coords.z / 16; j++) {
 					bool flag = false;
 					for (auto itr = loadedChunks.begin(); itr != loadedChunks.end(); itr++) {
-						if ((*itr).first == i and (*itr).second == j) {
+						if ((*itr).first == i && (*itr).second == j) {
 							flag = true;
 							break;
 						}
 					}
-					if (not flag) {
+					if (!flag) {
 						localloadedChunks.push_back(std::pair<int32_t, int32_t>(i, j));
 						localgenerationQueue.push_back(std::pair<int32_t, int32_t>(i, j));
 					}
@@ -326,18 +326,18 @@ private:
 				std::vector<std::pair<int32_t, int32_t>> newLoadedChunks;
 				bool flag = false;
 				for (auto itr = loadedChunks.begin(); itr != loadedChunks.end(); itr++) {
-					if ((*itr).first  < -renderDistance + current_coords.x / 16 or
-						(*itr).first  > renderDistance + current_coords.x / 16 or
-						(*itr).second < -renderDistance + current_coords.z / 16 or
+					if ((*itr).first  < -renderDistance + current_coords.x / 16 ||
+						(*itr).first  > renderDistance + current_coords.x / 16 ||
+						(*itr).second < -renderDistance + current_coords.z / 16 ||
 						(*itr).second > renderDistance + current_coords.z / 16) {
 						deletionQueueMutex.lock();
 						bool flag2 = false;
 						for (auto itr2 = deletionQueue.begin(); itr2 != deletionQueue.end(); itr2++) {
-							if ((*itr).first == (*itr2).first and (*itr).second == (*itr2).second) {
+							if ((*itr).first == (*itr2).first && (*itr).second == (*itr2).second) {
 								flag2 = true; break;
 							}
 						}
-						if (not flag2) {
+						if (!flag2) {
 							deletionQueue.push_back((*itr));
 							std::remove(checked.begin(), checked.end(), (*itr));
 							std::remove(doubleChecked.begin(), doubleChecked.end(), (*itr));
@@ -436,23 +436,23 @@ public:
 				(*itr)->canBeDeletedMutex.unlock();
 				continue;
 			}
-			if ((*itr)->x == x and (*itr)->z == z) {
+			if ((*itr)->x == x && (*itr)->z == z) {
 				(*itr)->canBeDeleted += 1;
 				chunk = (*itr);
 			}
-			if ((*itr)->x == x - 1 and (*itr)->z == z) {
+			if ((*itr)->x == x - 1 && (*itr)->z == z) {
 				(*itr)->canBeDeleted += 1;
 				chunks[0] = (*itr);
 			}
-			if ((*itr)->x == x + 1 and (*itr)->z == z) {
+			if ((*itr)->x == x + 1 && (*itr)->z == z) {
 				(*itr)->canBeDeleted += 1;
 				chunks[2] = (*itr);
 			}
-			if ((*itr)->x == x and (*itr)->z == z - 1) {
+			if ((*itr)->x == x && (*itr)->z == z - 1) {
 				(*itr)->canBeDeleted += 1;
 				chunks[1] = (*itr);
 			}
-			if ((*itr)->x == x and (*itr)->z == z + 1) {
+			if ((*itr)->x == x && (*itr)->z == z + 1) {
 				(*itr)->canBeDeleted += 1;
 				chunks[3] = (*itr);
 			}
@@ -460,13 +460,13 @@ public:
 		}
 		chunksMutex.unlock();
 		bool returnValue = (chunk != nullptr);
-		if (returnValue and (chunks[0] == nullptr or chunks[1] == nullptr and chunks[2] == nullptr or chunks[3] == nullptr)) {
+		if (returnValue && (chunks[0] == nullptr || chunks[1] == nullptr && chunks[2] == nullptr || chunks[3] == nullptr)) {
 			playerCoordsMutex.lock();
 			auto current_coords = playerCoords;
 			playerCoordsMutex.unlock();
-			if (chunk->x > -renderDistance + current_coords.x / 16 or
-				chunk->x < renderDistance + current_coords.x / 16 or
-				chunk->z > -renderDistance + current_coords.z / 16 or
+			if (chunk->x > -renderDistance + current_coords.x / 16 ||
+				chunk->x < renderDistance + current_coords.x / 16 ||
+				chunk->z > -renderDistance + current_coords.z / 16 ||
 				chunk->z < renderDistance + current_coords.z / 16) {
 				returnValue = true;
 			}
@@ -496,12 +496,12 @@ public:
 	void updateVertices() {
 		chunksMutex.lock();
 		for (auto itr = chunks.begin(); itr != chunks.end(); itr++) {
-			if ((*itr)->isOptimized() and not (*itr)->isVerticesLoaded()) {
+			if ((*itr)->isOptimized() && !(*itr)->isVerticesLoaded()) {
 				(*itr)->loadVerticesToVideoMemory();
 			}
 		}
 		chunksMutex.unlock();
-		if (not deleteVAOs.empty()) {
+		if (!deleteVAOs.empty()) {
 			VAO_VBOmutex.lock();
 			auto vao = deleteVAOs.front();  deleteVAOs.pop();
 			auto vbo = deleteVBOs.front();  deleteVBOs.pop();
@@ -535,12 +535,12 @@ public:
 		chunksMutex.unlock();
 	}
 	Block* getBlock(int32_t x, int32_t y, int32_t z) {
-		if (y < 0 or y > 255) {
+		if (y < 0 || y > 255) {
 			return nullptr;
 		}
 		chunksMutex.lock();
 		for (std::vector<Chunk*>::iterator itr = chunks.begin(); itr != chunks.end(); itr++) {
-			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x && x < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z && z < (*itr)->z * 16 + 16)) {
 				auto returnValue = (*itr)->getBlock(x, y, z);
 				chunksMutex.unlock();
 				return returnValue;
@@ -566,20 +566,20 @@ public:
 		Chunk* cref = nullptr;
 		for (std::vector<Chunk*>::iterator itr = chunks.begin(); itr != chunks.end(); itr++) {
 
-			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x && x < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z && z < (*itr)->z * 16 + 16)) {
 				cref = (*itr);
 			}
 
-			if (((*itr)->x * 16 < x - 16 and x - 16 < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x - 16 && x - 16 < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z && z < (*itr)->z * 16 + 16)) {
 				cs[0] = (*itr);
 			}
-			if (((*itr)->x * 16 < x + 16 and x + 16 < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x + 16 && x + 16 < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z && z < (*itr)->z * 16 + 16)) {
 				cs[2] = (*itr);
 			}
-			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z - 16 and z - 16 < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x && x < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z - 16 && z - 16 < (*itr)->z * 16 + 16)) {
 				cs[1] = (*itr);
 			}
-			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z + 16 and z + 16 < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x && x < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z + 16 && z + 16 < (*itr)->z * 16 + 16)) {
 				cs[3] = (*itr);
 			}
 		}
@@ -619,27 +619,27 @@ public:
 		Chunk* cref = nullptr;
 		for (std::vector<Chunk*>::iterator itr = chunks.begin(); itr != chunks.end(); itr++) {
 
-			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x && x < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z && z < (*itr)->z * 16 + 16)) {
 				cref = (*itr);
 			}
 
-			if (((*itr)->x * 16 < x - 16 and x - 16 < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x - 16 && x - 16 < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z && z < (*itr)->z * 16 + 16)) {
 				cs[0] = (*itr);
 			}
-			if (((*itr)->x * 16 < x + 16 and x + 16 < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z and z < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x + 16 && x + 16 < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z && z < (*itr)->z * 16 + 16)) {
 				cs[2] = (*itr);
 			}
-			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z - 16 and z - 16 < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x && x < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z - 16 && z - 16 < (*itr)->z * 16 + 16)) {
 				cs[1] = (*itr);
 			}
-			if (((*itr)->x * 16 < x and x < (*itr)->x * 16 + 16) and ((*itr)->z * 16 < z + 16 and z + 16 < (*itr)->z * 16 + 16)) {
+			if (((*itr)->x * 16 < x && x < (*itr)->x * 16 + 16) && ((*itr)->z * 16 < z + 16 && z + 16 < (*itr)->z * 16 + 16)) {
 				cs[3] = (*itr);
 			}
 		}
 		if (cref != nullptr) {
 			bool x = false;
 			x = cref->PlaceBlock(x, y, z, block, cs);
-			if (not x) {
+			if (!x) {
 				chunksMutex.unlock();
 				return false;
 			}
@@ -658,7 +658,7 @@ public:
 	Chunk* getChunk(int32_t x, int32_t z) {
 		chunksMutex.lock();
 		for (std::vector<Chunk*>::iterator itr = chunks.begin(); itr != chunks.end(); itr++) {
-			if ((*itr)->x == x and (*itr)->z == z) {
+			if ((*itr)->x == x && (*itr)->z == z) {
 				chunksMutex.unlock();
 				return (*itr);
 			}
@@ -669,7 +669,7 @@ public:
 	bool deleteChunk(int32_t x, int32_t z) {
 		chunksMutex.lock();
 		for (std::vector<Chunk*>::iterator itr = chunks.begin(); itr != chunks.end(); itr++) {
-			if ((*itr)->x == x and (*itr)->z == z) {
+			if ((*itr)->x == x && (*itr)->z == z) {
 				(*itr)->canBeDeletedMutex.lock();
 				if ((*itr)->canBeDeleted == 0) {
 					(*itr)->canBeDeleted = -1000;
@@ -758,7 +758,7 @@ public:
 		chunksMutex.unlock();
 	}
 	static World NewWorld(TextureLoader *t, std::vector<UBlock>* blocks, std::string name, uint32_t renderDistance) {
-		_mkdir("saves"); // if save folder is not created, we shall do this 
+		_mkdir("saves"); // if save folder is !created, we shall do this 
 		_mkdir(("saves\\" + name).c_str());
 		_mkdir(("saves\\" + name + "\\chunks").c_str());
 		::std::ofstream manifest("saves\\" + name + "\\MANIFEST");
@@ -962,25 +962,25 @@ void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
 						statements[0] = (ChunkBlocks[i][j][k - 1] == nullptr);
 					}
 					else {
-						statements[0] = (nearby[1] == nullptr or (nearby[1]->ChunkBlocks[i][j][15] == nullptr));
+						statements[0] = (nearby[1] == nullptr || (nearby[1]->ChunkBlocks[i][j][15] == nullptr));
 					}
 					if (k < 15) {
 						statements[1] = (ChunkBlocks[i][j][k + 1] == nullptr);
 					}
 					else {
-						statements[1] = (nearby[3] == nullptr or (nearby[3]->ChunkBlocks[i][j][0] == nullptr));
+						statements[1] = (nearby[3] == nullptr || (nearby[3]->ChunkBlocks[i][j][0] == nullptr));
 					}
 					if (i > 0) {
 						statements[2] = (ChunkBlocks[i - 1][j][k] == nullptr);
 					}
 					else {
-						statements[2] = (nearby[0] == nullptr or (nearby[0]->ChunkBlocks[15][j][k] == nullptr));
+						statements[2] = (nearby[0] == nullptr || (nearby[0]->ChunkBlocks[15][j][k] == nullptr));
 					}
 					if (i < 15) {
 						statements[3] = (ChunkBlocks[i + 1][j][k] == nullptr);
 					}
 					else {
-						statements[3] = (nearby[2] == nullptr or (nearby[2]->ChunkBlocks[0][j][k] == nullptr));
+						statements[3] = (nearby[2] == nullptr || (nearby[2]->ChunkBlocks[0][j][k] == nullptr));
 					}
 					if (j > 0) {
 						statements[4] = (ChunkBlocks[i][j - 1][k] == nullptr);
@@ -994,7 +994,7 @@ void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
 					else {
 						statements[5] = true;
 					}
-					if (statements[0] or statements[1] or statements[2] or statements[3] or statements[4] or statements[5]) {
+					if (statements[0] || statements[1] || statements[2] || statements[3] || statements[4] || statements[5]) {
 						bool flag = false;
 						for (auto itr = blocks.begin(); itr != blocks.end(); itr++) {
 							if ((*itr).first->integer_id == ChunkBlocks[i][j][k]->ref->integer_id) {
@@ -1003,7 +1003,7 @@ void Chunk::optimizeRenderer(uint16_t yoffset, Chunk** nearby) {
 								break;
 							}
 						}
-						if (not flag) {
+						if (!flag) {
 							blocks.push_back(std::pair<UBlock*, std::vector<std::pair<Block*, bool*>>>(
 								ChunkBlocks[i][j][k]->ref, std::vector<std::pair<Block*, bool*>>()));
 							blocks[blocks.size() - 1].second.push_back(std::pair<Block*, bool*>(ChunkBlocks[i][j][k], statements));
@@ -1139,7 +1139,7 @@ void Chunk::BreakBlock(int32_t x, int32_t y, int32_t z, Chunk** nearby) {
 }
 void Chunk::Draw() {
 	this->optimizeMutex.lock();
-	if (optimized and optimized2) {
+	if (optimized && optimized2) {
 		for (size_t j = 0; j < 16; j++) {
 			for (size_t i = 0; i < ovsize[j]; i++) {
 				ovblocks[j][i]->BindTextures();

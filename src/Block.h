@@ -94,7 +94,7 @@ bool ends_with(std::string str, std::string suffix) {
             getline(block, line);
             uint8_t hardness = std::atoi(line.c_str());
             std::string name = "";
-            for (size_t i = blockPath.size() - 7; i != size_t(-1) and blockPath[i] != '\\'; i--) {
+            for (size_t i = blockPath.size() - 7; i != size_t(-1) && blockPath[i] != '\\'; i--) {
                 name += blockPath[i];
             }
             std::reverse(name.begin(), name.end());
@@ -110,7 +110,7 @@ bool ends_with(std::string str, std::string suffix) {
         getline(blocks_manifest, line);
         size_t i = 0;
         std::string integer = "";
-        for (; i < line.size() and line[i] != ' '; integer += line[i++]); // getting ' ' location and writing id to integer
+        for (; i < line.size() && line[i] != ' '; integer += line[i++]); // getting ' ' location and writing id to integer
         for (size_t j = 0; j <= i; j++) {
             line.erase(line.begin());
         }

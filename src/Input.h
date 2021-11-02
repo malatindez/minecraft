@@ -18,7 +18,7 @@ struct KeySequence {
     size_t size = 0;
     KeySequence() {}
     KeySequence(size_t size, uint16_t* seq) {
-        if (size > 5 or size == 0) {
+        if (size > 5 || size == 0) {
             return;
         }
         sequence = new uint16_t[size];
@@ -57,7 +57,7 @@ struct KeySequence {
         if (size == 1) {
             delete sequence;
         }
-        else if (size < 5 and sequence != nullptr) {
+        else if (size < 5 && sequence != nullptr) {
             delete[] sequence;
         }
         size = -1;
@@ -99,7 +99,7 @@ public:
         memset(keys, 0, sizeof(bool) * 65536);
         window = win;
         glfwGetCursorPos(window, &xpos, &ypos);
-        if (not scroll_callback_set) {
+        if (!scroll_callback_set) {
             glfwSetScrollCallback(window, scroll_callback);
             scroll_callback_set = true;
         }
@@ -112,7 +112,7 @@ public:
     }
     bool checkSequence(KeySequence seq) {
         for (size_t i = 0; i < seq.size; i++) {
-            if (not keys[seq.sequence[i]]) {
+            if (!keys[seq.sequence[i]]) {
                 return false;
             }
         }
