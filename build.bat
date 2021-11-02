@@ -1,3 +1,4 @@
+git submodule update --init
 if not exist build mkdir build
 cd build
 cmake .. .
