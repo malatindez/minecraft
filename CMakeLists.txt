@@ -28,6 +28,11 @@ endforeach()
 set(INCLUDES ${SOURCES})
 list(FILTER INCLUDES INCLUDE REGEX "${SRC_DIR}/inc/*")
 
+make_directory(${CMAKE_BINARY_DIR}/runtime_directory)
+make_directory(${CMAKE_BINARY_DIR}/runtime_directory/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/runtime_directory/bin")
+include("${SRC_DIR}/packer/CMakeLists.txt")
 include("${SRC_DIR}/minecraft/CMakeLists.txt")
 include("${SRC_DIR}/tests/CMakeLists.txt")
-include("${SRC_DIR}/packer/CMakeLists.txt")
+
+include_directories("${INC_DIR}")
