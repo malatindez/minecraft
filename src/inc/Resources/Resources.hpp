@@ -14,7 +14,6 @@ using namespace resource;
  *    .res files. You can separate resources into multiple files, pass them to
  *    the loader and it will automatically parse them to folders and files.
  *
- * Define minecraft_RESOURCE_PACKING to enable resource packing to disk
  *
  *
  * Each file and folder are defined as following:
@@ -48,8 +47,8 @@ class Resources {
    * located. the name of .res file should be unique.
    */
   static std::shared_ptr<Directory> LoadResources(
-      const std::string_view& path_to_file, const bool& overwrite = true,
-      const bool& merge = true);
+      std::string_view const& path_to_file, bool const& overwrite = true,
+      bool const& merge = true);
   static std::shared_ptr<Directory> GetResourceFolder() {}
 
  private:

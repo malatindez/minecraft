@@ -2,8 +2,8 @@
 using namespace resource;
 
 std::shared_ptr<Directory> Resources::LoadResources(
-    const std::string_view& path_to_file, const bool& overwrite,
-    const bool& merge) {
+    std::string_view const& path_to_file, bool const& overwrite,
+    bool const& merge) {
   auto resource =
       AtomicIfstreamPointer(std::make_shared<std::basic_ifstream<std::byte>>(
           path_to_file, std::ios::binary));
