@@ -14,7 +14,7 @@ class File final : public BaseResource {
   friend class Directory;
 
   ~File() override {}
-  [[nodiscard]] std::shared_ptr<std::vector<std::byte>> data() {
+  [[nodiscard]] std::shared_ptr<std::vector<std::byte>> data() noexcept {
     if (data_.expired()) {
       auto lock = resource_file_ptr_.Lock();
       lock->seekg(data_begin_);
@@ -29,6 +29,15 @@ class File final : public BaseResource {
 
   [[nodiscard]] std::shared_ptr<std::vector<std::byte>> content() {
     return data();
+  }
+
+  [[nodiscard]] std::string ToString() noexcept {
+    std::shared_ptr<std::vector<std::byte>> data = this->data();
+    std::string return_value;
+    return_value.resize(data->size());
+    std::transform(data->begin(), data->end(), return_value.begin(),
+                   [](std::byte b) { return char(b); });
+    return std::string(return_value);
   }
 
   [[nodiscard]] uint64_t size() const noexcept override { return size_; }
