@@ -7,11 +7,12 @@
  * first path is a path to file, other ones are paths to folders
  */
 int main(int argc, char **argv) {
-  std::vector<std::string> arguments;
+  std::vector<std::filesystem::path> arguments;
   for (int i = 0; i < argc; i++) {
-    arguments.push_back(std::string(argv[i]));
+    arguments.push_back(std::filesystem::path(argv[i]));
   }
-  std::string output = arguments[1];
+  std::filesystem::path output = arguments[1];
   arguments.erase(arguments.begin(), arguments.begin() + 2);
-  resource::Packer::Pack(arguments, output);
+  resource::packer::Pack(arguments, output);
+  std::cout << "Successfully packed all data to " << output << std::endl;
 }
