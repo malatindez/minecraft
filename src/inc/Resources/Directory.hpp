@@ -20,37 +20,30 @@ namespace resource {
  */
 class Directory : public BaseResource {
  public:
-  using FilePtr = std::shared_ptr<File>;
-  using DirectoryPtr = std::shared_ptr<Directory>;
-
   Directory(uint64_t const& begin,
             AtomicIfstreamPointer const& resource_file_ptr);
-
-  
 
   [[nodiscard]] uint64_t size() const noexcept override;
   [[nodiscard]] uint64_t isFile() const noexcept override;
 
-  [[nodiscard]] std::vector<FilePtr> files() const noexcept;
-  [[nodiscard]] std::vector<DirectoryPtr> directories() const noexcept;
-  [[nodiscard]] std::vector<DirectoryPtr> dirs() const noexcept;
+  [[nodiscard]] std::vector<File> files() const noexcept;
+  [[nodiscard]] std::vector<Directory> directories() const noexcept;
+  [[nodiscard]] std::vector<Directory> dirs() const noexcept;
 
   [[nodiscard]] bool FolderExists(std::string_view const&) const noexcept;
   [[nodiscard]] bool DirectoryExists(std::string_view const&) const noexcept;
   [[nodiscard]] bool DirExists(std::string_view const&) const noexcept;
   [[nodiscard]] bool FileExists(std::string_view const&) const noexcept;
 
-  [[nodiscard]] DirectoryPtr GetFolder(std::string_view const&) const;
-  [[nodiscard]] DirectoryPtr GetDirectory(std::string_view const&) const;
-  [[nodiscard]] DirectoryPtr GetDir(std::string_view const&) const;
-  [[nodiscard]] FilePtr GetFile(std::string_view const&) const;
+  [[nodiscard]] Directory GetFolder(std::string_view const&) const;
+  [[nodiscard]] Directory GetDirectory(std::string_view const&) const;
+  [[nodiscard]] Directory GetDir(std::string_view const&) const;
+  [[nodiscard]] File GetFile(std::string_view const&) const;
 
  private:
-  std::byte ResourceExists(std::string_view const& name) const noexcept;
-
-  [[nodiscard]] std::vector<DirectoryPtr>::const_iterator GetDirectoryIterator(
+  [[nodiscard]] std::vector<Directory>::const_iterator GetDirectoryIterator(
       std::string_view const&) const noexcept;
-  [[nodiscard]] std::vector<FilePtr>::const_iterator GetFileIterator(
+  [[nodiscard]] std::vector<File>::const_iterator GetFileIterator(
       std::string_view const&) const noexcept;
 
   [[nodiscard]] uint64_t CalculateDirSize() const noexcept;
@@ -59,10 +52,9 @@ class Directory : public BaseResource {
   void Sort() noexcept;
 
   uint64_t dir_size_;
-  std::vector<DirectoryPtr> dirs_;
-  std::vector<FilePtr> files_;
+  std::vector<Directory> dirs_;
+  std::vector<File> files_;
 
-  std::shared_ptr<std::shared_mutex> mutex_ =
-      std::make_shared<std::shared_mutex>();
+  std::shared_ptr<std::shared_mutex> mutex_;
 };
 }  // namespace resource

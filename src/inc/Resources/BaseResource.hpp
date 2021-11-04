@@ -14,7 +14,7 @@ class BaseResource {
   }
 
  protected:
-     BaseResource() = default;
+  BaseResource() = default;
   // name_ should be loaded in the constructor of the inherited class
   BaseResource(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr)
       : begin_(begin), resource_file_ptr_(resource_file_ptr) {}

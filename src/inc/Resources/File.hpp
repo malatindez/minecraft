@@ -31,7 +31,7 @@ class File final : public BaseResource {
     return data();
   }
 
-  [[nodiscard]] uint64_t size() const noexcept override{ return size_; }
+  [[nodiscard]] uint64_t size() const noexcept override { return size_; }
 
  private:
   File(uint64_t begin, AtomicIfstreamPointer const &resource_file_ptr)
@@ -53,7 +53,8 @@ class File final : public BaseResource {
 
     uint16_t name_size = (uint16_t(buf[8]) << 0) | (uint16_t(buf[9]) << 8);
 
-    std::unique_ptr<char[]> name(new char[name_size]);
+    std::unique_ptr<char[]> name(new char[1 + name_size]);
+    name.get()[name_size] = '\0';
     lock->read(reinterpret_cast<std::byte *>(name.get()),
                name_size * sizeof(char));
 

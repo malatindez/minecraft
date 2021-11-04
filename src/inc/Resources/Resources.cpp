@@ -19,22 +19,25 @@ std::shared_ptr<Directory> Resources::LoadResources(
 void Resources::UnloadResources(std::filesystem::path const& path_to_file) {
   std::unique_lock lock(resource_mutex_);
   {
-      AtomicIfstreamPointer ref;
-      for (auto const& [path, pointer] : resource_handles_) {
-          if (path == path_to_file) {
-              ref = pointer;
-          }
+    AtomicIfstreamPointer ref;
+    for (auto const& [path, pointer] : resource_handles_) {
+      if (path == path_to_file) {
+        ref = pointer;
       }
-      auto it = tree_.begin();
-      for (; it != tree_.end() && (*it)->resource_file_ptr() == ref; it++);
-      if (it != tree_.end()) {
-          tree_.erase(it);
-      }
+    }
+    auto it = tree_.begin();
+    for (; it != tree_.end() && (*it)->resource_file_ptr() == ref; it++)
+      ;
+    if (it != tree_.end()) {
+      tree_.erase(it);
+    }
   }
   auto it = resource_handles_.begin();
-  for (; it != resource_handles_.end() && it->first != path_to_file; it++);
+  for (; it != resource_handles_.end() && it->first != path_to_file; it++)
+    ;
   if (it != resource_handles_.end()) {
-      resource_handles_.erase(it);
+    it->second.Lock()->close();
+    resource_handles_.erase(it);
   }
 }
 
