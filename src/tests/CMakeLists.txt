@@ -12,4 +12,6 @@ if(test)
 
   add_test(NAME TEST COMMAND runUnitTests)
 
+  add_dependencies(packer runUnitTests)
+  add_dependencies(minecraft runUnitTests)
 endif()
