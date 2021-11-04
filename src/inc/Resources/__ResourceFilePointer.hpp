@@ -6,7 +6,7 @@ namespace resource {
 template <typename T>
 class __AtomicSharedPtr {
  public:
-  template <class T>
+  template <typename T>
   class __Locked : public std::shared_ptr<T> {
    public:
     ~__Locked() { mutex_->unlock(); }
@@ -27,8 +27,8 @@ class __AtomicSharedPtr {
   // be terminated.
   __Locked<T> Lock() const noexcept { return __Locked<T>(mutex_, obj_); }
   explicit __AtomicSharedPtr() : mutex_(nullptr), obj_(nullptr) {}
-  explicit __AtomicSharedPtr(std::shared_ptr<T> obj) : mutex_(std::make_shared<std::mutex>()), obj_(obj) {
-  }
+  explicit __AtomicSharedPtr(std::shared_ptr<T> obj)
+      : mutex_(std::make_shared<std::mutex>()), obj_(obj) {}
   bool operator==(__AtomicSharedPtr const& other) const noexcept {
     return other.obj_ == obj_;
   }
