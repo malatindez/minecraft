@@ -11,9 +11,9 @@ class __AtomicSharedPtr {
    public:
     ~__Locked() { mutex_->unlock(); }
     __Locked(__Locked&& other) noexcept = delete;
-    __Locked(const __Locked& other) noexcept = delete;
+    __Locked(__Locked const& other) noexcept = delete;
     __Locked& operator=(__Locked&& other) noexcept = delete;
-    __Locked& operator=(const __Locked& other) noexcept = delete;
+    __Locked& operator=(__Locked const& other) noexcept = delete;
 
    private:
     __Locked(std::shared_ptr<std::mutex> mutex, std::shared_ptr<T> obj)

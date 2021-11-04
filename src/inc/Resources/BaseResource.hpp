@@ -13,7 +13,7 @@ class BaseResource {
  protected:
   BaseResource() {}
   // name_ should be loaded in the constructor of the inherited class
-  BaseResource(uint64_t begin, const AtomicIfstreamPointer& resource_file_ptr)
+  BaseResource(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr)
       : begin_(begin), resource_file_ptr_(resource_file_ptr) {}
   // 0 for folder
   // 1 for file

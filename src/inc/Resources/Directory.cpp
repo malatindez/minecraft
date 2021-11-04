@@ -13,8 +13,8 @@ static inline uint64_t BytesToUint64(const std::byte* buf) {
 static inline uint16_t BytesToUint16(const std::byte* buf) {
   return (uint16_t(buf[0]) << 0) | (uint16_t(buf[1]) << 8);
 }
-Directory::Directory(const uint64_t& begin,
-                     const AtomicIfstreamPointer& resource_file_ptr)
+Directory::Directory(uint64_t const& begin,
+                     AtomicIfstreamPointer const& resource_file_ptr)
     : BaseResource(begin, resource_file_ptr) {
   FilePtr dir_header_(
       std::shared_ptr<File>(new File(begin, resource_file_ptr)));
@@ -49,9 +49,9 @@ std::vector<DirectoryPtr> Directory::directories() const noexcept {
 std::vector<DirectoryPtr> Directory::dirs() const noexcept { return dirs_; }
 
 static inline std::pair<std::string, std::string> ltrim_path(
-    const std::string_view& path) {
+    std::string_view const& path) {
   auto it = std::find_if(path.begin(), path.end(),
-                         [&](const char& c) { return c == '/' || c == '\\'; });
+                         [&](char const& c) { return c == '/' || c == '\\'; });
   auto it2 = it;
   if (it != path.end()) {
     it2++;
@@ -60,31 +60,31 @@ static inline std::pair<std::string, std::string> ltrim_path(
                                              std::string(it2, path.end()));
 }
 
-bool Directory::DirExists(const std::string_view& dirpath) const noexcept {
+bool Directory::DirExists(std::string_view const& dirpath) const noexcept {
   return ResourceExists(dirpath) & 2;
 }
-bool Directory::FolderExists(const std::string_view& dirpath) const noexcept {
+bool Directory::FolderExists(std::string_view const& dirpath) const noexcept {
   return ResourceExists(dirpath) & 2;
 }
 
 bool Directory::DirectoryExists(
-    const std::string_view& dirpath) const noexcept {
+    std::string_view const& dirpath) const noexcept {
   return ResourceExists(dirpath) & 2;
 }
 
-bool Directory::FileExists(const std::string_view& filepath) const noexcept {
+bool Directory::FileExists(std::string_view const& filepath) const noexcept {
   return ResourceExists(filepath) & 1;
 }
 
-DirectoryPtr Directory::GetFolder(const std::string_view& dirpath) const {
+DirectoryPtr Directory::GetFolder(std::string_view const& dirpath) const {
   return GetDir(dirpath);
 }
 
-DirectoryPtr Directory::GetDirectory(const std::string_view& dirpath) const {
+DirectoryPtr Directory::GetDirectory(std::string_view const& dirpath) const {
   return GetDir(dirpath);
 }
 
-DirectoryPtr Directory::GetDir(const std::string_view& dirpath) const {
+DirectoryPtr Directory::GetDir(std::string_view const& dirpath) const {
   auto t = ltrim_path(dirpath);
   if (t.second.empty()) {
     auto itr = GetDirectoryIterator(dirpath);
@@ -97,7 +97,7 @@ DirectoryPtr Directory::GetDir(const std::string_view& dirpath) const {
   return nullptr;
 }
 
-FilePtr Directory::GetFile(const std::string_view& filepath) const {
+FilePtr Directory::GetFile(std::string_view const& filepath) const {
   auto t = ltrim_path(filepath);
   if (t.second.empty()) {
     auto itr = GetFileIterator(filepath);
@@ -110,7 +110,7 @@ FilePtr Directory::GetFile(const std::string_view& filepath) const {
   return nullptr;
 }
 
-uint8_t Directory::ResourceExists(const std::string_view& path) const noexcept {
+uint8_t Directory::ResourceExists(std::string_view const& path) const noexcept {
   auto t = ltrim_path(path);
   if (t.second.empty()) {
     return (GetDirectoryIterator(path) == dirs_.end() ? 2 : 0) +
@@ -121,23 +121,23 @@ uint8_t Directory::ResourceExists(const std::string_view& path) const noexcept {
 }
 
 std::vector<DirectoryPtr>::const_iterator Directory::GetDirectoryIterator(
-    const std::string_view& dirpath) const noexcept {
+    std::string_view const& dirpath) const noexcept {
   std::shared_lock lock(*mutex_);
-  return std::find_if(dirs_.begin(), dirs_.end(), [&](const DirectoryPtr& dir) {
+  return std::find_if(dirs_.begin(), dirs_.end(), [&](DirectoryPtr const& dir) {
     return dir->name() == dirpath;
   });
 }
 std::vector<FilePtr>::const_iterator Directory::GetFileIterator(
-    const std::string_view& filepath) const noexcept {
+    std::string_view const& filepath) const noexcept {
   std::shared_lock lock(*mutex_);
-  return std::find_if(files_.begin(), files_.end(), [&](const FilePtr& file) {
+  return std::find_if(files_.begin(), files_.end(), [&](FilePtr const& file) {
     return file->name() == filepath;
   });
 }
 
 uint64_t Directory::CalculateDirSize() const noexcept {
-  auto dl = [](uint64_t a, const DirectoryPtr& b) { return a + b->size(); };
-  auto fl = [](uint64_t a, const FilePtr& b) { return a + b->size(); };
+  auto dl = [](uint64_t a, DirectoryPtr const& b) { return a + b->size(); };
+  auto fl = [](uint64_t a, FilePtr const& b) { return a + b->size(); };
   std::shared_lock lock(*mutex_);
   return std::accumulate(dirs_.begin(), dirs_.end(), (uint64_t)0, dl) +
          std::accumulate(files_.begin(), files_.end(), (uint64_t)0, fl) + size_;
@@ -147,11 +147,11 @@ void Directory::UpdateDirSize() noexcept { dir_size_ = CalculateDirSize(); }
 void Directory::Sort() noexcept {
   std::unique_lock lock(*mutex_);
   std::sort(dirs_.begin(), dirs_.end(),
-            [](const DirectoryPtr& first, const DirectoryPtr& second) {
+            [](DirectoryPtr& first, const DirectoryPtr const& second) {
               return first->name().compare(second->name());
             });
   std::sort(files_.begin(), files_.end(),
-            [](const FilePtr& first, const FilePtr& second) {
+            [](FilePtr& first, const FilePtr const& second) {
               return first->name().compare(second->name());
             });
 }

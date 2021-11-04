@@ -23,8 +23,8 @@ class Directory : public BaseResource {
   using FilePtr = std::shared_ptr<File>;
   using DirectoryPtr = std::shared_ptr<Directory>;
 
-  Directory(const uint64_t& begin,
-            const AtomicIfstreamPointer& resource_file_ptr);
+  Directory(uint64_t const& begin,
+            AtomicIfstreamPointer const& resource_file_ptr);
 
   Directory();
 
@@ -36,23 +36,23 @@ class Directory : public BaseResource {
   [[nodiscard]] std::vector<DirectoryPtr> dirs() const noexcept;
   [[nodiscard]] uint64_t dir_size() const noexcept;
 
-  [[nodiscard]] bool FolderExists(const std::string_view&) const noexcept;
-  [[nodiscard]] bool DirectoryExists(const std::string_view&) const noexcept;
-  [[nodiscard]] bool DirExists(const std::string_view&) const noexcept;
-  [[nodiscard]] bool FileExists(const std::string_view&) const noexcept;
+  [[nodiscard]] bool FolderExists(std::string_view const&) const noexcept;
+  [[nodiscard]] bool DirectoryExists(std::string_view const&) const noexcept;
+  [[nodiscard]] bool DirExists(std::string_view const&) const noexcept;
+  [[nodiscard]] bool FileExists(std::string_view const&) const noexcept;
 
-  [[nodiscard]] DirectoryPtr GetFolder(const std::string_view&) const;
-  [[nodiscard]] DirectoryPtr GetDirectory(const std::string_view&) const;
-  [[nodiscard]] DirectoryPtr GetDir(const std::string_view&) const;
-  [[nodiscard]] FilePtr GetFile(const std::string_view&) const;
+  [[nodiscard]] DirectoryPtr GetFolder(std::string_view const&) const;
+  [[nodiscard]] DirectoryPtr GetDirectory(std::string_view const&) const;
+  [[nodiscard]] DirectoryPtr GetDir(std::string_view const&) const;
+  [[nodiscard]] FilePtr GetFile(std::string_view const&) const;
 
  private:
-  uint8_t ResourceExists(const std::string_view& name) const noexcept;
+  uint8_t ResourceExists(std::string_view const& name) const noexcept;
 
   [[nodiscard]] std::vector<DirectoryPtr>::const_iterator GetDirectoryIterator(
-      const std::string_view&) const noexcept;
+      std::string_view const&) const noexcept;
   [[nodiscard]] std::vector<FilePtr>::const_iterator GetFileIterator(
-      const std::string_view&) const noexcept;
+      std::string_view const&) const noexcept;
 
   [[nodiscard]] uint64_t CalculateDirSize() const noexcept;
   void UpdateDirSize() noexcept;

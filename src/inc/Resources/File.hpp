@@ -34,7 +34,7 @@ class File final : public BaseResource {
   [[nodiscard]] uint64_t size() const noexcept { return size_; }
 
  private:
-  File(uint64_t begin, const AtomicIfstreamPointer &resource_file_ptr)
+  File(uint64_t begin, AtomicIfstreamPointer const &resource_file_ptr)
       : BaseResource(begin, resource_file_ptr) {
     auto lock = resource_file_ptr_.Lock();
     lock->seekg(begin_);
