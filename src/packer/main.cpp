@@ -9,7 +9,7 @@
 int main(int argc, char **argv) {
   std::vector<std::filesystem::path> arguments;
   for (int i = 0; i < argc; i++) {
-    arguments.push_back(std::filesystem::path(argv[i]));
+    arguments.emplace_back(argv[i]);
   }
   std::filesystem::path output = arguments[1];
   arguments.erase(arguments.begin(), arguments.begin() + 2);
