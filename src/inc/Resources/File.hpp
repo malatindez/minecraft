@@ -31,7 +31,7 @@ class File final : public BaseResource {
     return data();
   }
 
-  [[nodiscard]] uint64_t size() const noexcept { return size_; }
+  [[nodiscard]] uint64_t size() const noexcept override{ return size_; }
 
  private:
   File(uint64_t begin, AtomicIfstreamPointer const &resource_file_ptr)

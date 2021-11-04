@@ -47,12 +47,13 @@ class Resources {
    * located. the name of .res file should be unique.
    */
   static std::shared_ptr<Directory> LoadResources(
-      std::string_view const& path_to_file, bool const& overwrite = true,
-      bool const& merge = true);
+      std::filesystem::path path_to_file);
+  static void UnloadResources(std::filesystem::path const& path_to_file);
   static std::shared_ptr<Directory> GetResourceFolder() {}
 
  private:
   static std::shared_mutex resource_mutex_;
   static std::vector<std::shared_ptr<Directory>> tree_;
-  static std::vector<AtomicIfstreamPointer> resource_handles_;
+  static std::vector<std::pair<std::filesystem::path, AtomicIfstreamPointer>>
+      resource_handles_;
 };

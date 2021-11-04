@@ -10,15 +10,13 @@ static inline uint64_t BytesToUint64(const std::byte* buf) {
          (uint64_t(buf[4]) << 32) | (uint64_t(buf[5]) << 40) |
          (uint64_t(buf[6]) << 48) | (uint64_t(buf[7]) << 56);
 }
-static inline uint16_t BytesToUint16(const std::byte* buf) {
-  return (uint16_t(buf[0]) << 0) | (uint16_t(buf[1]) << 8);
-}
+
 Directory::Directory(uint64_t const& begin,
                      AtomicIfstreamPointer const& resource_file_ptr)
     : BaseResource(begin, resource_file_ptr) {
-  FilePtr dir_header_(
-      std::shared_ptr<File>(new File(begin, resource_file_ptr)));
+  auto dir_header_ = FilePtr(new File(begin, resource_file_ptr));
   name_ = dir_header_->name();
+  size_ = dir_size_;
   auto data = dir_header_->data()->data();
   std::vector<uint64_t> resources(dir_header_->size() / 4);
   // Process files
@@ -28,12 +26,10 @@ Directory::Directory(uint64_t const& begin,
     if (flag) {
       flag = file_begin == 0;
       if (flag) {
-        files_.push_back(
-            std::shared_ptr<File>(new File(file_begin, resource_file_ptr)));
+        files_.push_back(FilePtr(new File(file_begin, resource_file_ptr)));
       }
     } else {
-      dirs_.push_back(std::shared_ptr<Directory>(
-          new Directory(file_begin, resource_file_ptr)));
+      dirs_.push_back(DirectoryPtr(new Directory(file_begin, resource_file_ptr)));
     }
   }
   dir_size_ = CalculateDirSize();
@@ -61,19 +57,19 @@ static inline std::pair<std::string, std::string> ltrim_path(
 }
 
 bool Directory::DirExists(std::string_view const& dirpath) const noexcept {
-  return ResourceExists(dirpath) & 2;
+  return ResourceExists(dirpath) == std::byte{ 2 };
 }
 bool Directory::FolderExists(std::string_view const& dirpath) const noexcept {
-  return ResourceExists(dirpath) & 2;
+  return ResourceExists(dirpath) == std::byte{ 2 };
 }
 
 bool Directory::DirectoryExists(
     std::string_view const& dirpath) const noexcept {
-  return ResourceExists(dirpath) & 2;
+  return ResourceExists(dirpath) == std::byte{ 2 };
 }
 
 bool Directory::FileExists(std::string_view const& filepath) const noexcept {
-  return ResourceExists(filepath) & 1;
+  return ResourceExists(filepath) == std::byte{ 1 };
 }
 
 DirectoryPtr Directory::GetFolder(std::string_view const& dirpath) const {
@@ -85,39 +81,41 @@ DirectoryPtr Directory::GetDirectory(std::string_view const& dirpath) const {
 }
 
 DirectoryPtr Directory::GetDir(std::string_view const& dirpath) const {
-  auto t = ltrim_path(dirpath);
-  if (t.second.empty()) {
+  auto [left, right] = ltrim_path(dirpath);
+  if (right.empty()) {
     auto itr = GetDirectoryIterator(dirpath);
     if (itr != dirs_.end()) {
       return *itr;
     }
-  } else if (DirExists(t.first)) {
-    return GetDirectory(t.first)->GetDir(dirpath);
+  } else if (DirExists(left)) {
+    return GetDirectory(left)->GetDir(right);
   }
   return nullptr;
 }
 
 FilePtr Directory::GetFile(std::string_view const& filepath) const {
-  auto t = ltrim_path(filepath);
-  if (t.second.empty()) {
+    auto [left, right] = ltrim_path(filepath);
+    if (right.empty()) {
     auto itr = GetFileIterator(filepath);
     if (itr != files_.end()) {
       return *itr;
     }
-  } else if (DirExists(t.first)) {
-    return GetDirectory(t.first)->GetFile(filepath);
+  } else if (DirExists(left)) {
+    return GetDirectory(left)->GetFile(right);
   }
   return nullptr;
 }
 
-uint8_t Directory::ResourceExists(std::string_view const& path) const noexcept {
-  auto t = ltrim_path(path);
-  if (t.second.empty()) {
-    return (GetDirectoryIterator(path) == dirs_.end() ? 2 : 0) +
-           (GetFileIterator(path) == files_.end() ? 1 : 0);
+std::byte Directory::ResourceExists(std::string_view const& path) const noexcept {
+    auto [left, right] = ltrim_path(path);
+  if (right.empty()) {
+      return (GetDirectoryIterator(path) == dirs_.end() ? std::byte{ 2 } : std::byte{ 0 }) |
+           (GetFileIterator(path) == files_.end() ? std::byte{ 1 } : std::byte{ 0 });
   }
-  return (DirExists(t.first) &&
-          GetDirectory(t.first)->ResourceExists(t.second));
+  if (DirExists(left)) {
+      GetDirectory(left)->ResourceExists(right);
+  }
+  return std::byte{ 0 };
 }
 
 std::vector<DirectoryPtr>::const_iterator Directory::GetDirectoryIterator(
@@ -147,11 +145,11 @@ void Directory::UpdateDirSize() noexcept { dir_size_ = CalculateDirSize(); }
 void Directory::Sort() noexcept {
   std::unique_lock lock(*mutex_);
   std::sort(dirs_.begin(), dirs_.end(),
-            [](DirectoryPtr& first, const DirectoryPtr const& second) {
+            [](DirectoryPtr const& first, DirectoryPtr const& second) {
               return first->name().compare(second->name());
             });
   std::sort(files_.begin(), files_.end(),
-            [](FilePtr& first, const FilePtr const& second) {
+            [](FilePtr const& first, FilePtr const& second) {
               return first->name().compare(second->name());
             });
 }

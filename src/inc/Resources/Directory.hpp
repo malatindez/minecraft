@@ -26,7 +26,7 @@ class Directory : public BaseResource {
   Directory(uint64_t const& begin,
             AtomicIfstreamPointer const& resource_file_ptr);
 
-  Directory();
+  
 
   [[nodiscard]] uint64_t size() const noexcept override;
   [[nodiscard]] uint64_t isFile() const noexcept override;
@@ -34,7 +34,6 @@ class Directory : public BaseResource {
   [[nodiscard]] std::vector<FilePtr> files() const noexcept;
   [[nodiscard]] std::vector<DirectoryPtr> directories() const noexcept;
   [[nodiscard]] std::vector<DirectoryPtr> dirs() const noexcept;
-  [[nodiscard]] uint64_t dir_size() const noexcept;
 
   [[nodiscard]] bool FolderExists(std::string_view const&) const noexcept;
   [[nodiscard]] bool DirectoryExists(std::string_view const&) const noexcept;
@@ -47,7 +46,7 @@ class Directory : public BaseResource {
   [[nodiscard]] FilePtr GetFile(std::string_view const&) const;
 
  private:
-  uint8_t ResourceExists(std::string_view const& name) const noexcept;
+  std::byte ResourceExists(std::string_view const& name) const noexcept;
 
   [[nodiscard]] std::vector<DirectoryPtr>::const_iterator GetDirectoryIterator(
       std::string_view const&) const noexcept;

@@ -26,17 +26,11 @@ class __AtomicSharedPtr {
   // Don't forget to delete retrieved pointers first, otherwise the program will
   // be terminated.
   __Locked<T> Lock() const noexcept { return __Locked<T>(mutex_, obj_); }
-  explicit __AtomicSharedPtr() {
-    mutex_ = nullptr;
-    obj_ = nullptr;
+  explicit __AtomicSharedPtr() : mutex_(nullptr), obj_(nullptr) {}
+  explicit __AtomicSharedPtr(std::shared_ptr<T> obj) : mutex_(std::make_shared<std::mutex>()), obj_(obj) {
   }
-  explicit __AtomicSharedPtr(std::shared_ptr<T> obj) {
-    mutex_ = std::make_shared<std::mutex>();
-    obj_ = obj;
-  }
-  explicit __AtomicSharedPtr(T obj) {
-    mutex_ = std::make_shared<std::mutex>;
-    obj_ = std::make_shared<obj>();
+  bool operator==(__AtomicSharedPtr const& other) const noexcept {
+    return other.obj_ == obj_;
   }
 
  private:
