@@ -96,8 +96,8 @@ class TestResources : public ::testing::Test {
   static void SetUpTestSuite() {
     static const std::uniform_int_distribution<uint32_t> kAmountOfFiles{28, 34};
     static const std::uniform_int_distribution<uint32_t> kStringSize{16, 24};
-    static const std::uniform_int_distribution<uint32_t> kFileSize{10000000,
-                                                                   100000000};
+    static const std::uniform_int_distribution<uint32_t> kFileSize{10000,
+                                                                   100000};
     packing_succeded = false;
     dir_ = fs::temp_directory_path() / "minecraft_test/TestResources/";
     for (std::string const& path : kFixedTestfiles) {
