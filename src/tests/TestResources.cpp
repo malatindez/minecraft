@@ -74,10 +74,11 @@ static std::mt19937 gen(rd());
   return return_value + final_char;
 }
 
-static void CreateFile(fs::path const& path, std::string_view const& data) {
+static void CreateFile(fs::path const& path, char const* data,
+                       const size_t size) {
   fs::create_directories({path.parent_path()});
   std::ofstream ofs(path);
-  ofs << data;
+  ofs.write(data, size);
   ofs.close();
 }
 
@@ -87,57 +88,85 @@ static inline double time_diff(
   return std::chrono::duration<double, std::milli>(end - begin).count();
 }
 
-TEST(TestResources, TestPacking) {
-  auto dir = fs::temp_directory_path() / "minecraft_test/TestPacking/";
-  static const std::vector<std::string> kFixedTestfiles = {
-      "a/b.txt", "a/b/c.txt", "a/b/c/d.txt"};
-  for (std::string const& path : kFixedTestfiles) {
-    CreateFile(dir / path, path);
-  }
-  std::vector<std::filesystem::path> files;
-  static const std::uniform_int_distribution<uint32_t> amount_of_files(0, 1000);
-  static const std::uniform_int_distribution<uint32_t> string_size(16, 32);
-  static const std::uniform_int_distribution<uint32_t> file_size(0, 10000);
+static const std::vector<std::string> kFixedTestfiles = {"a/b.txt", "a/b/c.txt",
+                                                         "a/b/c/d.txt"};
 
-  for (uint32_t i = 0; i < amount_of_files(gen); i++) {
-    std::string name = RandomUTF8Filename(string_size(gen));
-    auto path = dir / "unicode_test/" / name;
-    CreateFile(path, RandomUTF8String());
-    files.push_back(std::filesystem::path("unicode_test") / name);
+class TestResources : public ::testing::Test {
+ protected:
+  static void SetUpTestSuite() {
+    static const std::uniform_int_distribution<uint32_t> kAmountOfFiles{28, 34};
+    static const std::uniform_int_distribution<uint32_t> kStringSize{16, 24};
+    static const std::uniform_int_distribution<uint32_t> kFileSize{10000000,
+                                                                   100000000};
+    packing_succeded = false;
+    dir_ = fs::temp_directory_path() / "minecraft_test/TestResources/";
+    for (std::string const& path : kFixedTestfiles) {
+      CreateFile(dir_ / path, path.c_str(), path.size());
+    }
+
+    for (uint32_t i = 0; i < kAmountOfFiles(gen); i++) {
+      std::filesystem::path name = RandomUTF8Filename(kStringSize(gen));
+      auto path = dir_ / "unicode_test/" / name;
+      std::vector<char> t(kFileSize(gen));
+      CreateFile(path, t.data(), t.size());
+      unicode_files_.push_back(std::filesystem::path("unicode_test") / name);
+    }
+    packing_succeded = true;
   }
-  ASSERT_NO_THROW(resource::packer::Pack(
-      std::vector<fs::path>({dir / "a", dir / "unicode_test"}),
-      dir / "test.pack"))
+
+  static void TearDownTestSuite() {
+    fs::remove_all(fs::temp_directory_path() / "minecraft_test/TestResources");
+  }
+
+  static std::filesystem::path dir_;
+  static std::vector<std::filesystem::path> unicode_files_;
+  static bool packing_succeded;
+};
+
+std::filesystem::path TestResources::dir_;
+std::vector<std::filesystem::path> TestResources::unicode_files_;
+bool TestResources::packing_succeded;
+
+TEST_F(TestResources, TestPacking) {
+  auto t = std::vector<fs::path>({dir_ / "a", dir_ / "unicode_test"});
+  ASSERT_NO_THROW(resource::packer::Pack(t, dir_ / "test.pack"))
       << "Pack function should throw any exceptions";
-  auto t = Resources::LoadResources(dir / "test.pack");
+}
+TEST_F(TestResources, TestLoading) {
+  ASSERT_NO_THROW(Resources::LoadResources(dir_ / "test.pack"));
+  ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
+}
+
+TEST_F(TestResources, FixedFileLoading) {
+  auto resources_ = Resources::LoadResources(dir_ / "test.pack");
   for (std::string const& path : kFixedTestfiles) {
-    ASSERT_TRUE(t->FileExists(path))
+    ASSERT_TRUE(resources_->FileExists(path))
         << "file " << path << " doesn't exist within the resource file";
   }
-  for (std::filesystem::path const& file : files) {
-    ASSERT_TRUE(t->FileExists(file.string()))
-        << "file " << file << " doesn't exist within the resource file";
-  }
   for (std::string const& path : kFixedTestfiles) {
-    ASSERT_TRUE(t->GetFile(path).ToString() == path)
+    ASSERT_TRUE(resources_->GetFile(path).ToString() == path)
         << "File content is broken";
   }
+  ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
+}
+TEST_F(TestResources, RandomFileLoading) {
+  auto resources_ = Resources::LoadResources(dir_ / "test.pack");
+  for (std::filesystem::path const& file : TestResources::unicode_files_) {
+    ASSERT_TRUE(resources_->FileExists(file.string()))
+        << "file " << file << " doesn't exist within the resource file";
+  }
+  for (std::filesystem::path const& file : TestResources::unicode_files_) {
+    std::ifstream fileStream{TestResources::dir_ / file, std::ios::in};
+    uint64_t size = std::filesystem::file_size(TestResources::dir_ / file);
+    auto data_ptr = resources_->GetFile(file.string()).data();
 
-  for (std::filesystem::path const& file : files) {
-    std::basic_ifstream<std::byte> fileStream{dir / file, std::ios::in};
-    uint64_t size = std::filesystem::file_size(dir / file);
-    auto data_ptr = t->GetFile(file.string()).data();
-
-    std::vector<std::byte> file_data(size);
+    std::vector<char> file_data(size);
     fileStream.read(file_data.data(), size);
 
     ASSERT_TRUE(
         std::equal(file_data.begin(), file_data.end(), data_ptr->begin()))
-        << "File content is broken";
+        << "Content of the file" << file << "is broken";
     fileStream.close();
   }
-
-  ASSERT_NO_THROW(Resources::UnloadResources(dir / "test.pack"))
-      << "Failed to unload resources";
-  fs::remove_all(fs::temp_directory_path() / "minecraft_test/TestPacking");
+  ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
 }
