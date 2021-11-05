@@ -1,6 +1,14 @@
 #pragma once
 #include "BaseResource.hpp"
 namespace resource {
+
+    static inline uint64_t BytesToUint64(const char* sbuf) {
+        auto buf = std::bit_cast<const unsigned char*>(sbuf);
+        return (uint64_t(buf[0]) << 0) | (uint64_t(buf[1]) << 8) |
+            (uint64_t(buf[2]) << 16) | (uint64_t(buf[3]) << 24) |
+            (uint64_t(buf[4]) << 32) | (uint64_t(buf[5]) << 40) |
+            (uint64_t(buf[6]) << 48) | (uint64_t(buf[7]) << 56);
+    }
 /*
  * file data:
  * begin:
@@ -14,29 +22,29 @@ class File final : public BaseResource {
   friend class Directory;
 
   ~File() override {}
-  [[nodiscard]] std::shared_ptr<std::vector<std::byte>> data() noexcept {
+  [[nodiscard]] std::shared_ptr<std::vector<char>> data() noexcept {
     if (data_.expired()) {
       auto lock = resource_file_ptr_.Lock();
       lock->seekg(data_begin_);
       auto file_content =
-          std::make_shared<std::vector<std::byte>>(size_, std::byte(0));
-      lock->read(reinterpret_cast<std::byte *>(file_content->data()), size_);
+          std::make_shared<std::vector<char>>(size_);
+      lock->read(file_content->data(), size_);
       data_ = file_content;
       return file_content;
     }
     return data_.lock();
   }
 
-  [[nodiscard]] std::shared_ptr<std::vector<std::byte>> content() {
+  [[nodiscard]] std::shared_ptr<std::vector<char>> content() {
     return data();
   }
 
   [[nodiscard]] std::string ToString() noexcept {
-    std::shared_ptr<std::vector<std::byte>> data = this->data();
+    std::shared_ptr<std::vector<char>> data = this->data();
     std::string return_value;
     return_value.resize(data->size());
     std::transform(data->begin(), data->end(), return_value.begin(),
-                   [](std::byte b) { return char(b); });
+                   [](char b) { return char(b); });
     return std::string(return_value);
   }
 
@@ -48,23 +56,18 @@ class File final : public BaseResource {
     auto lock = resource_file_ptr_.Lock();
     lock->seekg(begin_);
     // retrieve next byte location & the size of the filename in bytes
-    std::vector<std::byte> buf(sizeof(uint64_t) + sizeof(uint16_t),
-                               std::byte(0));
+    std::vector<char> buf(sizeof(uint64_t) + sizeof(uint16_t),
+                               char(0));
 
-    lock->read(reinterpret_cast<std::byte *>(buf.data()),
+    lock->read(buf.data(),
                sizeof(uint64_t) + sizeof(uint16_t));
-
-    uint64_t nextfile_location =
-        (uint64_t(buf[0]) << 0) | (uint64_t(buf[1]) << 8) |
-        (uint64_t(buf[2]) << 16) | (uint64_t(buf[3]) << 24) |
-        (uint64_t(buf[4]) << 32) | (uint64_t(buf[5]) << 40) |
-        (uint64_t(buf[6]) << 48) | (uint64_t(buf[7]) << 56);
+    uint64_t nextfile_location = BytesToUint64(buf.data());
 
     uint16_t name_size = (uint16_t(buf[8]) << 0) | (uint16_t(buf[9]) << 8);
 
-    std::unique_ptr<char[]> name(new char[1 + name_size]);
+    std::unique_ptr<char[]> name(new char[1U + name_size]);
     name.get()[name_size] = '\0';
-    lock->read(reinterpret_cast<std::byte *>(name.get()),
+    lock->read(name.get(),
                name_size * sizeof(char));
 
     name_ = std::string(name.get());
@@ -73,6 +76,6 @@ class File final : public BaseResource {
   }
 
   uint64_t data_begin_;
-  std::weak_ptr<std::vector<std::byte>> data_;
+  std::weak_ptr<std::vector<char>> data_;
 };
 }  // namespace resource

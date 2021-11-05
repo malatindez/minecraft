@@ -39,5 +39,5 @@ class __AtomicSharedPtr {
 };
 
 // atomic wrapper around shared pointer of filebuf
-using AtomicIfstreamPointer = __AtomicSharedPtr<std::basic_ifstream<std::byte>>;
+using AtomicIfstreamPointer = __AtomicSharedPtr<std::ifstream>;
 }  // namespace resource

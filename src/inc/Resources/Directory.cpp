@@ -1,7 +1,8 @@
 #include "Directory.hpp"
 using namespace resource;
 
-static inline uint64_t BytesToUint64(const std::byte* buf) {
+static inline uint64_t BytesToUint64(const char* sbuf) {
+    auto buf = std::bit_cast<const unsigned char*>(sbuf);
   return (uint64_t(buf[0]) << 0) | (uint64_t(buf[1]) << 8) |
          (uint64_t(buf[2]) << 16) | (uint64_t(buf[3]) << 24) |
          (uint64_t(buf[4]) << 32) | (uint64_t(buf[5]) << 40) |
