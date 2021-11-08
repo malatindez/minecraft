@@ -28,15 +28,15 @@ namespace resource::packer {
 }
 [[nodiscard]] static inline std::vector<char> Uint16ToBytes(
     uint16_t const& integer) {
-    auto return_value = std::vector<char>(2);
-    return_value[0] = (unsigned char)((integer >> 0x00) & 0xff);
-    return_value[1] = (unsigned char)((integer >> 0x08) & 0xff);
-    return return_value;
+  auto return_value = std::vector<char>(2);
+  return_value[0] = (unsigned char)((integer >> 0x00) & 0xff);
+  return_value[1] = (unsigned char)((integer >> 0x08) & 0xff);
+  return return_value;
 }
 
 [[nodiscard]] std::vector<char> PrepareHeader(std::string_view const& name,
-                                                   uint64_t const& file_begin,
-                                                   uint64_t const& file_size) {
+                                              uint64_t const& file_begin,
+                                              uint64_t const& file_size) {
   if (name.size() > UINT16_MAX) {
     throw std::invalid_argument("name cannot be larger than uint16_t");
   }
@@ -75,11 +75,10 @@ void ProcessFile(std::ofstream& output_file,
   const uint64_t kBlockSize = min(2UL * 1024 * 1024 * 1024, length);
   std::vector<char> buf(kBlockSize);
 
-  std::basic_ifstream<char> file(filepath,
-                                      std::ios::binary | std::ios::in);
+  std::basic_ifstream<char> file(filepath, std::ios::binary | std::ios::in);
   for (uint64_t i = 0; i < length; i += kBlockSize) {
     file.read(buf.data(), min(kBlockSize, length - i));
-    output_file.write(buf.data(),buf.size());
+    output_file.write(buf.data(), buf.size());
   }
   file.close();
 }
@@ -153,8 +152,7 @@ void Pack(std::vector<std::filesystem::path>& folder_paths,
   auto data =
       PrepareHeader("", 0, (folder_paths.size() + 1) * sizeof(uint64_t));
 
-  std::ofstream output_file(output_path,
-                                             std::ios::binary | std::ios::out);
+  std::ofstream output_file(output_path, std::ios::binary | std::ios::out);
   ReserveBytes(output_file,
                data.size() + (folder_paths.size() + 1) * sizeof(uint64_t));
   for (auto const& folder : folder_paths) {

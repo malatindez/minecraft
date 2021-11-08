@@ -16,7 +16,12 @@ static std::mt19937 gen(rd());
   if (value > 0x10FFFF) {
     throw std::invalid_argument("Invalid value provided.");
   }
+
+  static const std::vector<uint32_t> kUnicodeThresholds = {0x80, 0x800, 0x10000,
+                                                           UINT32_MAX};
+
   std::string return_value = "";
+
   if (value < 0x80) {
     return_value += (char)value;
   } else if (value < 0x800) {
@@ -48,7 +53,6 @@ static std::mt19937 gen(rd());
   }
   return return_value;
 }
-
 [[nodiscard]] static std::string RandomUTF8Filename(size_t const& size = 32) {
   static const std::string kProhibitedCharacters = "<>:\"/\\|?*";
   std::string return_value;
@@ -68,8 +72,7 @@ static std::mt19937 gen(rd());
     final_char = RandomUTF8Char(33);
   } while (final_char.size() == 1 &&
            (kProhibitedCharacters.end() !=
-                std::find(kProhibitedCharacters.begin(),
-                          kProhibitedCharacters.end(), final_char[0]) ||
+                std::ranges::find(kProhibitedCharacters, final_char[0]) ||
             final_char[0] == '.'));
   return return_value + final_char;
 }

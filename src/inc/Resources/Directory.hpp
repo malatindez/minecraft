@@ -1,11 +1,11 @@
 #pragma once
 #include <algorithm>
 #include <atomic>
+#include <bit>
 #include <memory>
 #include <numeric>
 #include <shared_mutex>
 #include <vector>
-#include <bit>
 
 #include "BaseResource.hpp"
 #include "File.hpp"

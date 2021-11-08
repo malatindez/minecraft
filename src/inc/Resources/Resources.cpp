@@ -3,9 +3,8 @@ using namespace resource;
 
 std::shared_ptr<Directory> Resources::LoadResources(
     std::filesystem::path path_to_file) {
-  auto resource =
-      AtomicIfstreamPointer(std::make_shared<std::ifstream>(
-          path_to_file, std::ios::binary));
+  auto resource = AtomicIfstreamPointer(
+      std::make_shared<std::ifstream>(path_to_file, std::ios::binary));
   if (!resource.Lock()->is_open()) {
     throw std::invalid_argument("Cannot open the provided file" +
                                 path_to_file.string());
