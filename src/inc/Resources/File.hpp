@@ -23,15 +23,19 @@ class File final : public BaseResource {
 
   ~File() override {}
   [[nodiscard]] std::shared_ptr<std::vector<char>> data() noexcept {
-    if (data_.expired()) {
-      auto lock = resource_file_ptr_.Lock();
-      lock->seekg(data_begin_);
-      auto file_content = std::make_shared<std::vector<char>>(size_);
-      lock->read(file_content->data(), size_);
-      data_ = file_content;
-      return file_content;
+    if (data_->expired()) {
+      if (auto lock = resource_file_ptr_.TryLock()) {
+        lock->seekg(data_begin_);
+        auto file_content = std::make_shared<std::vector<char>>(size_);
+        lock->read(file_content->data(), size_);
+        (*data_) = file_content;
+        return file_content;
+      }
+      // wait until data_ is initialized in another thread
+      { auto lock = resource_file_ptr_.Lock(); }
+      return data();
     }
-    return data_.lock();
+    return data_->lock();
   }
 
   [[nodiscard]] std::shared_ptr<std::vector<char>> content() { return data(); }
@@ -50,6 +54,7 @@ class File final : public BaseResource {
  private:
   File(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr)
       : BaseResource(begin, resource_file_ptr) {
+    data_ = std::make_shared<std::weak_ptr<std::vector<char>>>();
     auto lock = resource_file_ptr_.Lock();
     lock->seekg(begin_);
     // retrieve next byte location & the size of the filename in bytes
@@ -70,6 +75,6 @@ class File final : public BaseResource {
   }
 
   uint64_t data_begin_;
-  std::weak_ptr<std::vector<char>> data_;
+  std::shared_ptr<std::weak_ptr<std::vector<char>>> data_;
 };
 }  // namespace resource
