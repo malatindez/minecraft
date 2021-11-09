@@ -48,7 +48,7 @@ static std::mt19937 gen(rd());
 
 [[nodiscard]] static std::string RandomUTF8String(size_t const& size = 32) {
   std::string return_value;
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     return_value += RandomUTF8Char();
   }
   return return_value;
@@ -56,7 +56,7 @@ static std::mt19937 gen(rd());
 [[nodiscard]] static std::string RandomUTF8Filename(size_t const& size = 32) {
   static const std::string kProhibitedCharacters = "<>:\"/\\|?*";
   std::string return_value;
-  for (int i = 0; i < size - 1;) {
+  for (size_t i = 0; i < size - 1;) {
     std::string temp = RandomUTF8Char(32);
     if (temp.size() == 1 && (kProhibitedCharacters.end() !=
                              std::find(kProhibitedCharacters.begin(),
@@ -72,7 +72,8 @@ static std::mt19937 gen(rd());
     final_char = RandomUTF8Char(33);
   } while (final_char.size() == 1 &&
            (kProhibitedCharacters.end() !=
-                std::ranges::find(kProhibitedCharacters, final_char[0]) ||
+                std::find(kProhibitedCharacters.begin(),
+                          kProhibitedCharacters.end(), final_char[0]) ||
             final_char[0] == '.'));
   return return_value + final_char;
 }
@@ -162,14 +163,59 @@ TEST_F(TestResources, RandomFileLoading) {
     std::ifstream fileStream{TestResources::dir_ / file, std::ios::in};
     uint64_t size = std::filesystem::file_size(TestResources::dir_ / file);
     auto data_ptr = resources_->GetFile(file.string()).data();
-
-    std::vector<char> file_data(size);
+    std::vector<char> file_data((size_t)size);
     fileStream.read(file_data.data(), size);
 
     ASSERT_TRUE(
         std::equal(file_data.begin(), file_data.end(), data_ptr->begin()))
         << "Content of the file" << file << "is broken";
     fileStream.close();
+  }
+  ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
+}
+const uint16_t kThreadAmount = 32;
+TEST_F(TestResources, TestMultithreadedRandomFileLoading) {
+  auto resources_ = Resources::LoadResources(dir_ / "test.pack");
+  std::condition_variable cv;
+  std::mutex m;
+  std::mutex counter_mutex;
+  int counter = 0;
+  using ptr_vec = std::vector<std::shared_ptr<std::vector<char>>>;
+  ptr_vec pointers(kThreadAmount);
+
+  auto thread_function = [&](ptr_vec::iterator itr) {
+    for (std::filesystem::path const& file : TestResources::unicode_files_) {
+      std::unique_lock<std::mutex> lk(m);
+      counter++;
+      cv.wait(lk);
+      ASSERT_TRUE(*itr = resources_->GetFile(file.string()).data())
+          << "file " << file << " doesn't exist within the resource file";
+      std::unique_lock<std::mutex> t(counter_mutex);
+    }
+  };
+  std::vector<std::thread> threads;
+  for (auto itr = pointers.begin(); itr != pointers.end(); itr++) {
+    threads.push_back(std::thread(thread_function, itr));
+  }
+
+  // thread synchronization 
+  for (std::filesystem::path const& file : TestResources::unicode_files_) {
+      using namespace std::chrono_literals;
+    while (counter != kThreadAmount) {
+      std::this_thread::sleep_for(1ms);
+    }
+    counter = 0;
+    bool eq = true;
+    auto itr = pointers.begin();
+    while (eq && itr != pointers.end())
+    {
+        eq = (itr == ++itr);
+    }
+    ASSERT_TRUE(eq);
+    cv.notify_all();
+  }
+  for (auto& thread : threads) {
+    thread.join();
   }
   ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
 }
