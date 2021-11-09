@@ -15,10 +15,9 @@ Directory::Directory(uint64_t const& begin,
   File dir_header_(begin, resource_file_ptr);
   name_ = dir_header_.name();
   size_ = dir_header_.size();
-  mutex_ = std::make_shared<std::shared_mutex>();
   auto data_ptr = dir_header_.data();
   auto data = data_ptr->data();
-  std::vector<uint64_t> resources(dir_header_.size() / 4);
+  std::vector<uint64_t> resources((size_t)(dir_header_.size() / 4ull));
   // Process files
   bool flag = true;
   for (auto buf = data; buf < data + size_; buf += sizeof(uint64_t)) {
@@ -120,14 +119,12 @@ File Directory::GetFile(std::string_view const& filepath) const {
 
 std::vector<Directory>::const_iterator Directory::GetDirectoryIterator(
     std::string_view const& dirpath) const noexcept {
-  std::shared_lock lock(*mutex_);
   return std::find_if(dirs_.begin(), dirs_.end(), [&](Directory const& dir) {
     return dir.name() == dirpath;
   });
 }
 std::vector<File>::const_iterator Directory::GetFileIterator(
     std::string_view const& filepath) const noexcept {
-  std::shared_lock lock(*mutex_);
   return std::find_if(files_.begin(), files_.end(), [&](File const& file) {
     return file.name() == filepath;
   });
@@ -136,20 +133,6 @@ std::vector<File>::const_iterator Directory::GetFileIterator(
 uint64_t Directory::CalculateDirSize() const noexcept {
   auto dl = [](uint64_t a, Directory const& b) { return a + b.size(); };
   auto fl = [](uint64_t a, File const& b) { return a + b.size(); };
-  std::shared_lock lock(*mutex_);
   return std::accumulate(dirs_.begin(), dirs_.end(), (uint64_t)0, dl) +
          std::accumulate(files_.begin(), files_.end(), (uint64_t)0, fl) + size_;
-}
-void Directory::UpdateDirSize() noexcept { dir_size_ = CalculateDirSize(); }
-
-void Directory::Sort() noexcept {
-  std::unique_lock lock(*mutex_);
-  std::sort(dirs_.begin(), dirs_.end(),
-            [](Directory const& first, Directory const& second) {
-              return first.name().compare(second.name());
-            });
-  std::sort(files_.begin(), files_.end(),
-            [](File const& first, File const& second) {
-              return first.name().compare(second.name());
-            });
 }

@@ -48,14 +48,9 @@ class Directory : public BaseResource {
       std::string_view const&) const noexcept;
 
   [[nodiscard]] uint64_t CalculateDirSize() const noexcept;
-  void UpdateDirSize() noexcept;
-
-  void Sort() noexcept;
 
   uint64_t dir_size_;
   std::vector<Directory> dirs_;
   std::vector<File> files_;
-
-  std::shared_ptr<std::shared_mutex> mutex_;
 };
 }  // namespace resource
