@@ -6,7 +6,7 @@ if(test)
   list(FILTER INC_SOURCES INCLUDE REGEX "${SRC_DIR}/inc/*")
   add_executable(runUnitTests ${TEST_SOURCES} ${INC_SOURCES})
   target_link_libraries(runUnitTests gtest gtest_main)
-  target_add_libraries(runUnitTests "glm" "gtest")
+  target_add_libraries(runUnitTests "glm" "glad" "glfw" "gtest")
   target_include_directories(runUnitTests PRIVATE "${INC_DIR}")
   target_include_directories(runUnitTests PRIVATE "${SRC_DIR}/tests")
 
