@@ -18,15 +18,16 @@ class __AtomicSharedPtr {
     __Locked(__Locked const& other) noexcept = delete;
     __Locked& operator=(__Locked&& other) noexcept = delete;
     __Locked& operator=(__Locked const& other) noexcept = delete;
+
    private:
     __Locked(std::shared_ptr<std::mutex> mutex, std::shared_ptr<T> obj,
              bool try_lock)
         : mutex_(mutex), std::shared_ptr<T>(obj) {
       if (try_lock) {
-          if (!mutex_->try_lock()) {
-              this->reset();   // if try_lock returns false,
-              mutex_.reset();  // clear pointers to inaccessible objects
-          }
+        if (!mutex_->try_lock()) {
+          this->reset();   // if try_lock returns false,
+          mutex_.reset();  // clear pointers to inaccessible objects
+        }
       } else {
         mutex_->lock();
       }

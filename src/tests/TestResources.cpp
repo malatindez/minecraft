@@ -198,18 +198,17 @@ TEST_F(TestResources, TestMultithreadedRandomFileLoading) {
     threads.push_back(std::thread(thread_function, itr));
   }
 
-  // thread synchronization 
+  // thread synchronization
   for (std::filesystem::path const& file : TestResources::unicode_files_) {
-      using namespace std::chrono_literals;
+    using namespace std::chrono_literals;
     while (counter != kThreadAmount) {
       std::this_thread::sleep_for(1ms);
     }
     counter = 0;
     bool eq = true;
     auto itr = pointers.begin();
-    while (eq && itr != pointers.end())
-    {
-        eq = (itr == ++itr);
+    while (eq && itr != pointers.end()) {
+      eq = (itr == ++itr);
     }
     ASSERT_TRUE(eq);
     cv.notify_all();
