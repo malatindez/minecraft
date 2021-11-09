@@ -72,7 +72,7 @@ void ProcessFile(std::ofstream& output_file,
       PrepareHeader(filepath.filename().string(), output_file.tellp(), length);
   output_file.write(data.data(), data.size());
 
-  const uint64_t kBlockSize = min(2UL * 1024 * 1024 * 1024, length);
+  const size_t kBlockSize = (uint32_t)min(2UL * 1024 * 1024 * 1024, length);
   std::vector<char> buf(kBlockSize);
 
   std::basic_ifstream<char> file(filepath, std::ios::binary | std::ios::in);
