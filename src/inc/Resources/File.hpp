@@ -22,7 +22,7 @@ class File final : public BaseResource {
   friend class Directory;
 
   ~File() override {}
-  [[nodiscard]] std::shared_ptr<std::vector<char>> data() noexcept {
+  [[nodiscard]] std::shared_ptr<std::vector<char>> data() const noexcept {
     if (data_->expired()) {
       if (auto lock = resource_file_ptr_.TryLock()) {
         lock->seekg(data_begin_);
@@ -38,9 +38,11 @@ class File final : public BaseResource {
     return data_->lock();
   }
 
-  [[nodiscard]] std::shared_ptr<std::vector<char>> content() { return data(); }
+  [[nodiscard]] std::shared_ptr<std::vector<char>> content() const noexcept {
+    return data();
+  }
 
-  [[nodiscard]] std::string ToString() noexcept {
+  [[nodiscard]] std::string ToString() const noexcept {
     std::shared_ptr<std::vector<char>> data = this->data();
     std::string return_value;
     return_value.resize(data->size());
@@ -48,6 +50,7 @@ class File final : public BaseResource {
                    [](char b) { return char(b); });
     return std::string(return_value);
   }
+  [[nodiscard]] std::string string() const noexcept { return ToString(); }
 
   [[nodiscard]] uint64_t size() const noexcept override { return size_; }
 
