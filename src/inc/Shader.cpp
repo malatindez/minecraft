@@ -75,10 +75,48 @@ Shader::~Shader() {
 }
 static inline GLint GetLocation(GLint programId, std::string const& name) {
   GLint location = glGetUniformLocation(programId, name.c_str());
-  if (location == -1 || location == GL_INVALID_VALUE || location == GL_INVALID_OPERATION) {
+  if (location == -1 || location == GL_INVALID_VALUE ||
+      location == GL_INVALID_OPERATION) {
     throw std::invalid_argument("Provided name is invalid!");
   }
   return location;
+}
+
+void Shader::set_bvec1(std::string const& name, glm::bvec1 const& value) const {
+  glUniform1i(GetLocation(*id_, name), value[0]);
+}
+void Shader::set_bvec2(std::string const& name, glm::bvec2 const& value) const {
+  glUniform2i(GetLocation(*id_, name), value[0], value[1]);
+}
+void Shader::set_bvec3(std::string const& name, glm::bvec3 const& value) const {
+  glUniform3i(GetLocation(*id_, name), value[0], value[1], value[2]);
+}
+void Shader::set_bvec4(std::string const& name, glm::bvec4 const& value) const {
+  glUniform4i(GetLocation(*id_, name), value[0], value[1], value[2], value[3]);
+}
+void Shader::set_ivec1(std::string const& name, glm::ivec1 const& value) const {
+  glUniform1iv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_ivec2(std::string const& name, glm::ivec2 const& value) const {
+  glUniform2iv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_ivec3(std::string const& name, glm::ivec3 const& value) const {
+  glUniform3iv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_ivec4(std::string const& name, glm::ivec4 const& value) const {
+  glUniform4iv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_uvec1(std::string const& name, glm::uvec1 const& value) const {
+  glUniform1uiv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_uvec2(std::string const& name, glm::uvec2 const& value) const {
+  glUniform2uiv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_uvec3(std::string const& name, glm::uvec3 const& value) const {
+  glUniform3uiv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_uvec4(std::string const& name, glm::uvec4 const& value) const {
+  glUniform4uiv(GetLocation(*id_, name), 1, &value[0]);
 }
 void Shader::set_vec1(std::string const& name, glm::vec1 const& value) const {
   glUniform1fv(GetLocation(*id_, name), 1, &value[0]);
@@ -91,6 +129,38 @@ void Shader::set_vec3(std::string const& name, glm::vec3 const& value) const {
 }
 void Shader::set_vec4(std::string const& name, glm::vec4 const& value) const {
   glUniform4fv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_dvec1(std::string const& name, glm::dvec1 const& value) const {
+  if (glUniform1dv == 0) {
+    throw std::runtime_error(
+        "OpenGL error! You should use OpenGL 4.0 or above to pass double to "
+        "shader.");
+  }
+  glUniform1dv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_dvec2(std::string const& name, glm::dvec2 const& value) const {
+  if (glUniform2dv == 0) {
+    throw std::runtime_error(
+        "OpenGL error! You should use OpenGL 4.0 or above to pass double to "
+        "shader.");
+  }
+  glUniform2dv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_dvec3(std::string const& name, glm::dvec3 const& value) const {
+  if (glUniform3dv == 0) {
+    throw std::runtime_error(
+        "OpenGL error! You should use OpenGL 4.0 or above to pass double to "
+        "shader.");
+  }
+  glUniform3dv(GetLocation(*id_, name), 1, &value[0]);
+}
+void Shader::set_dvec4(std::string const& name, glm::dvec4 const& value) const {
+  if (glUniform4dv == 0) {
+    throw std::runtime_error(
+        "OpenGL error! You should use OpenGL 4.0 or above to pass double to "
+        "shader.");
+  }
+  glUniform4dv(GetLocation(*id_, name), 1, &value[0]);
 }
 
 void Shader::set_mat2(std::string const& name, glm::mat2 const& value) const {
@@ -150,28 +220,95 @@ void Shader::set_uint(std::string const& name, uint32_t value) const {
 void Shader::set_float(std::string const& name, float value) const {
   glUniform1f(GetLocation(*id_, name), value);
 }
+void Shader::set_bvec(std::string const& name, glm::bvec1 const& value) const {
+  set_bvec1(name, value);
+}
+void Shader::set_bvec(std::string const& name, glm::bvec2 const& value) const {
+  set_bvec2(name, value);
+}
+void Shader::set_bvec(std::string const& name, glm::bvec3 const& value) const {
+  set_bvec3(name, value);
+}
+void Shader::set_bvec(std::string const& name, glm::bvec4 const& value) const {
+  set_bvec4(name, value);
+}
 
-#define MINECRAFT_SHADER_CPP_FUNC_VEC(x)                                \
-  void Shader::set_vec(std::string const& name, glm::vec##x const& vec) \
-      const {                                                           \
-    set_vec##x##(name, vec);                                            \
-  }
-MINECRAFT_SHADER_CPP_FUNC_VEC(1);
-MINECRAFT_SHADER_CPP_FUNC_VEC(2);
-MINECRAFT_SHADER_CPP_FUNC_VEC(3);
-MINECRAFT_SHADER_CPP_FUNC_VEC(4);
-#undef MINECRAFT_SHADER_CPP_FUNC_VEC
-#define MINECRAFT_SHADER_CPP_FUNC_MAT(a, b)                                   \
-  void Shader::set_mat(std::string const& name, glm::mat##a##x##b const& mat) \
-      const {                                                                 \
-    set_mat##a##x##b(name, mat);                                              \
-  }
-#define MINECRAFT_SHADER_CPP_FUNC_MAT_ITR(x) \
-  MINECRAFT_SHADER_CPP_FUNC_MAT(##x, 2);     \
-  MINECRAFT_SHADER_CPP_FUNC_MAT(##x, 3);     \
-  MINECRAFT_SHADER_CPP_FUNC_MAT(##x, 4);
-MINECRAFT_SHADER_CPP_FUNC_MAT_ITR(2);
-MINECRAFT_SHADER_CPP_FUNC_MAT_ITR(3);
-MINECRAFT_SHADER_CPP_FUNC_MAT_ITR(4);
-#undef MINECRAFT_SHADER_CPP_FUNC_MAT
-#undef MINECRAFT_SHADER_CPP_FUNC_MAT_ITR
+void Shader::set_ivec(std::string const& name, glm::ivec1 const& value) const {
+  set_ivec1(name, value);
+}
+void Shader::set_ivec(std::string const& name, glm::ivec2 const& value) const {
+  set_ivec2(name, value);
+}
+void Shader::set_ivec(std::string const& name, glm::ivec3 const& value) const {
+  set_ivec3(name, value);
+}
+void Shader::set_ivec(std::string const& name, glm::ivec4 const& value) const {
+  set_ivec4(name, value);
+}
+
+void Shader::set_uvec(std::string const& name, glm::uvec1 const& value) const {
+  set_uvec1(name, value);
+}
+void Shader::set_uvec(std::string const& name, glm::uvec2 const& value) const {
+  set_uvec2(name, value);
+}
+void Shader::set_uvec(std::string const& name, glm::uvec3 const& value) const {
+  set_uvec3(name, value);
+}
+void Shader::set_uvec(std::string const& name, glm::uvec4 const& value) const {
+  set_uvec4(name, value);
+}
+
+void Shader::set_vec(std::string const& name, glm::vec1 const& value) const {
+  set_vec1(name, value);
+}
+void Shader::set_vec(std::string const& name, glm::vec2 const& value) const {
+  set_vec2(name, value);
+}
+void Shader::set_vec(std::string const& name, glm::vec3 const& value) const {
+  set_vec3(name, value);
+}
+void Shader::set_vec(std::string const& name, glm::vec4 const& value) const {
+  set_vec4(name, value);
+}
+
+void Shader::set_dvec(std::string const& name, glm::dvec1 const& value) const {
+  set_dvec1(name, value);
+}
+void Shader::set_dvec(std::string const& name, glm::dvec2 const& value) const {
+  set_dvec2(name, value);
+}
+void Shader::set_dvec(std::string const& name, glm::dvec3 const& value) const {
+  set_dvec3(name, value);
+}
+void Shader::set_dvec(std::string const& name, glm::dvec4 const& value) const {
+  set_dvec4(name, value);
+}
+
+void Shader::set_mat(std::string const& name, glm::mat2 const& value) const {
+  set_mat2(name, value);
+}
+void Shader::set_mat(std::string const& name, glm::mat3 const& value) const {
+  set_mat3(name, value);
+}
+void Shader::set_mat(std::string const& name, glm::mat4 const& value) const {
+  set_mat4(name, value);
+}
+void Shader::set_mat(std::string const& name, glm::mat2x3 const& value) const {
+  set_mat2x3(name, value);
+}
+void Shader::set_mat(std::string const& name, glm::mat2x4 const& value) const {
+  set_mat2x4(name, value);
+}
+void Shader::set_mat(std::string const& name, glm::mat3x2 const& value) const {
+  set_mat3x2(name, value);
+}
+void Shader::set_mat(std::string const& name, glm::mat3x4 const& value) const {
+  set_mat3x4(name, value);
+}
+void Shader::set_mat(std::string const& name, glm::mat4x2 const& value) const {
+  set_mat4x2(name, value);
+}
+void Shader::set_mat(std::string const& name, glm::mat4x3 const& value) const {
+  set_mat4x3(name, value);
+}
