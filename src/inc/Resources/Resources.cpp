@@ -1,8 +1,7 @@
 #include "Resources.hpp"
 using namespace resource;
 
-std::shared_ptr<Directory> Resources::LoadResources(
-    std::filesystem::path path_to_file) {
+Directory Resources::LoadResources(std::filesystem::path path_to_file) {
   auto resource = AtomicIfstreamPointer(
       std::make_shared<std::ifstream>(path_to_file, std::ios::binary));
   if (!resource.Lock()->is_open()) {
@@ -13,7 +12,7 @@ std::shared_ptr<Directory> Resources::LoadResources(
   auto dir = std::make_shared<Directory>(0, resource);
   tree_.push_back(dir);
   resource_handles_.emplace_back(path_to_file, resource);
-  return dir;
+  return *dir;
 }
 void Resources::UnloadResources(std::filesystem::path const& path_to_file) {
   std::unique_lock lock(resource_mutex_);

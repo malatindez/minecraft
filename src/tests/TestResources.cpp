@@ -134,7 +134,7 @@ bool TestResources::packing_succeded;
 TEST_F(TestResources, TestPacking) {
   auto t = std::vector<fs::path>({dir_ / "a", dir_ / "unicode_test"});
   ASSERT_NO_THROW(resource::packer::Pack(t, dir_ / "test.pack"))
-      << "Pack function should throw any exceptions";
+      << "Pack function shouldn't throw any exceptions";
 }
 TEST_F(TestResources, TestLoading) {
   ASSERT_NO_THROW(Resources::LoadResources(dir_ / "test.pack"));
@@ -144,11 +144,11 @@ TEST_F(TestResources, TestLoading) {
 TEST_F(TestResources, FixedFileLoading) {
   auto resources_ = Resources::LoadResources(dir_ / "test.pack");
   for (std::string const& path : kFixedTestfiles) {
-    ASSERT_TRUE(resources_->FileExists(path))
+    ASSERT_TRUE(resources_.FileExists(path))
         << "file " << path << " doesn't exist within the resource file";
   }
   for (std::string const& path : kFixedTestfiles) {
-    ASSERT_TRUE(resources_->GetFile(path).ToString() == path)
+    ASSERT_TRUE(resources_.GetFile(path).ToString() == path)
         << "File content is broken";
   }
   ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
@@ -156,13 +156,13 @@ TEST_F(TestResources, FixedFileLoading) {
 TEST_F(TestResources, RandomFileLoading) {
   auto resources_ = Resources::LoadResources(dir_ / "test.pack");
   for (std::filesystem::path const& file : TestResources::unicode_files_) {
-    ASSERT_TRUE(resources_->FileExists(file.string()))
+    ASSERT_TRUE(resources_.FileExists(file.string()))
         << "file " << file << " doesn't exist within the resource file";
   }
   for (std::filesystem::path const& file : TestResources::unicode_files_) {
     std::ifstream fileStream{TestResources::dir_ / file, std::ios::in};
     uint64_t size = std::filesystem::file_size(TestResources::dir_ / file);
-    auto data_ptr = resources_->GetFile(file.string()).data();
+    auto data_ptr = resources_.GetFile(file.string()).data();
     std::vector<char> file_data((size_t)size);
     fileStream.read(file_data.data(), size);
 
@@ -188,7 +188,7 @@ TEST_F(TestResources, TestMultithreadedRandomFileLoading) {
       std::unique_lock<std::mutex> lk(m);
       counter++;
       cv.wait(lk);
-      ASSERT_TRUE(*itr = resources_->GetFile(file.string()).data())
+      ASSERT_TRUE(*itr = resources_.GetFile(file.string()).data())
           << "file " << file << " doesn't exist within the resource file";
       std::unique_lock<std::mutex> t(counter_mutex);
     }
