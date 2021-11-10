@@ -8,6 +8,7 @@ project(minecraft LANGUAGES CXX)
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/inc")
 set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs")
+set(CONF_DIR "${CMAKE_BINARY_DIR}/config")
 
 include("${LIB_DIR}/CMakeLists.txt")
 
