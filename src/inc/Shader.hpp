@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <map>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -26,12 +27,22 @@ class Shader {
   // activate the shader
   void Use() { glUseProgram(*id_); }
 
+  inline GLint GetLocation(std::string const& name) const {
+      GLint location = glGetUniformLocation(*id_, name.c_str());
+      if (location == -1 || location == GL_INVALID_VALUE ||
+          location == GL_INVALID_OPERATION) {
+          throw std::invalid_argument("Provided name is invalid!");
+      }
+      return location;
+  }
+
   uint32_t id() { return *id_; }
   // utility uniform functions
   void set_bool(std::string const& name, bool value) const;
   void set_int(std::string const& name, int value) const;
   void set_uint(std::string const& name, uint32_t value) const;
   void set_float(std::string const& name, float value) const;
+
   void set_bvec1(std::string const& name, glm::bvec1 const& value) const;
   void set_bvec2(std::string const& name, glm::bvec2 const& value) const;
   void set_bvec3(std::string const& name, glm::bvec3 const& value) const;
@@ -100,7 +111,7 @@ class Shader {
   void set_mat(std::string const& name, glm::mat3x4 const& value) const;
   void set_mat(std::string const& name, glm::mat4x2 const& value) const;
   void set_mat(std::string const& name, glm::mat4x3 const& value) const;
-
- private:
+     
+private:
   std::shared_ptr<uint32_t> id_;
 };
