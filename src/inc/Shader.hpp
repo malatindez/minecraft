@@ -28,15 +28,15 @@ class Shader {
   void Use() { glUseProgram(*id_); }
 
   inline GLint GetLocation(std::string const& name) const {
-      GLint location = glGetUniformLocation(*id_, name.c_str());
-      if (location == -1 || location == GL_INVALID_VALUE ||
-          location == GL_INVALID_OPERATION) {
-          throw std::invalid_argument("Provided name is invalid!");
-      }
-      return location;
+    GLint location = glGetUniformLocation(*id_, name.c_str());
+    if (location == -1 || location == GL_INVALID_VALUE ||
+        location == GL_INVALID_OPERATION) {
+      throw std::invalid_argument("Provided name is invalid!");
+    }
+    return location;
   }
 
-  uint32_t id() { return *id_; }
+  uint32_t id() const { return *id_; }
   // utility uniform functions
   void set_bool(std::string const& name, bool value) const;
   void set_int(std::string const& name, int value) const;
@@ -111,7 +111,7 @@ class Shader {
   void set_mat(std::string const& name, glm::mat3x4 const& value) const;
   void set_mat(std::string const& name, glm::mat4x2 const& value) const;
   void set_mat(std::string const& name, glm::mat4x3 const& value) const;
-     
-private:
+
+ private:
   std::shared_ptr<uint32_t> id_;
 };
