@@ -48,12 +48,12 @@ national:
 - Chicago Cubs
 - Atlanta Braves)");
   ASSERT_EQ(entry.size(), 2);
-  auto sub_entry1 = entry["american"];
+  Entry& sub_entry1 = entry["american"];
   ASSERT_EQ(sub_entry1.size(), 3);
   ASSERT_TRUE(sub_entry1.contains("Boston Red Sox"));
   ASSERT_TRUE(sub_entry1.contains("Detroit Tigers"));
   ASSERT_TRUE(sub_entry1.contains("New York Yankees"));
-  auto sub_entry2 = entry["national"];
+  Entry& sub_entry2 = entry["national"];
   ASSERT_EQ(sub_entry2.size(), 3);
   ASSERT_TRUE(sub_entry2.contains("New York Mets"));
   ASSERT_TRUE(sub_entry2.contains("Chicago Cubs"));
@@ -441,7 +441,7 @@ TEST(TestYamlParser, TestTags_OrderedMappings) {
 }
 
 TEST(TestYamlParser, FullTest_InvoiceTest) {
-    Entry entry = Parse(R"(
+  Entry entry = Parse(R"(
 --- !<tag:clarkevans.com,2002:invoice>
 invoice: 34843
 date   : 2001-01-23
@@ -471,34 +471,34 @@ comments:
   Late afternoon is best.
   Backup contact is Nancy
   Billsmer @ 338-4338.)");
-    ASSERT_EQ(entry["invoice"], 34843);
-    ASSERT_EQ(entry["date"], "2001-01-23");
-    ASSERT_EQ(entry["bill-to"]["given"], "Chris");
-    ASSERT_EQ(entry["bill-to"]["family"], "Dumars");
-    ASSERT_EQ(entry["bill-to"]["address"]["lines"], "458 Walkman Dr. Suite #292");
-    ASSERT_EQ(entry["bill-to"]["address"]["city"], "Royal Oak");
-    ASSERT_EQ(entry["bill-to"]["address"]["state"], "MI");
-    ASSERT_EQ(entry["bill-to"]["address"]["postal"], 48046);
-    ASSERT_EQ(entry["ship-to"], entry["bill-to"]);
-    ASSERT_EQ(entry["ship-to"]["given"], "Chris");
-    ASSERT_EQ(entry["ship-to"]["family"], "Dumars");
-    ASSERT_EQ(entry["ship-to"]["address"]["lines"], "458 Walkman Dr. Suite #292");
-    ASSERT_EQ(entry["ship-to"]["address"]["city"], "Royal Oak");
-    ASSERT_EQ(entry["ship-to"]["address"]["state"], "MI");
-    ASSERT_EQ(entry["ship-to"]["address"]["postal"], 48046);
-    ASSERT_EQ(entry["product"][0]["sku"], "BL349D");
-    ASSERT_EQ(entry["product"][0]["quantity"], 4);
-    ASSERT_EQ(entry["product"][0]["description"], "Basketball");
-    ASSERT_EQ(entry["product"][0]["price"], 450.0);
-    ASSERT_EQ(entry["product"][1]["sku"], "BL4438H");
-    ASSERT_EQ(entry["product"][1]["quantity"], 1);
-    ASSERT_EQ(entry["product"][1]["description"], "Super Hoop");
-    ASSERT_EQ(entry["product"][1]["price"], 2392.0);
-    ASSERT_EQ(entry["tax"], 251.42);
-    ASSERT_EQ(entry["total"], 4443.52);
-    ASSERT_EQ(
-        entry["comments"],
-        "Late afternoon is best. Backup contact is Nancy Billsmer @ 338-4338.");
+  ASSERT_EQ(entry["invoice"], 34843);
+  ASSERT_EQ(entry["date"], "2001-01-23");
+  ASSERT_EQ(entry["bill-to"]["given"], "Chris");
+  ASSERT_EQ(entry["bill-to"]["family"], "Dumars");
+  ASSERT_EQ(entry["bill-to"]["address"]["lines"], "458 Walkman Dr. Suite #292");
+  ASSERT_EQ(entry["bill-to"]["address"]["city"], "Royal Oak");
+  ASSERT_EQ(entry["bill-to"]["address"]["state"], "MI");
+  ASSERT_EQ(entry["bill-to"]["address"]["postal"], 48046);
+  ASSERT_EQ(entry["ship-to"], entry["bill-to"]);
+  ASSERT_EQ(entry["ship-to"]["given"], "Chris");
+  ASSERT_EQ(entry["ship-to"]["family"], "Dumars");
+  ASSERT_EQ(entry["ship-to"]["address"]["lines"], "458 Walkman Dr. Suite #292");
+  ASSERT_EQ(entry["ship-to"]["address"]["city"], "Royal Oak");
+  ASSERT_EQ(entry["ship-to"]["address"]["state"], "MI");
+  ASSERT_EQ(entry["ship-to"]["address"]["postal"], 48046);
+  ASSERT_EQ(entry["product"][0]["sku"], "BL349D");
+  ASSERT_EQ(entry["product"][0]["quantity"], 4);
+  ASSERT_EQ(entry["product"][0]["description"], "Basketball");
+  ASSERT_EQ(entry["product"][0]["price"], 450.0);
+  ASSERT_EQ(entry["product"][1]["sku"], "BL4438H");
+  ASSERT_EQ(entry["product"][1]["quantity"], 1);
+  ASSERT_EQ(entry["product"][1]["description"], "Super Hoop");
+  ASSERT_EQ(entry["product"][1]["price"], 2392.0);
+  ASSERT_EQ(entry["tax"], 251.42);
+  ASSERT_EQ(entry["total"], 4443.52);
+  ASSERT_EQ(
+      entry["comments"],
+      "Late afternoon is best. Backup contact is Nancy Billsmer @ 338-4338.");
 }
 
 TEST(TestYamlParser, FullTest_LogFile) {
