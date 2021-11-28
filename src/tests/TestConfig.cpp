@@ -9,8 +9,10 @@ TEST(TEST_CONFIG, TestSaving) {
   Config conf;
   conf.CreateSection("Graphics");
   Config::Section& graphics = conf["Graphics"];
+
   graphics.SetValue("ResolutionX", (uint64_t)3200);
   graphics.SetValue("ResolutionY", (uint64_t)3200);
+
   fs::create_directories(
       {fs::temp_directory_path() / "minecraft_test/TestConfig"});
   std::ofstream ofs(fs::temp_directory_path() /
