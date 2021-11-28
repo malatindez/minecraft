@@ -2,42 +2,31 @@
 namespace yaml {
 class EntryPair : public Entry {
   friend class Entry;
-
- private:
   std::unique_ptr<Entry> key_ = nullptr;
   std::unique_ptr<Entry> value_ = nullptr;
 };
 class EntryInteger : public Entry {
   friend class Entry;
-
- private:
   int64_t integer_;
 };
 class EntryUnsignedInteger : public Entry {
   friend class Entry;
-
- private:
   uint64_t unsigned_integer_;
 };
 class EntryDouble : public Entry {
   friend class Entry;
-
- private:
   long double double_;
 };
 bool Entry::contains(std::string_view const& string) const {
   if (!is_sequence() && !is_map()) {
     throw std::invalid_argument("This entry is not a sequence nor a map");
   }
-  for (Entry const& entry : entries_) {
-    if (entry.is_string() && entry.to_string() == string) {
-      return true;
-    } else if (entry.is_pair() && entry.key().is_string() &&
-               entry.key().to_string() == string) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(
+      entries_.begin(), entries_.end(), [&string](Entry const& entry) {
+        return (entry.is_string() && entry.to_string() == string) ||
+               (entry.is_pair() && entry.key().is_string() &&
+                entry.key().to_string() == string);
+      });
 }
 
 bool Entry::contains(int64_t integer) const {
@@ -55,89 +44,62 @@ bool Entry::contains(int32_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  for (Entry const& entry : entries_) {
-    if (entry == integer) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(
+      entries_.begin(), entries_.end(),
+      [&integer](Entry const& entry) { return entry == integer; });
 }
 bool Entry::contains(int16_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  for (Entry const& entry : entries_) {
-    if (entry == integer) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(
+      entries_.begin(), entries_.end(),
+      [&integer](Entry const& entry) { return entry == integer; });
 }
 bool Entry::contains(uint64_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  for (Entry const& entry : entries_) {
-    if (entry == integer) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(
+      entries_.begin(), entries_.end(),
+      [&integer](Entry const& entry) { return entry == integer; });
 }
 bool Entry::contains(uint32_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  for (Entry const& entry : entries_) {
-    if (entry == integer) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(
+      entries_.begin(), entries_.end(),
+      [&integer](Entry const& entry) { return entry == integer; });
 }
 bool Entry::contains(uint16_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  for (Entry const& entry : entries_) {
-    if (entry == integer) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(
+      entries_.begin(), entries_.end(),
+      [&integer](Entry const& entry) { return entry == integer; });
 }
 bool Entry::contains(long double real) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  for (Entry const& entry : entries_) {
-    if (entry == real) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(entries_.begin(), entries_.end(),
+                     [&real](Entry const& entry) { return entry == real; });
 }
 bool Entry::contains(double real) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  for (Entry const& entry : entries_) {
-    if (entry == real) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(entries_.begin(), entries_.end(),
+                     [&real](Entry const& entry) { return entry == real; });
 }
 bool Entry::contains(float real) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  for (Entry const& entry : entries_) {
-    if (entry == real) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(entries_.begin(), entries_.end(),
+                     [&real](Entry const& entry) { return entry == real; });
 }
 
 bool Entry::operator==(Entry const& other) const noexcept {
@@ -208,7 +170,5 @@ inline uint64_t Entry::to_uint() const {
 }
 inline std::string_view Entry::to_string() const noexcept { return str_; }
 
-Entry Parse(std::string_view const& string) {
-    return Entry();
-}
+Entry Parse(std::string_view const& string) { return Entry(); }
 }  // namespace yaml

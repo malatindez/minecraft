@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -26,7 +27,7 @@ class Entry {
   };
   auto begin() const noexcept { return entries_.begin(); }
   auto end() const noexcept { return entries_.end(); }
-  size_t size() { return entries_.size(); }
+  size_t size() const noexcept { return entries_.size(); }
   inline bool is_bool() const noexcept { return type_ == Type::kBool; }
   inline bool is_date() const noexcept { return type_ == Type::kDate; }
   inline bool is_directive() const noexcept { return type_ == Type::kDir; }
@@ -40,7 +41,9 @@ class Entry {
   inline bool is_set() const noexcept { return type_ == Type::kSet; }
   inline bool is_string() const noexcept { return type_ == Type::kString; }
   inline bool is_time() const noexcept { return type_ == Type::kTime; }
-  inline bool is_timestamp() const noexcept { return type_ == Type::kTimestamp; }
+  inline bool is_timestamp() const noexcept {
+    return type_ == Type::kTimestamp;
+  }
   inline bool is_uint() const noexcept { return type_ == Type::kUInt; }
 
   bool contains(std::string_view const& string) const;
