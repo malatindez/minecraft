@@ -37,9 +37,11 @@ Directory::Directory(uint64_t const& begin,
 uint64_t Directory::size() const noexcept { return dir_size_; }
 uint64_t Directory::isFile() const noexcept { return false; }
 
-std::vector<File> Directory::files() const noexcept { return files_; }
-std::vector<Directory> Directory::directories() const noexcept { return dirs_; }
-std::vector<Directory> Directory::dirs() const noexcept { return dirs_; }
+std::vector<File> const& Directory::files() const noexcept { return files_; }
+std::vector<Directory> const& Directory::directories() const noexcept {
+  return dirs_;
+}
+std::vector<Directory> const& Directory::dirs() const noexcept { return dirs_; }
 
 static inline std::pair<std::string, std::string> ltrim_path(
     std::string_view const& path) {
@@ -83,15 +85,16 @@ bool Directory::FileExists(std::string_view const& filepath) const noexcept {
   return false;
 }
 
-Directory Directory::GetFolder(std::string_view const& dirpath) const {
+Directory const& Directory::GetFolder(std::string_view const& dirpath) const {
   return GetDir(dirpath);
 }
 
-Directory Directory::GetDirectory(std::string_view const& dirpath) const {
+Directory const& Directory::GetDirectory(
+    std::string_view const& dirpath) const {
   return GetDir(dirpath);
 }
 
-Directory Directory::GetDir(std::string_view const& dirpath) const {
+Directory const& Directory::GetDir(std::string_view const& dirpath) const {
   auto [left, right] = ltrim_path(dirpath);
   if (right.empty()) {
     auto itr = GetDirectoryIterator(left);
@@ -104,7 +107,7 @@ Directory Directory::GetDir(std::string_view const& dirpath) const {
   throw std::invalid_argument(std::string(dirpath));
 }
 
-File Directory::GetFile(std::string_view const& filepath) const {
+File const& Directory::GetFile(std::string_view const& filepath) const {
   auto [left, right] = ltrim_path(filepath);
   if (right.empty()) {
     auto itr = GetFileIterator(left);

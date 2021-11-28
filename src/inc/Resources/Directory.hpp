@@ -27,19 +27,19 @@ class Directory : public BaseResource {
   [[nodiscard]] uint64_t size() const noexcept override;
   [[nodiscard]] uint64_t isFile() const noexcept override;
 
-  [[nodiscard]] std::vector<File> files() const noexcept;
-  [[nodiscard]] std::vector<Directory> directories() const noexcept;
-  [[nodiscard]] std::vector<Directory> dirs() const noexcept;
+  [[nodiscard]] std::vector<File> const& files() const noexcept;
+  [[nodiscard]] std::vector<Directory> const& directories() const noexcept;
+  [[nodiscard]] std::vector<Directory> const& dirs() const noexcept;
 
   [[nodiscard]] bool FolderExists(std::string_view const&) const noexcept;
   [[nodiscard]] bool DirectoryExists(std::string_view const&) const noexcept;
   [[nodiscard]] bool DirExists(std::string_view const&) const noexcept;
   [[nodiscard]] bool FileExists(std::string_view const&) const noexcept;
 
-  [[nodiscard]] Directory GetFolder(std::string_view const&) const;
-  [[nodiscard]] Directory GetDirectory(std::string_view const&) const;
-  [[nodiscard]] Directory GetDir(std::string_view const&) const;
-  [[nodiscard]] File GetFile(std::string_view const&) const;
+  [[nodiscard]] Directory const& GetFolder(std::string_view const&) const;
+  [[nodiscard]] Directory const& GetDirectory(std::string_view const&) const;
+  [[nodiscard]] Directory const& GetDir(std::string_view const&) const;
+  [[nodiscard]] File const& GetFile(std::string_view const&) const;
 
  private:
   [[nodiscard]] std::vector<Directory>::const_iterator GetDirectoryIterator(

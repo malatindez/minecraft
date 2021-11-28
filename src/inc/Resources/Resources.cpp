@@ -1,7 +1,7 @@
 #include "Resources.hpp"
 using namespace resource;
 
-Directory Resources::LoadResources(std::filesystem::path path_to_file) {
+Directory const& Resources::LoadResources(std::filesystem::path path_to_file) {
   auto resource = AtomicIfstreamPointer(
       std::make_shared<std::ifstream>(path_to_file, std::ios::binary));
   if (!resource.Lock()->is_open()) {
