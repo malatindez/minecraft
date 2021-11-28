@@ -116,7 +116,8 @@ void Config::Deserialize(std::string_view const& str) {
         DeserializeLine(current_section, line);
       }
       line = "";
-    } else if (str[i] == ';' && (i == 0 || str[i - 1] != '\\')) {
+    } else if ((str[i] == ';' || str[i] == '#') &&
+               (i == 0 || str[i - 1] != '\\')) {
       skip = true;
     } else if (!skip) {
       line += str[i];
