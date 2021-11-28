@@ -6,9 +6,37 @@
 namespace chrono = std::chrono;
 using namespace yaml;
 TEST(TestYamlParser, BasicTest) {
+    using namespace std::chrono;
   Entry entry(Entry::Type::kMap);
-  std::vector<int> t;
+
+  std::vector<int> t{1024, 768};
   entry["Resolution"] = t;
+  std::map<std::string, int> map{
+      {"first", 1}, {"second", 2}, {"third", 3}, {"fourth", 4}};
+  entry["data"]["thing"] = std::move(map);
+
+  auto now = system_clock::now();
+
+  auto const ld = floor<days>(now);
+  auto i = std::chrono::duration_cast<std::chrono::microseconds>(
+               now.time_since_epoch())
+               .count();
+  const year_month_day ymd{ld};
+  hh_mm_ss hms{duration_cast<microseconds>(now - ld)};
+  std::tm tm = {0};
+  auto cast = duration_cast<seconds>(now.time_since_epoch());
+  tm.tm_sec = floor<seconds>(cast).count() % 60;
+  tm.tm_min = floor<minutes>(cast).count() % 60;
+  tm.tm_hour = floor<hours>(cast).count() % 24;
+  year_month_day ymd2 = floor<days>(sys_seconds(cast));
+  tm.tm_year = (int)ymd2.year();
+  tm.tm_mon = (unsigned)ymd2.month();
+  tm.tm_mday = (unsigned)ymd2.day();
+  tm.tm_isdst = -1;
+  entry["data"]["timestamp"] = tm;
+  entry["data"]["date"] = ymd;
+  entry["data"]["time"] = hms;
+  entry.Serialize();
 }
 TEST(TestYamlParser, TestCollections_SequenceOfScalars) {
   Entry entry = Parse(R"(
@@ -476,8 +504,10 @@ comments:
   Late afternoon is best.
   Backup contact is Nancy
   Billsmer @ 338-4338.)");
+  using namespace std::chrono;
   ASSERT_EQ(entry["invoice"], 34843);
   ASSERT_EQ(entry["date"], "2001-01-23");
+  ASSERT_EQ(entry["date"], year_month_day(year(2001), month(1), day(23)));
   ASSERT_EQ(entry["bill-to"]["given"], "Chris");
   ASSERT_EQ(entry["bill-to"]["family"], "Dumars");
   ASSERT_EQ(entry["bill-to"]["address"]["lines"], "458 Walkman Dr. Suite #292");

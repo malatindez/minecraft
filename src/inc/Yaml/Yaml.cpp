@@ -3,6 +3,12 @@ namespace yaml {
 
 Entry::Entry() noexcept { type_ = Entry::Type::kNull; }
 Entry::Entry(Type type) : type_(type) {}
+
+Entry::Entry(Entry&& entry) noexcept
+    : type_(entry.type_), str_(entry.str_), tag_(entry.tag_) {
+  entries_ = std::move(entry.entries_);
+  data_ = std::move(entry.data_);
+}
 Entry::Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value) {
   type_ = Entry::Type::kPair;
   data_ = std::make_unique<Pair>(std::move(key), std::move(value));
@@ -18,7 +24,14 @@ Entry::Entry(uint16_t const& other) noexcept { operator=(other); }
 Entry::Entry(long double const& other) noexcept { operator=(other); }
 Entry::Entry(double const& other) noexcept { operator=(other); }
 Entry::Entry(float const& other) noexcept { operator=(other); }
-
+Entry::Entry(std::tm const& other) noexcept { operator=(other); }
+Entry::Entry(std::chrono::year_month_day const& other) noexcept {
+  operator=(other);
+}
+Entry::Entry(
+    std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) noexcept {
+  operator=(other);
+}
 bool Entry::contains(std::string_view const& string) const {
   if (!is_sequence() && !is_map()) {
     throw std::invalid_argument("This entry is not a sequence nor a map");
@@ -136,9 +149,28 @@ bool Entry::operator==(double const& other) const noexcept {
 bool Entry::operator==(float const& other) const noexcept {
   return is_double() && to_double() == other;
 }
+bool Entry::operator==(std::tm const& other) const noexcept {
+  auto t = to_datetime();
+  return is_timestamp() && t.tm_year == other.tm_year &&
+         t.tm_wday == other.tm_wday && t.tm_yday == other.tm_yday &&
+         t.tm_mon == other.tm_mon && t.tm_mday == other.tm_mday &&
+         t.tm_hour == other.tm_hour && t.tm_min == other.tm_min &&
+         t.tm_sec == other.tm_sec;
+}
+bool Entry::operator==(
+    std::chrono::year_month_day const& other) const noexcept {
+  return is_date() && to_date() == other;
+}
+bool Entry::operator==(std::chrono::hh_mm_ss<std::chrono::microseconds> const&
+                           other) const noexcept {
+  return is_time() && to_time().to_duration() == other.to_duration();
+}
 Entry& Entry::operator[](std::string_view const& key) {
-  if (!is_map()) {
+  if (!is_null() && !is_map()) {
     throw std::invalid_argument("This entry is not a map");
+  }
+  if (is_null()) {
+    operator=(std::map<int, int>());
   }
   auto it = std::find_if(entries_.begin(), entries_.end(),
                          [&key](Entry const& entry) {
@@ -247,6 +279,50 @@ Entry& Entry::operator=(float const& other) noexcept {
   tag_ = "";
   return *this;
 }
+std::string format_time(std::tm const& other) {
+  return std::put_time(&other, "%Y-%m-%d %H:%M:%S")._Fmtfirst;
+}
+std::string format_time(std::chrono::year_month_day const& other) {
+  std::tm t;
+  t.tm_year = int32_t(other.year());
+  t.tm_mon = uint32_t(other.month());
+  t.tm_mday = uint32_t(other.day());
+  return std::put_time(&t, "%Y-%m-%d")._Fmtfirst;
+}
+std::string format_time(
+    std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) {
+  std::tm t;
+  t.tm_hour = uint32_t(other.hours().count());
+  t.tm_min = uint32_t(other.minutes().count());
+  t.tm_sec = uint32_t(other.seconds().count());
+  return std::put_time(&t, "%H:%M:%S")._Fmtfirst;
+}
+Entry& Entry::operator=(std::tm const& other) noexcept {
+  entries_.clear();
+  type_ = Entry::Type::kTimestamp;
+
+  str_ = format_time(other);
+  data_ = std::make_unique<TimePoint>(other);
+  tag_ = "";
+  return *this;
+}
+Entry& Entry::operator=(std::chrono::year_month_day const& other) noexcept {
+  entries_.clear();
+  type_ = Entry::Type::kDate;
+  str_ = format_time(other);
+  data_ = std::make_unique<TimePoint>(other);
+  tag_ = "";
+  return *this;
+}
+Entry& Entry::operator=(
+    std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) noexcept {
+  entries_.clear();
+  type_ = Entry::Type::kDate;
+  str_ = format_time(other);
+  data_ = std::make_unique<TimePoint>(other);
+  tag_ = "";
+  return *this;
+}
 
 Entry& Entry::key() const {
   if (!is_pair()) {
@@ -274,15 +350,13 @@ inline std::chrono::year_month_day Entry::to_date() const {
   }
   return reinterpret_cast<const TimePoint*>(data_.get())->date_;
 }
-inline std::chrono::time_point<std::chrono::microseconds> Entry::to_datetime()
-    const {
+inline std::tm Entry::to_datetime() const {
   if (!is_timestamp()) {
     throw std::invalid_argument("This entry is not a timestamp");
   }
   return reinterpret_cast<const TimePoint*>(data_.get())->datetime_;
 }
-inline std::chrono::time_point<std::chrono::microseconds> Entry::to_time_point()
-    const {
+inline std::tm Entry::to_time_point() const {
   if (!is_timestamp()) {
     throw std::invalid_argument("This entry is not a timestamp");
   }

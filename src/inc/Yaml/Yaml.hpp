@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <chrono>
+#include <iomanip>
 #include <map>
 #include <memory>
 #include <set>
@@ -29,8 +30,11 @@ class Entry {
     kUInt
   };
   Entry() noexcept;
-  Entry(Type type);
-  Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value);
+  ~Entry() = default;
+  explicit Entry(Type type);
+  explicit Entry(Entry&& entry) noexcept;
+  explicit Entry(Entry const& entry) = delete;
+  explicit Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value);
   explicit Entry(std::string_view const& other) noexcept;
   explicit Entry(int64_t const& other) noexcept;
   explicit Entry(int32_t const& other) noexcept;
@@ -41,19 +45,37 @@ class Entry {
   explicit Entry(long double const& other) noexcept;
   explicit Entry(double const& other) noexcept;
   explicit Entry(float const& other) noexcept;
+  explicit Entry(std::tm const& other) noexcept;
+  explicit Entry(std::chrono::year_month_day const& other) noexcept;
+  explicit Entry(
+      std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) noexcept;
   // Accepts only values that are convertible by std::string
   template <typename T>
-  Entry(std::vector<T> const& other) noexcept {
+  explicit Entry(std::vector<T>&& other) noexcept {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T1, typename T2>
-  Entry(std::map<T1, T2> const& other) noexcept {
+  explicit Entry(std::map<T1, T2>&& other) noexcept {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T>
-  Entry(std::set<T> const& other) noexcept {
+  explicit Entry(std::set<T>&& other) noexcept {
+    operator=(other);
+  }
+  template <typename T>
+  explicit Entry(std::vector<T> const& other) noexcept {
+    operator=(other);
+  }
+  // Accepts only values that are convertible by std::string
+  template <typename T1, typename T2>
+  explicit Entry(std::map<T1, T2> const& other) noexcept {
+    operator=(other);
+  }
+  // Accepts only values that are convertible by std::string
+  template <typename T>
+  explicit Entry(std::set<T> const& other) noexcept {
     operator=(other);
   }
   auto begin() const noexcept { return entries_.begin(); }
@@ -98,10 +120,15 @@ class Entry {
   bool operator==(long double const& other) const noexcept;
   bool operator==(double const& other) const noexcept;
   bool operator==(float const& other) const noexcept;
+  bool operator==(std::tm const& other) const noexcept;
+  bool operator==(std::chrono::year_month_day const& other) const noexcept;
+  bool operator==(std::chrono::hh_mm_ss<std::chrono::microseconds> const& other)
+      const noexcept;
   // if the entry was not found, this function will create the new one with
   // value None
   Entry& operator[](std::string_view const& key);
   Entry& operator[](size_t const& i);
+  Entry& operator=(Entry const& entry) = delete;
   Entry& operator=(std::string_view const& other) noexcept;
   Entry& operator=(bool const& other) noexcept;
   Entry& operator=(int64_t const& other) noexcept;
@@ -113,15 +140,57 @@ class Entry {
   Entry& operator=(long double const& other) noexcept;
   Entry& operator=(double const& other) noexcept;
   Entry& operator=(float const& other) noexcept;
+  Entry& operator=(std::tm const& other) noexcept;
+  Entry& operator=(std::chrono::year_month_day const& other) noexcept;
+  Entry& operator=(
+      std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) noexcept;
   // TODO
   // figure out how to move assignments below to the .cpp file
   // Accepts only values that are convertible by std::string
+  template <typename T>
+  Entry& operator=(std::vector<T>&& other) noexcept {
+    entries_.clear();
+    type_ = Entry::Type::kSequence;
+    for (auto const& t : other) {
+      entries_.emplace_back(std::move(Entry(t)));
+    }
+    tag_ = "";
+    str_ = Serialize();
+    return *this;
+  }
+  template <typename T1, typename T2>
+  Entry& operator=(std::map<T1, T2>&& other) noexcept {
+    entries_.clear();
+    type_ = Entry::Type::kMap;
+    for (auto const& [t1, t2] : other) {
+      // Call an Entry() with two entries as parameters
+      entries_.emplace_back(std::make_unique<Entry>(std::move(t1)),
+                            std::make_unique<Entry>(std::move(t2)));
+    }
+    tag_ = "";
+    str_ = Serialize();
+    return *this;
+  }
+  template <typename T>
+  Entry& operator=(std::set<T>&& other) noexcept {
+    entries_.clear();
+    type_ = Entry::Type::kSet;
+    for (auto const& t : other) {
+      // Call an Entry() with two entries as parameters, the value is set to be
+      // Null
+      entries_.emplace_back(Entry(t), Entry());
+    }
+    tag_ = "set";
+    str_ = Serialize();
+    return *this;
+  }
+
   template <typename T>
   Entry& operator=(std::vector<T> const& other) noexcept {
     entries_.clear();
     type_ = Entry::Type::kSequence;
     for (auto const& t : other) {
-      entries_.emplace_back(Entry(t));
+      entries_.emplace_back(std::move(Entry(t)));
     }
     tag_ = "";
     str_ = Serialize();
@@ -133,7 +202,8 @@ class Entry {
     type_ = Entry::Type::kMap;
     for (auto const& [t1, t2] : other) {
       // Call an Entry() with two entries as parameters
-      entries_.emplace_back(Entry(t1), Entry(t2));
+      entries_.emplace_back(std::make_unique<Entry>(std::move(t1)),
+                            std::make_unique<Entry>(std::move(t2)));
     }
     tag_ = "";
     str_ = Serialize();
@@ -158,8 +228,8 @@ class Entry {
 
   std::chrono::hh_mm_ss<std::chrono::microseconds> to_time() const;
   std::chrono::year_month_day to_date() const;
-  std::chrono::time_point<std::chrono::microseconds> to_datetime() const;
-  std::chrono::time_point<std::chrono::microseconds> to_time_point() const;
+  std::tm to_datetime() const;
+  std::tm to_time_point() const;
 
   long double to_double() const;
   int64_t to_int() const;
@@ -171,6 +241,21 @@ class Entry {
   Type const& type() const { return type_; }
   std::string const& str() const { return str_; }
   std::string const& tag() const { return tag_; }
+  
+  void append(Entry&& entry) {
+      if (is_sequence()) {
+          entries_.push_back(std::move(entry));
+          return;
+      }
+      if (is_map()) {
+          if (entry.is_pair()) {
+              entries_.push_back(std::move(entry));
+          }
+          throw std::invalid_argument("This entry is a map, but the argument is not a pair");
+          return;
+      }
+      throw std::invalid_argument("This entry is not a sequence nor a map");
+  }
 
   std::string Serialize() const noexcept { return ""; }
 
@@ -200,9 +285,28 @@ class Entry {
     explicit Boolean(bool boolean) : boolean_(boolean) {}
   };
   struct TimePoint : public AbstractValue {
-    std::chrono::time_point<std::chrono::microseconds> datetime_;
+    std::tm datetime_;
     std::chrono::year_month_day date_;
     std::chrono::hh_mm_ss<std::chrono::microseconds> time_;
+    explicit TimePoint(std::tm tm) : datetime_(tm) {
+      using namespace std::chrono;
+      date_ =
+          year_month_day(year(tm.tm_year), month(tm.tm_mon), day(tm.tm_mday));
+      time_ = hh_mm_ss<std::chrono::microseconds>(microseconds::duration(
+          3600000000ULL * tm.tm_hour + 60000000ULL * tm.tm_min +
+          1000000 * tm.tm_sec));
+    }
+    explicit TimePoint(std::chrono::year_month_day date) : date_(date) {
+      datetime_.tm_year = int32_t(date.year());
+      datetime_.tm_mon = uint32_t(date.month());
+      datetime_.tm_mday = uint32_t(date.day());
+    }
+    explicit TimePoint(std::chrono::hh_mm_ss<std::chrono::microseconds> time)
+        : time_(time) {
+      datetime_.tm_hour = uint32_t(time.hours().count());
+      datetime_.tm_min = uint32_t(time.minutes().count());
+      datetime_.tm_sec = uint32_t(time.seconds().count());
+    }
   };
 
   std::vector<Entry> entries_;
