@@ -27,8 +27,6 @@ static inline void CheckCompileErrors(GLuint shader, std::string type) {
   }
 }
 
-
-
 Shader::Shader(std::string const& vertexShaderCode,
                std::string const& fragmentShaderCode,
                std::string const& geometryShaderCode) {
@@ -57,7 +55,7 @@ Shader::Shader(std::string const& vertexShaderCode,
   glAttachShader(*id_, fragment);
   if (geometryShaderCode.size() != 0) glAttachShader(*id_, geometry);
   glLinkProgram(*id_);
-  CheckCompileErrors(*id_,"PROGRAM");
+  CheckCompileErrors(*id_, "PROGRAM");
   glDeleteShader(vertex);
   glDeleteShader(fragment);
   if (geometryShaderCode.size() != 0) glDeleteShader(geometry);
@@ -77,16 +75,16 @@ Shader::~Shader() {
 }
 
 void Shader::set_bool(std::string const& name, bool value) const {
-    glUniform1i(GetLocation(name), (int)value);
+  glUniform1i(GetLocation(name), (int)value);
 }
 void Shader::set_int(std::string const& name, int value) const {
-    glUniform1i(GetLocation(name), value);
+  glUniform1i(GetLocation(name), value);
 }
 void Shader::set_uint(std::string const& name, uint32_t value) const {
-    glUniform1ui(GetLocation(name), value);
+  glUniform1ui(GetLocation(name), value);
 }
 void Shader::set_float(std::string const& name, float value) const {
-    glUniform1f(GetLocation(name), value);
+  glUniform1f(GetLocation(name), value);
 }
 
 void Shader::set_bvec1(std::string const& name, glm::bvec1 const& value) const {
@@ -282,33 +280,29 @@ void Shader::set_dvec(std::string const& name, glm::dvec4 const& value) const {
 }
 
 void Shader::set_mat(std::string const& name, glm::mat2 const& value) const {
-    set_mat2(name, value);
+  set_mat2(name, value);
 }
 void Shader::set_mat(std::string const& name, glm::mat3 const& value) const {
-    set_mat3(name, value);
+  set_mat3(name, value);
 }
 void Shader::set_mat(std::string const& name, glm::mat4 const& value) const {
-    set_mat4(name, value);
+  set_mat4(name, value);
 }
 void Shader::set_mat(std::string const& name, glm::mat2x3 const& value) const {
-    set_mat2x3(name, value);
+  set_mat2x3(name, value);
 }
 void Shader::set_mat(std::string const& name, glm::mat2x4 const& value) const {
-    set_mat2x4(name, value);
+  set_mat2x4(name, value);
 }
 void Shader::set_mat(std::string const& name, glm::mat3x2 const& value) const {
-    set_mat3x2(name, value);
+  set_mat3x2(name, value);
 }
 void Shader::set_mat(std::string const& name, glm::mat3x4 const& value) const {
-    set_mat3x4(name, value);
+  set_mat3x4(name, value);
 }
 void Shader::set_mat(std::string const& name, glm::mat4x2 const& value) const {
-    set_mat4x2(name, value);
+  set_mat4x2(name, value);
 }
 void Shader::set_mat(std::string const& name, glm::mat4x3 const& value) const {
-    set_mat4x3(name, value);
+  set_mat4x3(name, value);
 }
-
-
-
-

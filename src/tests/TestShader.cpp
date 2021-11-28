@@ -12,16 +12,16 @@
 namespace fs = std::filesystem;
 
 void initOpenGL(int major = 3, int minor = 3) {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(
-        1000, 1000, "shader test", NULL, NULL);
-    ASSERT_FALSE(window == NULL) << "Failed to create GLFW window" << std::endl;
-    glfwMakeContextCurrent(window);
-    ASSERT_TRUE(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) << "Failed to load glad" << std::endl;
+  glfwInit();
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+  GLFWwindow* window = glfwCreateWindow(1000, 1000, "shader test", NULL, NULL);
+  ASSERT_FALSE(window == NULL) << "Failed to create GLFW window" << std::endl;
+  glfwMakeContextCurrent(window);
+  ASSERT_TRUE(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+      << "Failed to load glad" << std::endl;
 }
 
 class TestShader : public ::testing::Test {
@@ -57,50 +57,50 @@ TEST_F(TestShader, TestLoading) {
 }
 
 TEST_F(TestShader, TestSettersExceptions) {
-    initOpenGL(3, 3);
-    std::shared_ptr<Shader> shader;
-    ASSERT_NO_THROW(shader = std::make_shared<Shader>(
-        shaders_->GetFile("TestShader/test.vert"),
-        shaders_->GetFile("TestShader/test.frag"),
-        shaders_->GetFile("TestShader/test.geom")));
-    shader->Use();
-    ASSERT_THROW(shader->set_bool("a", false), std::invalid_argument);
-    ASSERT_THROW(shader->set_int("b", 0), std::invalid_argument);
-    ASSERT_THROW(shader->set_uint("c", 1), std::invalid_argument);
-    ASSERT_THROW(shader->set_float("d", 123), std::invalid_argument);
-    ASSERT_THROW(shader->set_vec("e", glm::vec1(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_vec("f", glm::vec2(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_vec("g", glm::vec3(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_vec("h", glm::vec4(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_mat("j", glm::mat2x2(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_mat("k", glm::mat2x3(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_mat("l", glm::mat2x4(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_mat("m", glm::mat3x2(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_mat("n", glm::mat3x3(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_mat("o", glm::mat3x4(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_mat("p", glm::mat4x2(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_mat("q", glm::mat4x3(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_mat("r", glm::mat4x4(0)), std::invalid_argument);
+  initOpenGL(3, 3);
+  std::shared_ptr<Shader> shader;
+  ASSERT_NO_THROW(shader = std::make_shared<Shader>(
+                      shaders_->GetFile("TestShader/test.vert"),
+                      shaders_->GetFile("TestShader/test.frag"),
+                      shaders_->GetFile("TestShader/test.geom")));
+  shader->Use();
+  ASSERT_THROW(shader->set_bool("a", false), std::invalid_argument);
+  ASSERT_THROW(shader->set_int("b", 0), std::invalid_argument);
+  ASSERT_THROW(shader->set_uint("c", 1), std::invalid_argument);
+  ASSERT_THROW(shader->set_float("d", 123), std::invalid_argument);
+  ASSERT_THROW(shader->set_vec("e", glm::vec1(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_vec("f", glm::vec2(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_vec("g", glm::vec3(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_vec("h", glm::vec4(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_mat("j", glm::mat2x2(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_mat("k", glm::mat2x3(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_mat("l", glm::mat2x4(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_mat("m", glm::mat3x2(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_mat("n", glm::mat3x3(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_mat("o", glm::mat3x4(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_mat("p", glm::mat4x2(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_mat("q", glm::mat4x3(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_mat("r", glm::mat4x4(0)), std::invalid_argument);
 
-    ASSERT_THROW(shader->set_dvec1("dvec1_v", glm::dvec1(0)), std::runtime_error);
-    ASSERT_THROW(shader->set_dvec2("dvec2_v", glm::dvec2(0)), std::runtime_error);
-    ASSERT_THROW(shader->set_dvec3("dvec3_v", glm::dvec3(0)), std::runtime_error);
-    ASSERT_THROW(shader->set_dvec4("dvec4_v", glm::dvec4(0)), std::runtime_error);
+  ASSERT_THROW(shader->set_dvec1("dvec1_v", glm::dvec1(0)), std::runtime_error);
+  ASSERT_THROW(shader->set_dvec2("dvec2_v", glm::dvec2(0)), std::runtime_error);
+  ASSERT_THROW(shader->set_dvec3("dvec3_v", glm::dvec3(0)), std::runtime_error);
+  ASSERT_THROW(shader->set_dvec4("dvec4_v", glm::dvec4(0)), std::runtime_error);
 
-    ASSERT_THROW(shader->set_bvec("a", glm::bvec1(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_bvec("b", glm::bvec2(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_bvec("c", glm::bvec3(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_bvec("d", glm::bvec4(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_bvec("a", glm::bvec1(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_bvec("b", glm::bvec2(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_bvec("c", glm::bvec3(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_bvec("d", glm::bvec4(0)), std::invalid_argument);
 
-    ASSERT_THROW(shader->set_ivec("a", glm::ivec1(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_ivec("b", glm::ivec2(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_ivec("c", glm::ivec3(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_ivec("d", glm::ivec4(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_ivec("a", glm::ivec1(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_ivec("b", glm::ivec2(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_ivec("c", glm::ivec3(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_ivec("d", glm::ivec4(0)), std::invalid_argument);
 
-    ASSERT_THROW(shader->set_uvec("a", glm::uvec1(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_uvec("b", glm::uvec2(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_uvec("c", glm::uvec3(0)), std::invalid_argument);
-    ASSERT_THROW(shader->set_uvec("d", glm::uvec4(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_uvec("a", glm::uvec1(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_uvec("b", glm::uvec2(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_uvec("c", glm::uvec3(0)), std::invalid_argument);
+  ASSERT_THROW(shader->set_uvec("d", glm::uvec4(0)), std::invalid_argument);
 }
 TEST_F(TestShader, TestSetters) {
   initOpenGL(4, 3);
@@ -114,7 +114,7 @@ TEST_F(TestShader, TestSetters) {
   ASSERT_NO_THROW(shader->set_int("int_v", 0));
   ASSERT_NO_THROW(shader->set_uint("uint_v", 1));
   ASSERT_NO_THROW(shader->set_float("float_v", false));
-  
+
   ASSERT_NO_THROW(shader->set_bvec1("bvec1_v", glm::bvec1(0)));
   ASSERT_NO_THROW(shader->set_bvec2("bvec2_v", glm::bvec2(0)));
   ASSERT_NO_THROW(shader->set_bvec3("bvec3_v", glm::bvec3(0)));
