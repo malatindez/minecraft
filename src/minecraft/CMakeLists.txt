@@ -13,11 +13,11 @@ add_custom_target(
     "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/packer.exe"
   COMMAND
     "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/packer.exe"
-    "${CMAKE_BINARY_DIR}/runtime_directory/resource.pack"
+    "${CMAKE_BINARY_DIR}/runtime_directory/resources.pack"
     "${CMAKE_CURRENT_SOURCE_DIR}/resources"
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   COMMENT
-    "Packing the resources folder to resource.pack @ ${CMAKE_BINARY_DIR}/runtime_directory/resource.pack"
+    "Packing the resources folder to resources.pack @ ${CMAKE_BINARY_DIR}/runtime_directory/resource.pack"
   SOURCES ${PACKER_SOURCES})
 add_dependencies(pack_resources packer)
 add_dependencies(minecraft pack_resources)
