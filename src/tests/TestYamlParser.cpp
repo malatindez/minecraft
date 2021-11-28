@@ -5,6 +5,11 @@
 #include "gtest/gtest.h"
 namespace chrono = std::chrono;
 using namespace yaml;
+TEST(TestYamlParser, BasicTest) {
+  Entry entry(Entry::Type::kMap);
+  std::vector<int> t;
+  entry["Resolution"] = t;
+}
 TEST(TestYamlParser, TestCollections_SequenceOfScalars) {
   Entry entry = Parse(R"(
 - Mark McGwire

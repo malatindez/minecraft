@@ -2,10 +2,10 @@
 namespace yaml {
 
 Entry::Entry() noexcept { type_ = Entry::Type::kNull; }
+Entry::Entry(Type type) : type_(type) {}
 Entry::Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value) {
   type_ = Entry::Type::kPair;
   data_ = std::make_unique<Pair>(std::move(key), std::move(value));
-  tag_ = "";
   str_ = Serialize();
 }
 Entry::Entry(std::string_view const& other) noexcept { operator=(other); }
@@ -146,7 +146,7 @@ Entry& Entry::operator[](std::string_view const& key) {
                                   entry.key().to_string() == key;
                          });
   if (it == entries_.end()) {
-    throw std::invalid_argument("The key is not valid");
+    return entries_.emplace_back();
   }
   return it->value();
 }
@@ -245,45 +245,6 @@ Entry& Entry::operator=(float const& other) noexcept {
   str_ = std::to_string(other);
   data_ = std::make_unique<Double>(other);
   tag_ = "";
-  return *this;
-}
-// Accepts only values that are convertible by std::string
-template <typename T>
-Entry& Entry::operator=(std::vector<T> const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kSequence;
-  for (T const& t : other) {
-    entries_.emplace_back(Entry(t));
-  }
-  tag_ = "";
-  str_ = Serialize();
-  return *this;
-}
-// Accepts only values that are convertible by std::string
-template <typename T1, typename T2>
-Entry& Entry::operator=(std::map<T1, T2> const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kMap;
-  for (auto const& [t1, t2] : other) {
-    // Call an Entry() with two entries as parameters
-    entries_.emplace_back(Entry(t1), Entry(t2));
-  }
-  tag_ = "";
-  str_ = Serialize();
-  return *this;
-}
-// Accepts only values that are convertible by std::string
-template <typename T>
-Entry& Entry::operator=(std::set<T> const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kSet;
-  for (T const& t : other) {
-    // Call an Entry() with two entries as parameters, the value is set to be
-    // Null
-    entries_.emplace_back(Entry(t), Entry());
-  }
-  tag_ = "set";
-  str_ = Serialize();
   return *this;
 }
 

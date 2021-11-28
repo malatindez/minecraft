@@ -29,6 +29,7 @@ class Entry {
     kUInt
   };
   Entry() noexcept;
+  Entry(Type type);
   Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value);
   explicit Entry(std::string_view const& other) noexcept;
   explicit Entry(int64_t const& other) noexcept;
@@ -40,6 +41,21 @@ class Entry {
   explicit Entry(long double const& other) noexcept;
   explicit Entry(double const& other) noexcept;
   explicit Entry(float const& other) noexcept;
+  // Accepts only values that are convertible by std::string
+  template <typename T>
+  Entry(std::vector<T> const& other) noexcept {
+    operator=(other);
+  }
+  // Accepts only values that are convertible by std::string
+  template <typename T1, typename T2>
+  Entry(std::map<T1, T2> const& other) noexcept {
+    operator=(other);
+  }
+  // Accepts only values that are convertible by std::string
+  template <typename T>
+  Entry(std::set<T> const& other) noexcept {
+    operator=(other);
+  }
   auto begin() const noexcept { return entries_.begin(); }
   auto end() const noexcept { return entries_.end(); }
   size_t size() const noexcept { return entries_.size(); }
@@ -82,6 +98,8 @@ class Entry {
   bool operator==(long double const& other) const noexcept;
   bool operator==(double const& other) const noexcept;
   bool operator==(float const& other) const noexcept;
+  // if the entry was not found, this function will create the new one with
+  // value None
   Entry& operator[](std::string_view const& key);
   Entry& operator[](size_t const& i);
   Entry& operator=(std::string_view const& other) noexcept;
@@ -95,15 +113,46 @@ class Entry {
   Entry& operator=(long double const& other) noexcept;
   Entry& operator=(double const& other) noexcept;
   Entry& operator=(float const& other) noexcept;
+  // TODO
+  // figure out how to move assignments below to the .cpp file
   // Accepts only values that are convertible by std::string
   template <typename T>
-  Entry& operator=(std::vector<T> const& other) noexcept;
-  // Accepts only values that are convertible by std::string
+  Entry& operator=(std::vector<T> const& other) noexcept {
+    entries_.clear();
+    type_ = Entry::Type::kSequence;
+    for (auto const& t : other) {
+      entries_.emplace_back(Entry(t));
+    }
+    tag_ = "";
+    str_ = Serialize();
+    return *this;
+  }
   template <typename T1, typename T2>
-  Entry& operator=(std::map<T1, T2> const& other) noexcept;
-  // Accepts only values that are convertible by std::string
+  Entry& operator=(std::map<T1, T2> const& other) noexcept {
+    entries_.clear();
+    type_ = Entry::Type::kMap;
+    for (auto const& [t1, t2] : other) {
+      // Call an Entry() with two entries as parameters
+      entries_.emplace_back(Entry(t1), Entry(t2));
+    }
+    tag_ = "";
+    str_ = Serialize();
+    return *this;
+  }
   template <typename T>
-  Entry& operator=(std::set<T> const& other) noexcept;
+  Entry& operator=(std::set<T> const& other) noexcept {
+    entries_.clear();
+    type_ = Entry::Type::kSet;
+    for (auto const& t : other) {
+      // Call an Entry() with two entries as parameters, the value is set to be
+      // Null
+      entries_.emplace_back(Entry(t), Entry());
+    }
+    tag_ = "set";
+    str_ = Serialize();
+    return *this;
+  }
+
   Entry& key() const;
   Entry& value() const;
 
@@ -160,7 +209,7 @@ class Entry {
   Type type_ = Entry::Type::kNull;
   std::string str_ = "";
   std::string tag_ = "";
-  std::unique_ptr<AbstractValue> data_;
+  std::unique_ptr<AbstractValue> data_ = nullptr;
 };
 Entry Parse(std::string_view const& string);
 }  // namespace yaml
