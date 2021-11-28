@@ -67,15 +67,8 @@ class Entry {
   bool operator==(long double const& other) const noexcept;
   bool operator==(double const& other) const noexcept;
   bool operator==(float const& other) const noexcept;
-  Entry operator[](std::string_view const& key) const {
-    /* TODO */
-    return Entry();
-  }
-  Entry operator[](size_t i) const {
-    /* TODO */
-    return Entry();
-  }
-
+  Entry const& operator[](std::string_view const& key) const;
+  Entry const& operator[](size_t i) const;
   Entry const& key() const;
   Entry const& value() const;
 

@@ -135,6 +135,29 @@ bool Entry::operator==(double const& other) const noexcept {
 bool Entry::operator==(float const& other) const noexcept {
   return is_double() && to_double() == other;
 }
+Entry const& Entry::operator[](std::string_view const& key) const {
+  if (!is_map()) {
+    throw std::invalid_argument("This entry is not a map");
+  }
+  auto it = std::find_if(entries_.begin(), entries_.end(),
+                         [&key](Entry const& entry) {
+                           return entry.is_pair() && entry.key().is_string() &&
+                                  entry.key().to_string() == key;
+                         });
+  if (it == entries_.end()) {
+    throw std::invalid_argument("The key is not valid");
+  }
+  return it->value();
+}
+Entry const& Entry::operator[](size_t i) const {
+  if (!is_map() && !is_sequence()) {
+    throw std::invalid_argument("This entry is not a map nor a sequence");
+  }
+  if (entries_.size() < i) {
+    throw std::invalid_argument("The key is not valid");
+  }
+  return entries_[i];
+}
 
 Entry const& Entry::key() const {
   if (!is_pair()) {
