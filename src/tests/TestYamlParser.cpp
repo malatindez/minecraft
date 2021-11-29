@@ -1,18 +1,22 @@
 #include <chrono>
 #include <cmath>
+#include <iostream>
 
 #include "Yaml/Yaml.hpp"
 #include "gtest/gtest.h"
 namespace chrono = std::chrono;
 using namespace yaml;
 TEST(TestYamlParser, BasicTest) {
-    using namespace std::chrono;
+  using namespace std::chrono;
   Entry entry(Entry::Type::kMap);
 
   std::vector<int> t{1024, 768};
-  entry["Resolution"] = t;
+  entry["Resolution"]["Seq"] = t;
+  entry["Resolution"]["Map"] =
+      std::map<std::string, int>{{"x", 1024}, {"y", 768}};
   std::map<std::string, int> map{
       {"first", 1}, {"second", 2}, {"third", 3}, {"fourth", 4}};
+
   entry["data"]["thing"] = std::move(map);
 
   auto now = system_clock::now();
@@ -36,7 +40,13 @@ TEST(TestYamlParser, BasicTest) {
   entry["data"]["timestamp"] = tm;
   entry["data"]["date"] = ymd;
   entry["data"]["time"] = hms;
-  entry.Serialize();
+  //  entry["data"]["thing"]["first"] = entry["data"]["timestamp"];
+  std::string str;
+  for (std::string& i : entry.Serialize()) {
+    str.insert(str.size(), std::move(i));
+    str += '\n';
+  }
+  std::cout << str;
 }
 TEST(TestYamlParser, TestCollections_SequenceOfScalars) {
   Entry entry = Parse(R"(
@@ -467,7 +477,7 @@ TEST(TestYamlParser, TestTags_OrderedMappings) {
 - Sammy Sosa: 63
 - Ken Griffey: 58)");
   ASSERT_EQ(entry.tag(), "omap");
-  ASSERT_TRUE(entry.is_omap());
+  ASSERT_TRUE(entry.is_map());
   ASSERT_EQ(entry["Mark McGwire"], 65);
   ASSERT_EQ(entry["Sammy Sosa"], 63);
   ASSERT_EQ(entry["Ken Griffey"], 58);
