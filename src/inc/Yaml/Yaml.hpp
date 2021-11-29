@@ -12,15 +12,15 @@ namespace yaml {
 
 class Entry {
  public:
-  enum class Type {
+  enum class Type : unsigned char {
     kBool,
     kDate,
     kDir,
     kDouble,
     kInt,
+    kLink,
     kMap,
     kNull,
-    kOMap,
     kPair,
     kSequence,
     kSet,
@@ -29,58 +29,70 @@ class Entry {
     kTimestamp,
     kUInt
   };
-  Entry() noexcept;
+  Entry(Entry* parent = nullptr) noexcept;
   ~Entry() = default;
-  explicit Entry(Type type);
-  explicit Entry(Entry&& entry) noexcept;
-  explicit Entry(Entry const& entry) = delete;
-  explicit Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value);
-  explicit Entry(std::string_view const& other) noexcept;
-  explicit Entry(int64_t const& other) noexcept;
-  explicit Entry(int32_t const& other) noexcept;
-  explicit Entry(int16_t const& other) noexcept;
-  explicit Entry(uint64_t const& other) noexcept;
-  explicit Entry(uint32_t const& other) noexcept;
-  explicit Entry(uint16_t const& other) noexcept;
-  explicit Entry(long double const& other) noexcept;
-  explicit Entry(double const& other) noexcept;
-  explicit Entry(float const& other) noexcept;
-  explicit Entry(std::tm const& other) noexcept;
-  explicit Entry(std::chrono::year_month_day const& other) noexcept;
-  explicit Entry(
-      std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) noexcept;
+  explicit Entry(Type type, Entry* parent = nullptr) noexcept;
+  explicit Entry(Entry&& entry, Entry* parent = nullptr) noexcept;
+  explicit Entry(Entry& entry, Entry* parent = nullptr) noexcept;
+  explicit Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value,
+                 Entry* parent = nullptr) noexcept;
+  explicit Entry(std::string_view const& other,
+                 Entry* parent = nullptr) noexcept;
+  explicit Entry(int64_t const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(int32_t const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(int16_t const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(uint64_t const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(uint32_t const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(uint16_t const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(long double const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(double const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(float const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(std::tm const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(std::chrono::year_month_day const& other,
+                 Entry* parent = nullptr) noexcept;
+  explicit Entry(std::chrono::hh_mm_ss<std::chrono::microseconds> const& other,
+                 Entry* parent = nullptr) noexcept;
   // Accepts only values that are convertible by std::string
   template <typename T>
-  explicit Entry(std::vector<T>&& other) noexcept {
+  explicit Entry(std::vector<T>&& other, Entry* parent = nullptr)
+      : parent_(parent) {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T1, typename T2>
-  explicit Entry(std::map<T1, T2>&& other) noexcept {
+  explicit Entry(std::map<T1, T2>&& other, Entry* parent = nullptr)
+      : parent_(parent) {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T>
-  explicit Entry(std::set<T>&& other) noexcept {
+  explicit Entry(std::set<T>&& other, Entry* parent = nullptr)
+      : parent_(parent) {
     operator=(other);
   }
   template <typename T>
-  explicit Entry(std::vector<T> const& other) noexcept {
+  explicit Entry(std::vector<T> const& other, Entry* parent = nullptr)
+      : parent_(parent) {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T1, typename T2>
-  explicit Entry(std::map<T1, T2> const& other) noexcept {
+  explicit Entry(std::map<T1, T2> const& other, Entry* parent = nullptr)
+      : parent_(parent) {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T>
-  explicit Entry(std::set<T> const& other) noexcept {
+  explicit Entry(std::set<T> const& other, Entry* parent = nullptr)
+      : parent_(parent) {
     operator=(other);
   }
   auto begin() const noexcept { return entries_.begin(); }
   auto end() const noexcept { return entries_.end(); }
   size_t size() const noexcept { return entries_.size(); }
+  inline bool is_simple_type() const noexcept {
+    return !is_pair() && !is_sequence() && !is_map() && !is_set();
+  }
   inline bool is_bool() const noexcept { return type_ == Type::kBool; }
   inline bool is_date() const noexcept { return type_ == Type::kDate; }
   inline bool is_directive() const noexcept { return type_ == Type::kDir; }
@@ -88,7 +100,6 @@ class Entry {
   inline bool is_int() const noexcept { return type_ == Type::kInt; }
   inline bool is_map() const noexcept { return type_ == Type::kMap; }
   inline bool is_null() const noexcept { return type_ == Type::kNull; }
-  inline bool is_omap() const noexcept { return type_ == Type::kOMap; }
   inline bool is_pair() const noexcept { return type_ == Type::kPair; }
   inline bool is_sequence() const noexcept { return type_ == Type::kSequence; }
   inline bool is_set() const noexcept { return type_ == Type::kSet; }
@@ -127,8 +138,11 @@ class Entry {
   // if the entry was not found, this function will create the new one with
   // value None
   Entry& operator[](std::string_view const& key);
+  Entry& operator[](Entry& key);
   Entry& operator[](size_t const& i);
-  Entry& operator=(Entry const& entry) = delete;
+  Entry& operator[](Entry&& key);
+  Entry& operator[](Entry const& key);
+  Entry& operator=(Entry& entry) noexcept;
   Entry& operator=(std::string_view const& other) noexcept;
   Entry& operator=(bool const& other) noexcept;
   Entry& operator=(int64_t const& other) noexcept;
@@ -155,7 +169,7 @@ class Entry {
       entries_.emplace_back(std::move(Entry(t)));
     }
     tag_ = "";
-    str_ = Serialize();
+    str_ = "";
     return *this;
   }
   template <typename T1, typename T2>
@@ -168,7 +182,7 @@ class Entry {
                             std::make_unique<Entry>(std::move(t2)));
     }
     tag_ = "";
-    str_ = Serialize();
+    str_ = "";
     return *this;
   }
   template <typename T>
@@ -193,7 +207,7 @@ class Entry {
       entries_.emplace_back(std::move(Entry(t)));
     }
     tag_ = "";
-    str_ = Serialize();
+    str_ = "";
     return *this;
   }
   template <typename T1, typename T2>
@@ -241,23 +255,12 @@ class Entry {
   Type const& type() const { return type_; }
   std::string const& str() const { return str_; }
   std::string const& tag() const { return tag_; }
-  
-  void append(Entry&& entry) {
-      if (is_sequence()) {
-          entries_.push_back(std::move(entry));
-          return;
-      }
-      if (is_map()) {
-          if (entry.is_pair()) {
-              entries_.push_back(std::move(entry));
-          }
-          throw std::invalid_argument("This entry is a map, but the argument is not a pair");
-          return;
-      }
-      throw std::invalid_argument("This entry is not a sequence nor a map");
-  }
 
-  std::string Serialize() const noexcept { return ""; }
+  void append(Entry&& entry);
+
+  std::vector<std::string> Serialize() const noexcept;
+
+  Entry* parent() const noexcept { return parent_; }
 
  private:
   struct AbstractValue {};
@@ -308,12 +311,17 @@ class Entry {
       datetime_.tm_sec = uint32_t(time.seconds().count());
     }
   };
+  struct Link : public AbstractValue {
+    Entry* link_;
+    explicit Link(Entry* link) : link_(link) {}
+  };
 
   std::vector<Entry> entries_;
   Type type_ = Entry::Type::kNull;
   std::string str_ = "";
   std::string tag_ = "";
   std::unique_ptr<AbstractValue> data_ = nullptr;
+  Entry* parent_ = nullptr;
 };
 Entry Parse(std::string_view const& string);
 }  // namespace yaml
