@@ -6,12 +6,11 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include<span>
 namespace yaml {
-
 class Entry {
  public:
   enum class Type : unsigned char {
@@ -114,97 +113,98 @@ class Entry {
   }
   constexpr bool is_uint() const noexcept { return type_ == Type::kUInt; }
 
-
   constexpr bool contains(std::string_view const& string) const {
-      if (!is_sequence() && !is_map()) {
-          throw std::invalid_argument("This entry is not a sequence nor a map");
-      }
-      return std::any_of(
-          entries_.begin(), entries_.end(),
-          [&string](std::unique_ptr<Entry> const& entry) {
-              return (entry->is_string() && entry->to_string() == string) ||
-                  (entry->is_pair() && entry->key().is_string() &&
-                      entry->key().to_string() == string);
-          });
+    if (!is_sequence() && !is_map()) {
+      throw std::invalid_argument("This entry is not a sequence nor a map");
+    }
+    return std::any_of(
+        entries_.begin(), entries_.end(),
+        [&string](std::unique_ptr<Entry> const& entry) {
+          return (entry->is_string() && entry->to_string() == string) ||
+                 (entry->is_pair() && entry->key().is_string() &&
+                  entry->key().to_string() == string);
+        });
   }
   constexpr bool contains(int64_t integer) const {
-      if (!is_sequence()) {
-          throw std::invalid_argument("This entry is not a sequence");
-      }
-      return std::any_of(entries_.begin(), entries_.end(),
-          [&integer](std::unique_ptr<Entry> const& entry) {
-              return *entry == integer;
-          });
-      return false;
+    if (!is_sequence()) {
+      throw std::invalid_argument("This entry is not a sequence");
+    }
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&integer](std::unique_ptr<Entry> const& entry) {
+                         return *entry == integer;
+                       });
   }
   constexpr bool contains(int32_t integer) const {
-      if (!is_sequence()) {
-          throw std::invalid_argument("This entry is not a sequence");
-      }
-      return std::any_of(entries_.begin(), entries_.end(),
-          [&integer](std::unique_ptr<Entry> const& entry) {
-              return *entry == integer;
-          });
+    if (!is_sequence()) {
+      throw std::invalid_argument("This entry is not a sequence");
+    }
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&integer](std::unique_ptr<Entry> const& entry) {
+                         return *entry == integer;
+                       });
   }
   constexpr bool contains(int16_t integer) const {
-      if (!is_sequence()) {
-          throw std::invalid_argument("This entry is not a sequence");
-      }
-      return std::any_of(entries_.begin(), entries_.end(),
-          [&integer](std::unique_ptr<Entry> const& entry) {
-              return *entry == integer;
-          });
+    if (!is_sequence()) {
+      throw std::invalid_argument("This entry is not a sequence");
+    }
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&integer](std::unique_ptr<Entry> const& entry) {
+                         return *entry == integer;
+                       });
   }
   constexpr bool contains(uint64_t integer) const {
-      if (!is_sequence()) {
-          throw std::invalid_argument("This entry is not a sequence");
-      }
-      return std::any_of(entries_.begin(), entries_.end(),
-          [&integer](std::unique_ptr<Entry> const& entry) {
-              return *entry == integer;
-          });
+    if (!is_sequence()) {
+      throw std::invalid_argument("This entry is not a sequence");
+    }
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&integer](std::unique_ptr<Entry> const& entry) {
+                         return *entry == integer;
+                       });
   }
   constexpr bool contains(uint32_t integer) const {
-      if (!is_sequence()) {
-          throw std::invalid_argument("This entry is not a sequence");
-      }
-      return std::any_of(entries_.begin(), entries_.end(),
-          [&integer](std::unique_ptr<Entry> const& entry) {
-              return *entry == integer;
-          });
+    if (!is_sequence()) {
+      throw std::invalid_argument("This entry is not a sequence");
+    }
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&integer](std::unique_ptr<Entry> const& entry) {
+                         return *entry == integer;
+                       });
   }
   constexpr bool contains(uint16_t integer) const {
-      if (!is_sequence()) {
-          throw std::invalid_argument("This entry is not a sequence");
-      }
-      return std::any_of(entries_.begin(), entries_.end(),
-          [&integer](std::unique_ptr<Entry> const& entry) {
-              return *entry == integer;
-          });
+    if (!is_sequence()) {
+      throw std::invalid_argument("This entry is not a sequence");
+    }
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&integer](std::unique_ptr<Entry> const& entry) {
+                         return *entry == integer;
+                       });
   }
   constexpr bool contains(long double real) const {
-      if (!is_sequence()) {
-          throw std::invalid_argument("This entry is not a sequence");
-      }
-      return std::any_of(
-          entries_.begin(), entries_.end(),
-          [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
+    if (!is_sequence()) {
+      throw std::invalid_argument("This entry is not a sequence");
+    }
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&real](std::unique_ptr<Entry> const& entry) {
+                         return *entry == real;
+                       });
   }
   constexpr bool contains(double real) const {
-      if (!is_sequence()) {
-          throw std::invalid_argument("This entry is not a sequence");
-      }
-      return std::any_of(
-          entries_.begin(), entries_.end(),
-          [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
+    if (!is_sequence()) {
+      throw std::invalid_argument("This entry is not a sequence");
+    }
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&real](std::unique_ptr<Entry> const& entry) {
+                         return *entry == real;
+                       });
   }
   constexpr bool contains(float real) const {
-      if (!is_sequence()) {
-          throw std::invalid_argument("This entry is not a sequence");
-      }
-      return std::any_of(
-          entries_.begin(), entries_.end(),
-          [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
+    if (!is_sequence()) {
+      throw std::invalid_argument("This entry is not a sequence");
+    }
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&real](std::unique_ptr<Entry> const& entry) {
+                         return *entry == real;
+                       });
   }
 
   bool operator==(Entry const& other) const noexcept;
@@ -344,6 +344,7 @@ class Entry {
   std::string const& tag() const { return tag_; }
 
   void append(Entry&& entry);
+  void append(std::unique_ptr<Entry> entry);
 
   std::vector<std::string> Serialize() const noexcept;
 
@@ -427,8 +428,8 @@ class Entry {
   Entry* parent_ = nullptr;
 };
 class InvalidSyntax : public std::invalid_argument {
-public:
-    using std::invalid_argument::invalid_argument;
+ public:
+  using std::invalid_argument::invalid_argument;
 };
 Entry Parse(std::string_view const& string);
 }  // namespace yaml

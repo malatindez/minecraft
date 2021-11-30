@@ -431,13 +431,16 @@ inline bool Entry::to_boolean() const {
 inline std::string_view Entry::to_string() const noexcept { return str_; }
 
 void Entry::append(Entry&& entry) {
+  append(std::make_unique<Entry>(std::move(entry), this));
+}
+void Entry::append(std::unique_ptr<Entry> entry) {
   if (is_sequence()) {
-    entries_.emplace_back(std::make_unique<Entry>(std::move(entry), this));
+    entries_.emplace_back(std::move(entry));
     return;
   }
   if (is_map()) {
-    if (entry.is_pair()) {
-      entries_.emplace_back(std::make_unique<Entry>(std::move(entry), this));
+    if (entry->is_pair()) {
+      entries_.emplace_back(std::move(entry));
     }
     throw std::invalid_argument(
         "This entry is a map, but the argument is not a pair");
