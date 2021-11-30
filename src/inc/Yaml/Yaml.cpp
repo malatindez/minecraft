@@ -1,19 +1,25 @@
 #include "Yaml.hpp"
 namespace yaml {
 
-Entry::Entry(Entry* parent) noexcept : parent_(parent) {
-  type_ = Entry::Type::kNull;
-}
 Entry::Entry(Type type, Entry* parent) noexcept
     : type_(type), parent_(parent) {}
 
 Entry::Entry(Entry&& entry, Entry* parent) noexcept
-    : type_(entry.type_), str_(entry.str_), tag_(entry.tag_), parent_(parent) {
+    : type_(entry.type_),
+      str_(entry.str_),
+      tag_(entry.tag_),
+      parent_(entry.parent_) {
   entries_ = std::move(entry.entries_);
   data_ = std::move(entry.data_);
+  if (parent != nullptr) {
+    parent_ = parent;
+  }
 }
-Entry::Entry(Entry& entry, Entry* parent) noexcept : parent_(parent) {
+Entry::Entry(Entry& entry, Entry* parent) noexcept : parent_(entry.parent_) {
   operator=(entry);
+  if (parent != nullptr) {
+    parent_ = parent;
+  }
 }
 Entry::Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value,
              Entry* parent) noexcept
@@ -73,18 +79,19 @@ bool Entry::contains(std::string_view const& string) const {
     throw std::invalid_argument("This entry is not a sequence nor a map");
   }
   return std::any_of(
-      entries_.begin(), entries_.end(), [&string](Entry const& entry) {
-        return (entry.is_string() && entry.to_string() == string) ||
-               (entry.is_pair() && entry.key().is_string() &&
-                entry.key().to_string() == string);
+      entries_.begin(), entries_.end(),
+      [&string](std::unique_ptr<Entry> const& entry) {
+        return (entry->is_string() && entry->to_string() == string) ||
+               (entry->is_pair() && entry->key().is_string() &&
+                entry->key().to_string() == string);
       });
 }
 bool Entry::contains(int64_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  for (Entry const& entry : entries_) {
-    if (entry == integer) {
+  for (std::unique_ptr<Entry> const& entry : entries_) {
+    if (*entry == integer) {
       return true;
     }
   }
@@ -94,62 +101,70 @@ bool Entry::contains(int32_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&integer](Entry const& entry) { return entry == integer; });
+  return std::any_of(entries_.begin(), entries_.end(),
+                     [&integer](std::unique_ptr<Entry> const& entry) {
+                       return *entry == integer;
+                     });
 }
 bool Entry::contains(int16_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&integer](Entry const& entry) { return entry == integer; });
+  return std::any_of(entries_.begin(), entries_.end(),
+                     [&integer](std::unique_ptr<Entry> const& entry) {
+                       return *entry == integer;
+                     });
 }
 bool Entry::contains(uint64_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&integer](Entry const& entry) { return entry == integer; });
+  return std::any_of(entries_.begin(), entries_.end(),
+                     [&integer](std::unique_ptr<Entry> const& entry) {
+                       return *entry == integer;
+                     });
 }
 bool Entry::contains(uint32_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&integer](Entry const& entry) { return entry == integer; });
+  return std::any_of(entries_.begin(), entries_.end(),
+                     [&integer](std::unique_ptr<Entry> const& entry) {
+                       return *entry == integer;
+                     });
 }
 bool Entry::contains(uint16_t integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&integer](Entry const& entry) { return entry == integer; });
+  return std::any_of(entries_.begin(), entries_.end(),
+                     [&integer](std::unique_ptr<Entry> const& entry) {
+                       return *entry == integer;
+                     });
 }
 bool Entry::contains(long double real) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  return std::any_of(entries_.begin(), entries_.end(),
-                     [&real](Entry const& entry) { return entry == real; });
+  return std::any_of(
+      entries_.begin(), entries_.end(),
+      [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
 }
 bool Entry::contains(double real) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  return std::any_of(entries_.begin(), entries_.end(),
-                     [&real](Entry const& entry) { return entry == real; });
+  return std::any_of(
+      entries_.begin(), entries_.end(),
+      [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
 }
 bool Entry::contains(float real) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  return std::any_of(entries_.begin(), entries_.end(),
-                     [&real](Entry const& entry) { return entry == real; });
+  return std::any_of(
+      entries_.begin(), entries_.end(),
+      [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
 }
 
 bool Entry::operator==(Entry const& other) const noexcept {
@@ -209,17 +224,19 @@ Entry& Entry::operator[](std::string_view const& key) {
     operator=(std::map<int, int>());
   }
   auto it = std::find_if(entries_.begin(), entries_.end(),
-                         [&key](Entry const& entry) {
-                           return entry.is_pair() && entry.key().is_string() &&
-                                  entry.key().to_string() == key;
+                         [&key](std::unique_ptr<Entry> const& entry) {
+                           return entry->is_pair() &&
+                                  entry->key().is_string() &&
+                                  entry->key().to_string() == key;
                          });
   if (it == entries_.end()) {
     return entries_
-        .emplace_back(std::make_unique<Entry>(key), std::make_unique<Entry>(),
-                      this)
-        .value();
+        .emplace_back(
+            std::make_unique<Entry>(std::make_unique<Entry>(key),
+                                    std::make_unique<Entry>(Type::kNull), this))
+        ->value();
   }
-  return it->value();
+  return (*it)->value();
 }
 Entry& Entry::operator[](Entry&& key) {
   if (!is_null() && !is_map()) {
@@ -229,16 +246,17 @@ Entry& Entry::operator[](Entry&& key) {
     operator=(std::map<int, int>());
   }
   auto it = std::find_if(entries_.begin(), entries_.end(),
-                         [&key](Entry const& entry) {
-                           return entry.is_pair() && entry.key() == key;
+                         [&key](std::unique_ptr<Entry> const& entry) {
+                           return entry->is_pair() && entry->key() == key;
                          });
   if (it == entries_.end()) {
     return entries_
-        .emplace_back(std::make_unique<Entry>(std::move(key)),
-                      std::make_unique<Entry>(), this)
-        .value();
+        .emplace_back(std::make_unique<Entry>(
+            std::make_unique<Entry>(std::move(key), nullptr),
+            std::make_unique<Entry>(Type::kNull), this))
+        ->value();
   }
-  return it->value();
+  return (*it)->value();
 }
 
 Entry& Entry::operator[](Entry const& key) {
@@ -249,13 +267,13 @@ Entry& Entry::operator[](Entry const& key) {
     operator=(std::map<int, int>());
   }
   auto it = std::find_if(entries_.begin(), entries_.end(),
-                         [&key](Entry const& entry) {
-                           return entry.is_pair() && entry.key() == key;
+                         [&key](std::unique_ptr<Entry> const& entry) {
+                           return entry->is_pair() && entry->key() == key;
                          });
   if (it == entries_.end()) {
     throw std::invalid_argument("Invalid key");
   }
-  return it->value();
+  return (*it)->value();
 }
 Entry& Entry::operator[](size_t const& i) {
   if (!is_map() && !is_sequence()) {
@@ -264,7 +282,7 @@ Entry& Entry::operator[](size_t const& i) {
   if (entries_.size() < i) {
     throw std::invalid_argument("The index is not valid");
   }
-  return entries_[i];
+  return *entries_[i];
 }
 bool recusive_validity_check(Entry const& entry, Entry const& key) {
   if (auto parent = entry.parent(); parent != nullptr) {
@@ -275,9 +293,9 @@ bool recusive_validity_check(Entry const& entry, Entry const& key) {
   }
   return true;
 }
-Entry& Entry::operator=(Entry& entry) noexcept {
-  if (recusive_validity_check(*this, entry) &&
-      recusive_validity_check(entry, *this)) {
+Entry& Entry::operator=(Entry& entry) {
+  if (!(*this != entry && recusive_validity_check(*this, entry) &&
+        recusive_validity_check(entry, *this))) {
     throw std::invalid_argument("The entry cannot contain itself");
   }
   entries_.clear();
@@ -437,85 +455,86 @@ Entry& Entry::key() const {
   if (!is_pair()) {
     throw std::invalid_argument("This entry is not a pair");
   }
-  return *reinterpret_cast<const Pair*>(data_.get())->key_;
+  return *static_cast<Pair*>(data_.get())->key_;
 }
 
 Entry& Entry::value() const {
   if (!is_pair()) {
     throw std::invalid_argument("This entry is not a pair");
   }
-  return *reinterpret_cast<const Pair*>(data_.get())->value_;
+  return *static_cast<Pair*>(data_.get())->value_;
 }
 
 inline std::chrono::hh_mm_ss<std::chrono::microseconds> Entry::to_time() const {
   if (!is_time() && !is_timestamp()) {
     throw std::invalid_argument("This entry is not a time");
   }
-  return reinterpret_cast<const TimePoint*>(data_.get())->time_;
+  return static_cast<TimePoint*>(data_.get())->time_;
 }
 inline std::chrono::year_month_day Entry::to_date() const {
   if (!is_date() && !is_timestamp()) {
     throw std::invalid_argument("This entry is not date");
   }
-  return reinterpret_cast<const TimePoint*>(data_.get())->date_;
+  return static_cast<TimePoint*>(data_.get())->date_;
 }
 inline std::tm Entry::to_datetime() const {
   if (!is_timestamp()) {
     throw std::invalid_argument("This entry is not a timestamp");
   }
-  return reinterpret_cast<const TimePoint*>(data_.get())->datetime_;
+  return static_cast<TimePoint*>(data_.get())->datetime_;
 }
 inline std::tm Entry::to_time_point() const {
   if (!is_timestamp()) {
     throw std::invalid_argument("This entry is not a timestamp");
   }
-  return reinterpret_cast<const TimePoint*>(data_.get())->datetime_;
+  return static_cast<TimePoint*>(data_.get())->datetime_;
 }
 
 inline long double Entry::to_double() const {
   if (!is_double()) {
     throw std::invalid_argument("This entry is not a double");
   }
-  return reinterpret_cast<const Double*>(data_.get())->double_;
+  return static_cast<Double*>(data_.get())->double_;
 }
 inline long long int Entry::to_int() const {
   if (!is_int()) {
     throw std::invalid_argument("This entry is not an integer");
   }
-  return reinterpret_cast<const Integer*>(data_.get())->integer_;
+  return static_cast<Integer*>(data_.get())->integer_;
 }
 inline uint64_t Entry::to_uint() const {
   if (!is_uint()) {
     throw std::invalid_argument("This entry is not an unsigned integer");
   }
-  return reinterpret_cast<const UnsignedInteger*>(data_.get())
-      ->unsigned_integer_;
+  return static_cast<UnsignedInteger*>(data_.get())->unsigned_integer_;
 }
 
 inline bool Entry::to_bool() const {
   if (!is_bool()) {
     throw std::invalid_argument("This entry is not a boolean");
   }
-  return reinterpret_cast<const Boolean*>(data_.get())->boolean_;
+  return static_cast<Boolean*>(data_.get())->boolean_;
 }
 inline bool Entry::to_boolean() const {
   if (!is_bool()) {
     throw std::invalid_argument("This entry is not a boolean");
   }
-  return reinterpret_cast<const Boolean*>(data_.get())->boolean_;
+  return static_cast<Boolean*>(data_.get())->boolean_;
 }
 inline std::string_view Entry::to_string() const noexcept { return str_; }
 
-Entry Parse(std::string_view const& string) { return Entry(); }
+Entry Parse(std::string_view const& string) {
+  return Entry(Entry::Type::kNull);
+}
 
 void Entry::append(Entry&& entry) {
   if (is_sequence()) {
-    entries_.push_back(std::move(entry));
+    entries_.emplace_back(std::make_unique<Entry>(std::move(entry), this));
     return;
   }
   if (is_map()) {
     if (entry.is_pair()) {
-      entries_.push_back(std::move(entry));
+      entries_.emplace_back(std::make_unique<Entry>(std::move(entry), this));
     }
     throw std::invalid_argument(
         "This entry is a map, but the argument is not a pair");
@@ -523,77 +542,100 @@ void Entry::append(Entry&& entry) {
   }
   throw std::invalid_argument("This entry is not a sequence nor a map");
 }
+inline std::vector<std::string> SerializeMap(
+    std::vector<std::unique_ptr<Entry>> const& entries) {
+  std::vector<std::string> return_value;
+  for (std::unique_ptr<Entry> const& entry : entries) {
+    if (!entry->is_pair()) {
+      continue;
+    }
+    for (std::string& str : entry->Serialize()) {
+      return_value.emplace_back(std::move(str));
+    }
+  }
+  return std::move(return_value);
+}
+inline std::vector<std::string> SerializeSet(
+    std::vector<std::unique_ptr<Entry>> const& entries) {
+  std::vector<std::string> return_value;
+  for (std::unique_ptr<Entry> const& entry : entries) {
+    if (!entry->is_pair()) {
+      continue;
+    }
+    auto t = entry->Serialize();
+
+    for (std::string& str : t) {
+      str.insert(0, "  ");
+    }
+    t[0][0] = '?';
+    for (std::string& str : t) {
+      return_value.emplace_back(std::move(str));
+    }
+  }
+  return std::move(return_value);
+}
+inline std::vector<std::string> SerializeSequence(
+    std::vector<std::unique_ptr<Entry>> const& entries) {
+  std::vector<std::string> return_value;
+  for (std::unique_ptr<Entry> const& entry : entries) {
+    auto t = entry->Serialize();
+
+    for (std::string& str : t) {
+      str.insert(0, "  ");
+    }
+    t[0][0] = '-';
+    for (std::string& str : t) {
+      return_value.emplace_back(std::move(str));
+    }
+  }
+  return std::move(return_value);
+}
+inline std::vector<std::string> SerializePair(Entry const& entry) {
+  std::vector<std::string> return_value;
+  if (entry.key().is_simple_type() && entry.value().is_simple_type()) {
+    return_value.emplace_back(entry.key().Serialize()[0] + ": " +
+                              entry.value().Serialize()[0]);
+  } else if (entry.key().is_simple_type()) {
+    auto t = entry.key().Serialize()[0] + ": ";
+    return_value.emplace_back(std::move(t));
+    auto y = entry.value().Serialize();
+    for (std::string& str : y) {
+      str.insert(0, "  ");
+    }
+    for (std::string& str : y) {
+      return_value.emplace_back(std::move(str));
+    }
+  } else {
+    auto t = entry.key().Serialize();
+    for (std::string& str : t) {
+      str.insert(0, "  ");
+    }
+    t[0][0] = '?';
+    for (std::string& str : t) {
+      return_value.emplace_back(std::move(str));
+    }
+    t = entry.value().Serialize();
+
+    for (std::string& str : t) {
+      str.insert(0, "  ");
+    }
+    t[0][0] = ':';
+    for (std::string& str : t) {
+      return_value.emplace_back(std::move(str));
+    }
+  }
+  return std::move(return_value);
+}
 std::vector<std::string> Entry::Serialize() const noexcept {
   std::vector<std::string> return_value;
   if (is_map()) {
-    for (Entry const& entry : entries_) {
-      if (entry.type_ != Type::kPair) {
-        break;
-      }
-      for (std::string& str : entry.Serialize()) {
-        return_value.emplace_back(std::move(str));
-      }
-    }
+    return_value = SerializeMap(entries_);
   } else if (is_set()) {
-    for (Entry const& entry : entries_) {
-      if (entry.type_ != Type::kPair) {
-        break;
-      }
-      auto t = entry.Serialize();
-
-      for (std::string& str : t) {
-        str.insert(0, "  ");
-      }
-      t[0][0] = '?';
-      for (std::string& str : t) {
-        return_value.emplace_back(std::move(str));
-      }
-    }
+    return_value = SerializeSet(entries_);
   } else if (is_sequence()) {
-    for (Entry const& entry : entries_) {
-      auto t = entry.Serialize();
-
-      for (std::string& str : t) {
-        str.insert(0, "  ");
-      }
-      t[0][0] = '-';
-      for (std::string& str : t) {
-        return_value.emplace_back(std::move(str));
-      }
-    }
+    return_value = SerializeSequence(entries_);
   } else if (is_pair()) {
-    if (key().is_simple_type() && value().is_simple_type()) {
-      return_value.emplace_back(key().Serialize()[0] + ": " +
-                                value().Serialize()[0]);
-    } else if (key().is_simple_type()) {
-      auto t = key().Serialize()[0] + ": ";
-      return_value.emplace_back(std::move(t));
-      auto y = value().Serialize();
-      for (std::string& str : y) {
-        str.insert(0, "  ");
-      }
-      for (std::string& str : y) {
-        return_value.emplace_back(std::move(str));
-      }
-    } else {
-      auto t = key().Serialize();
-      for (std::string& str : t) {
-        str.insert(0, "  ");
-      }
-      t[0][0] = '?';
-      for (std::string& str : t) {
-        return_value.emplace_back(std::move(str));
-      }
-      t = value().Serialize();
-
-      for (std::string& str : t) {
-        str.insert(0, "  ");
-      }
-      t[0][0] = ':';
-      for (std::string& str : t) {
-        return_value.emplace_back(std::move(str));
-      }
-    }
+    return_value = SerializePair(*this);
   } else if (is_uint()) {
     return_value = std::vector<std::string>{std::to_string(to_uint())};
   } else if (is_int()) {
@@ -610,6 +652,11 @@ std::vector<std::string> Entry::Serialize() const noexcept {
     return_value = std::vector<std::string>{std::string(to_string())};
   } else if (is_string()) {
     return_value = std::vector<std::string>{std::string(to_string())};
+  } else if (is_link()) {
+    return_value = link_value().Serialize();
+  }
+  if (return_value.empty()) {
+    return_value.emplace_back("");
   }
   return return_value;
 }

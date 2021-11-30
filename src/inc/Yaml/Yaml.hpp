@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <set>
@@ -29,7 +30,6 @@ class Entry {
     kTimestamp,
     kUInt
   };
-  Entry(Entry* parent = nullptr) noexcept;
   ~Entry() = default;
   explicit Entry(Type type, Entry* parent = nullptr) noexcept;
   explicit Entry(Entry&& entry, Entry* parent = nullptr) noexcept;
@@ -98,6 +98,7 @@ class Entry {
   inline bool is_directive() const noexcept { return type_ == Type::kDir; }
   inline bool is_double() const noexcept { return type_ == Type::kDouble; }
   inline bool is_int() const noexcept { return type_ == Type::kInt; }
+  inline bool is_link() const noexcept { return type_ == Type::kLink; }
   inline bool is_map() const noexcept { return type_ == Type::kMap; }
   inline bool is_null() const noexcept { return type_ == Type::kNull; }
   inline bool is_pair() const noexcept { return type_ == Type::kPair; }
@@ -142,7 +143,7 @@ class Entry {
   Entry& operator[](size_t const& i);
   Entry& operator[](Entry&& key);
   Entry& operator[](Entry const& key);
-  Entry& operator=(Entry& entry) noexcept;
+  Entry& operator=(Entry& entry);
   Entry& operator=(std::string_view const& other) noexcept;
   Entry& operator=(bool const& other) noexcept;
   Entry& operator=(int64_t const& other) noexcept;
@@ -166,7 +167,7 @@ class Entry {
     entries_.clear();
     type_ = Entry::Type::kSequence;
     for (auto const& t : other) {
-      entries_.emplace_back(std::move(Entry(t)));
+      entries_.emplace_back(std::move(t), this);
     }
     tag_ = "";
     str_ = "";
@@ -178,8 +179,10 @@ class Entry {
     type_ = Entry::Type::kMap;
     for (auto const& [t1, t2] : other) {
       // Call an Entry() with two entries as parameters
-      entries_.emplace_back(std::make_unique<Entry>(std::move(t1)),
-                            std::make_unique<Entry>(std::move(t2)));
+      auto const& test = entries_.emplace_back(std::make_unique<Entry>(
+          std::make_unique<Entry>(t1), std::make_unique<Entry>(t2), this));
+      bool a = test->key().parent() == test.get();
+      bool b = test->value().parent() == test.get();
     }
     tag_ = "";
     str_ = "";
@@ -192,7 +195,7 @@ class Entry {
     for (auto const& t : other) {
       // Call an Entry() with two entries as parameters, the value is set to be
       // Null
-      entries_.emplace_back(Entry(t), Entry());
+      entries_.emplace_back(Entry(t), Entry(Type::kNull, nullptr), this);
     }
     tag_ = "set";
     str_ = Serialize();
@@ -204,7 +207,7 @@ class Entry {
     entries_.clear();
     type_ = Entry::Type::kSequence;
     for (auto const& t : other) {
-      entries_.emplace_back(std::move(Entry(t)));
+      entries_.emplace_back(std::make_unique<Entry>(t, this));
     }
     tag_ = "";
     str_ = "";
@@ -217,7 +220,7 @@ class Entry {
     for (auto const& [t1, t2] : other) {
       // Call an Entry() with two entries as parameters
       entries_.emplace_back(std::make_unique<Entry>(std::move(t1)),
-                            std::make_unique<Entry>(std::move(t2)));
+                            std::make_unique<Entry>(std::move(t2)), this);
     }
     tag_ = "";
     str_ = Serialize();
@@ -230,7 +233,7 @@ class Entry {
     for (auto const& t : other) {
       // Call an Entry() with two entries as parameters, the value is set to be
       // Null
-      entries_.emplace_back(Entry(t), Entry());
+      entries_.emplace_back(Entry(t), Entry(Type::kNull, nullptr), this);
     }
     tag_ = "set";
     str_ = Serialize();
@@ -262,8 +265,17 @@ class Entry {
 
   Entry* parent() const noexcept { return parent_; }
 
+  Entry const& link_value() const {
+    if (!is_link()) {
+      throw std::invalid_argument("This entry is not a boolean");
+    }
+    return *static_cast<Link*>(data_.get())->link_;
+  }
+
  private:
-  struct AbstractValue {};
+  struct AbstractValue {
+    virtual ~AbstractValue() = default;
+  };
   struct Pair : public AbstractValue {
     std::unique_ptr<Entry> key_ = nullptr;
     std::unique_ptr<Entry> value_ = nullptr;
@@ -291,7 +303,7 @@ class Entry {
     std::tm datetime_;
     std::chrono::year_month_day date_;
     std::chrono::hh_mm_ss<std::chrono::microseconds> time_;
-    explicit TimePoint(std::tm tm) : datetime_(tm) {
+    explicit TimePoint(std::tm const& tm) : datetime_(tm) {
       using namespace std::chrono;
       date_ =
           year_month_day(year(tm.tm_year), month(tm.tm_mon), day(tm.tm_mday));
@@ -304,7 +316,8 @@ class Entry {
       datetime_.tm_mon = uint32_t(date.month());
       datetime_.tm_mday = uint32_t(date.day());
     }
-    explicit TimePoint(std::chrono::hh_mm_ss<std::chrono::microseconds> time)
+    explicit TimePoint(
+        std::chrono::hh_mm_ss<std::chrono::microseconds> const& time)
         : time_(time) {
       datetime_.tm_hour = uint32_t(time.hours().count());
       datetime_.tm_min = uint32_t(time.minutes().count());
@@ -316,7 +329,7 @@ class Entry {
     explicit Link(Entry* link) : link_(link) {}
   };
 
-  std::vector<Entry> entries_;
+  std::vector<std::unique_ptr<Entry>> entries_;
   Type type_ = Entry::Type::kNull;
   std::string str_ = "";
   std::string tag_ = "";

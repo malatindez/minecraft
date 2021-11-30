@@ -8,9 +8,9 @@ namespace chrono = std::chrono;
 using namespace yaml;
 TEST(TestYamlParser, BasicTest) {
   using namespace std::chrono;
-  Entry entry(Entry::Type::kMap);
+  Entry entry(Entry::Type::kMap, nullptr);
 
-  std::vector<int> t{1024, 768};
+  std::vector<int> t{1024, 768, 123};
   entry["Resolution"]["Seq"] = t;
   entry["Resolution"]["Map"] =
       std::map<std::string, int>{{"x", 1024}, {"y", 768}};
@@ -22,9 +22,6 @@ TEST(TestYamlParser, BasicTest) {
   auto now = system_clock::now();
 
   auto const ld = floor<days>(now);
-  auto i = std::chrono::duration_cast<std::chrono::microseconds>(
-               now.time_since_epoch())
-               .count();
   const year_month_day ymd{ld};
   hh_mm_ss hms{duration_cast<microseconds>(now - ld)};
   std::tm tm = {0};
@@ -40,10 +37,10 @@ TEST(TestYamlParser, BasicTest) {
   entry["data"]["timestamp"] = tm;
   entry["data"]["date"] = ymd;
   entry["data"]["time"] = hms;
-  //  entry["data"]["thing"]["first"] = entry["data"]["timestamp"];
+  entry["data"]["thing"]["first"] = entry["data"]["timestamp"];
   std::string str;
-  for (std::string& i : entry.Serialize()) {
-    str.insert(str.size(), std::move(i));
+  for (std::string const& i : entry.Serialize()) {
+    str.insert(str.size(), i);
     str += '\n';
   }
   std::cout << str;
@@ -61,8 +58,8 @@ TEST(TestYamlParser, TestCollections_SequenceOfScalars) {
   ASSERT_TRUE(entry.contains("Mark McGwire"));
   ASSERT_TRUE(entry.contains("Sammy Sosa"));
   ASSERT_TRUE(entry.contains("Ken Griffey"));
-  for (Entry const& sub_entry : entry) {
-    ASSERT_EQ(sub_entry.type(), Entry::Type::kString);
+  for (std::unique_ptr<Entry> const& sub_entry : entry) {
+    ASSERT_EQ(sub_entry->type(), Entry::Type::kString);
   }
 }
 TEST(TestYamlParser, TestCollections_MappingOfSequences) {
@@ -91,12 +88,12 @@ national:
 - Chicago Cubs
 - Atlanta Braves)");
   ASSERT_EQ(entry.size(), 2);
-  Entry& sub_entry1 = entry["american"];
+  Entry const& sub_entry1 = entry["american"];
   ASSERT_EQ(sub_entry1.size(), 3);
   ASSERT_TRUE(sub_entry1.contains("Boston Red Sox"));
   ASSERT_TRUE(sub_entry1.contains("Detroit Tigers"));
   ASSERT_TRUE(sub_entry1.contains("New York Yankees"));
-  Entry& sub_entry2 = entry["national"];
+  Entry const& sub_entry2 = entry["national"];
   ASSERT_EQ(sub_entry2.size(), 3);
   ASSERT_TRUE(sub_entry2.contains("New York Mets"));
   ASSERT_TRUE(sub_entry2.contains("Chicago Cubs"));
