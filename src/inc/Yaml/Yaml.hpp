@@ -161,7 +161,6 @@ class Entry {
       std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) noexcept;
   // TODO
   // figure out how to move assignments below to the .cpp file
-  // Accepts only values that are convertible by std::string
   template <typename T>
   Entry& operator=(std::vector<T>&& other) noexcept {
     entries_.clear();
@@ -231,8 +230,7 @@ class Entry {
     entries_.clear();
     type_ = Entry::Type::kSet;
     for (auto const& t : other) {
-      // Call an Entry() with two entries as parameters, the value is set to be
-      // Null
+      // Call an Entry() with two entries as parameters, value is null
       entries_.emplace_back(Entry(t), Entry(Type::kNull, nullptr), this);
     }
     tag_ = "set";
@@ -307,7 +305,7 @@ class Entry {
       using namespace std::chrono;
       date_ =
           year_month_day(year(tm.tm_year), month(tm.tm_mon), day(tm.tm_mday));
-      time_ = hh_mm_ss<std::chrono::microseconds>(microseconds::duration(
+      time_ = hh_mm_ss<microseconds>(microseconds::duration(
           3600000000ULL * tm.tm_hour + 60000000ULL * tm.tm_min +
           1000000 * tm.tm_sec));
     }
@@ -315,10 +313,16 @@ class Entry {
       datetime_.tm_year = int32_t(date.year());
       datetime_.tm_mon = uint32_t(date.month());
       datetime_.tm_mday = uint32_t(date.day());
+      datetime_.tm_hour = 0;
+      datetime_.tm_min = 0;
+      datetime_.tm_sec = 0;
     }
     explicit TimePoint(
         std::chrono::hh_mm_ss<std::chrono::microseconds> const& time)
-        : time_(time) {
+        : date_(std::chrono::local_days()), time_(time) {
+      datetime_.tm_year = 0;
+      datetime_.tm_mon = 0;
+      datetime_.tm_mday = 0;
       datetime_.tm_hour = uint32_t(time.hours().count());
       datetime_.tm_min = uint32_t(time.minutes().count());
       datetime_.tm_sec = uint32_t(time.seconds().count());

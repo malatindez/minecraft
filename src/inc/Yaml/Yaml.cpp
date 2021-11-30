@@ -523,10 +523,6 @@ inline bool Entry::to_boolean() const {
 }
 inline std::string_view Entry::to_string() const noexcept { return str_; }
 
-Entry Parse(std::string_view const& string) {
-  return Entry(Entry::Type::kNull);
-}
-
 void Entry::append(Entry&& entry) {
   if (is_sequence()) {
     entries_.emplace_back(std::make_unique<Entry>(std::move(entry), this));
@@ -553,7 +549,7 @@ inline std::vector<std::string> SerializeMap(
       return_value.emplace_back(std::move(str));
     }
   }
-  return std::move(return_value);
+  return return_value;
 }
 inline std::vector<std::string> SerializeSet(
     std::vector<std::unique_ptr<Entry>> const& entries) {
@@ -572,7 +568,7 @@ inline std::vector<std::string> SerializeSet(
       return_value.emplace_back(std::move(str));
     }
   }
-  return std::move(return_value);
+  return return_value;
 }
 inline std::vector<std::string> SerializeSequence(
     std::vector<std::unique_ptr<Entry>> const& entries) {
@@ -588,7 +584,7 @@ inline std::vector<std::string> SerializeSequence(
       return_value.emplace_back(std::move(str));
     }
   }
-  return std::move(return_value);
+  return return_value;
 }
 inline std::vector<std::string> SerializePair(Entry const& entry) {
   std::vector<std::string> return_value;
@@ -624,7 +620,7 @@ inline std::vector<std::string> SerializePair(Entry const& entry) {
       return_value.emplace_back(std::move(str));
     }
   }
-  return std::move(return_value);
+  return return_value;
 }
 std::vector<std::string> Entry::Serialize() const noexcept {
   std::vector<std::string> return_value;
@@ -659,5 +655,8 @@ std::vector<std::string> Entry::Serialize() const noexcept {
     return_value.emplace_back("");
   }
   return return_value;
+}
+Entry Parse(std::string_view const& string) {
+  return Entry(Entry::Type::kNull);
 }
 }  // namespace yaml
