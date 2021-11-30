@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include<span>
 namespace yaml {
 
 class Entry {
@@ -87,40 +88,125 @@ class Entry {
       : parent_(parent) {
     operator=(other);
   }
-  auto begin() const noexcept { return entries_.begin(); }
-  auto end() const noexcept { return entries_.end(); }
+  constexpr auto begin() const noexcept { return entries_.begin(); }
+  constexpr auto end() const noexcept { return entries_.end(); }
   size_t size() const noexcept { return entries_.size(); }
-  inline bool is_simple_type() const noexcept {
+  constexpr bool is_simple_type() const noexcept {
     return !is_pair() && !is_sequence() && !is_map() && !is_set();
   }
-  inline bool is_bool() const noexcept { return type_ == Type::kBool; }
-  inline bool is_date() const noexcept { return type_ == Type::kDate; }
-  inline bool is_directive() const noexcept { return type_ == Type::kDir; }
-  inline bool is_double() const noexcept { return type_ == Type::kDouble; }
-  inline bool is_int() const noexcept { return type_ == Type::kInt; }
-  inline bool is_link() const noexcept { return type_ == Type::kLink; }
-  inline bool is_map() const noexcept { return type_ == Type::kMap; }
-  inline bool is_null() const noexcept { return type_ == Type::kNull; }
-  inline bool is_pair() const noexcept { return type_ == Type::kPair; }
-  inline bool is_sequence() const noexcept { return type_ == Type::kSequence; }
-  inline bool is_set() const noexcept { return type_ == Type::kSet; }
-  inline bool is_string() const noexcept { return type_ == Type::kString; }
-  inline bool is_time() const noexcept { return type_ == Type::kTime; }
-  inline bool is_timestamp() const noexcept {
+  constexpr bool is_bool() const noexcept { return type_ == Type::kBool; }
+  constexpr bool is_date() const noexcept { return type_ == Type::kDate; }
+  constexpr bool is_directive() const noexcept { return type_ == Type::kDir; }
+  constexpr bool is_double() const noexcept { return type_ == Type::kDouble; }
+  constexpr bool is_int() const noexcept { return type_ == Type::kInt; }
+  constexpr bool is_link() const noexcept { return type_ == Type::kLink; }
+  constexpr bool is_map() const noexcept { return type_ == Type::kMap; }
+  constexpr bool is_null() const noexcept { return type_ == Type::kNull; }
+  constexpr bool is_pair() const noexcept { return type_ == Type::kPair; }
+  constexpr bool is_sequence() const noexcept {
+    return type_ == Type::kSequence;
+  }
+  constexpr bool is_set() const noexcept { return type_ == Type::kSet; }
+  constexpr bool is_string() const noexcept { return type_ == Type::kString; }
+  constexpr bool is_time() const noexcept { return type_ == Type::kTime; }
+  constexpr bool is_timestamp() const noexcept {
     return type_ == Type::kTimestamp;
   }
-  inline bool is_uint() const noexcept { return type_ == Type::kUInt; }
+  constexpr bool is_uint() const noexcept { return type_ == Type::kUInt; }
 
-  bool contains(std::string_view const& string) const;
-  bool contains(int64_t integer) const;
-  bool contains(int32_t integer) const;
-  bool contains(int16_t integer) const;
-  bool contains(uint64_t integer) const;
-  bool contains(uint32_t integer) const;
-  bool contains(uint16_t integer) const;
-  bool contains(long double real) const;
-  bool contains(double real) const;
-  bool contains(float real) const;
+
+  constexpr bool contains(std::string_view const& string) const {
+      if (!is_sequence() && !is_map()) {
+          throw std::invalid_argument("This entry is not a sequence nor a map");
+      }
+      return std::any_of(
+          entries_.begin(), entries_.end(),
+          [&string](std::unique_ptr<Entry> const& entry) {
+              return (entry->is_string() && entry->to_string() == string) ||
+                  (entry->is_pair() && entry->key().is_string() &&
+                      entry->key().to_string() == string);
+          });
+  }
+  constexpr bool contains(int64_t integer) const {
+      if (!is_sequence()) {
+          throw std::invalid_argument("This entry is not a sequence");
+      }
+      return std::any_of(entries_.begin(), entries_.end(),
+          [&integer](std::unique_ptr<Entry> const& entry) {
+              return *entry == integer;
+          });
+      return false;
+  }
+  constexpr bool contains(int32_t integer) const {
+      if (!is_sequence()) {
+          throw std::invalid_argument("This entry is not a sequence");
+      }
+      return std::any_of(entries_.begin(), entries_.end(),
+          [&integer](std::unique_ptr<Entry> const& entry) {
+              return *entry == integer;
+          });
+  }
+  constexpr bool contains(int16_t integer) const {
+      if (!is_sequence()) {
+          throw std::invalid_argument("This entry is not a sequence");
+      }
+      return std::any_of(entries_.begin(), entries_.end(),
+          [&integer](std::unique_ptr<Entry> const& entry) {
+              return *entry == integer;
+          });
+  }
+  constexpr bool contains(uint64_t integer) const {
+      if (!is_sequence()) {
+          throw std::invalid_argument("This entry is not a sequence");
+      }
+      return std::any_of(entries_.begin(), entries_.end(),
+          [&integer](std::unique_ptr<Entry> const& entry) {
+              return *entry == integer;
+          });
+  }
+  constexpr bool contains(uint32_t integer) const {
+      if (!is_sequence()) {
+          throw std::invalid_argument("This entry is not a sequence");
+      }
+      return std::any_of(entries_.begin(), entries_.end(),
+          [&integer](std::unique_ptr<Entry> const& entry) {
+              return *entry == integer;
+          });
+  }
+  constexpr bool contains(uint16_t integer) const {
+      if (!is_sequence()) {
+          throw std::invalid_argument("This entry is not a sequence");
+      }
+      return std::any_of(entries_.begin(), entries_.end(),
+          [&integer](std::unique_ptr<Entry> const& entry) {
+              return *entry == integer;
+          });
+  }
+  constexpr bool contains(long double real) const {
+      if (!is_sequence()) {
+          throw std::invalid_argument("This entry is not a sequence");
+      }
+      return std::any_of(
+          entries_.begin(), entries_.end(),
+          [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
+  }
+  constexpr bool contains(double real) const {
+      if (!is_sequence()) {
+          throw std::invalid_argument("This entry is not a sequence");
+      }
+      return std::any_of(
+          entries_.begin(), entries_.end(),
+          [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
+  }
+  constexpr bool contains(float real) const {
+      if (!is_sequence()) {
+          throw std::invalid_argument("This entry is not a sequence");
+      }
+      return std::any_of(
+          entries_.begin(), entries_.end(),
+          [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
+  }
+
   bool operator==(Entry const& other) const noexcept;
   bool operator==(std::string_view const& other) const noexcept;
   bool operator==(int64_t const& other) const noexcept;
@@ -339,6 +425,10 @@ class Entry {
   std::string tag_ = "";
   std::unique_ptr<AbstractValue> data_ = nullptr;
   Entry* parent_ = nullptr;
+};
+class InvalidSyntax : public std::invalid_argument {
+public:
+    using std::invalid_argument::invalid_argument;
 };
 Entry Parse(std::string_view const& string);
 }  // namespace yaml

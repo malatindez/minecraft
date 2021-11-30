@@ -74,99 +74,6 @@ Entry::Entry(std::chrono::hh_mm_ss<std::chrono::microseconds> const& other,
     : parent_(parent) {
   operator=(other);
 }
-bool Entry::contains(std::string_view const& string) const {
-  if (!is_sequence() && !is_map()) {
-    throw std::invalid_argument("This entry is not a sequence nor a map");
-  }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&string](std::unique_ptr<Entry> const& entry) {
-        return (entry->is_string() && entry->to_string() == string) ||
-               (entry->is_pair() && entry->key().is_string() &&
-                entry->key().to_string() == string);
-      });
-}
-bool Entry::contains(int64_t integer) const {
-  if (!is_sequence()) {
-    throw std::invalid_argument("This entry is not a sequence");
-  }
-  for (std::unique_ptr<Entry> const& entry : entries_) {
-    if (*entry == integer) {
-      return true;
-    }
-  }
-  return false;
-}
-bool Entry::contains(int32_t integer) const {
-  if (!is_sequence()) {
-    throw std::invalid_argument("This entry is not a sequence");
-  }
-  return std::any_of(entries_.begin(), entries_.end(),
-                     [&integer](std::unique_ptr<Entry> const& entry) {
-                       return *entry == integer;
-                     });
-}
-bool Entry::contains(int16_t integer) const {
-  if (!is_sequence()) {
-    throw std::invalid_argument("This entry is not a sequence");
-  }
-  return std::any_of(entries_.begin(), entries_.end(),
-                     [&integer](std::unique_ptr<Entry> const& entry) {
-                       return *entry == integer;
-                     });
-}
-bool Entry::contains(uint64_t integer) const {
-  if (!is_sequence()) {
-    throw std::invalid_argument("This entry is not a sequence");
-  }
-  return std::any_of(entries_.begin(), entries_.end(),
-                     [&integer](std::unique_ptr<Entry> const& entry) {
-                       return *entry == integer;
-                     });
-}
-bool Entry::contains(uint32_t integer) const {
-  if (!is_sequence()) {
-    throw std::invalid_argument("This entry is not a sequence");
-  }
-  return std::any_of(entries_.begin(), entries_.end(),
-                     [&integer](std::unique_ptr<Entry> const& entry) {
-                       return *entry == integer;
-                     });
-}
-bool Entry::contains(uint16_t integer) const {
-  if (!is_sequence()) {
-    throw std::invalid_argument("This entry is not a sequence");
-  }
-  return std::any_of(entries_.begin(), entries_.end(),
-                     [&integer](std::unique_ptr<Entry> const& entry) {
-                       return *entry == integer;
-                     });
-}
-bool Entry::contains(long double real) const {
-  if (!is_sequence()) {
-    throw std::invalid_argument("This entry is not a sequence");
-  }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
-}
-bool Entry::contains(double real) const {
-  if (!is_sequence()) {
-    throw std::invalid_argument("This entry is not a sequence");
-  }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
-}
-bool Entry::contains(float real) const {
-  if (!is_sequence()) {
-    throw std::invalid_argument("This entry is not a sequence");
-  }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&real](std::unique_ptr<Entry> const& entry) { return *entry == real; });
-}
-
 bool Entry::operator==(Entry const& other) const noexcept {
   return other.type_ == type_ && str_ == other.str_;
 }
@@ -656,7 +563,13 @@ std::vector<std::string> Entry::Serialize() const noexcept {
   }
   return return_value;
 }
+constexpr bool beginswith(std::string_view const& target, std::string_view const& begin) {
+    return target.compare(begin) == 0;
+}
+constexpr bool contains(std::string_view const& target, std::string_view const& contains) {
+    return target.find(contains) != std::string::npos;
+}
 Entry Parse(std::string_view const& string) {
-  return Entry(Entry::Type::kNull);
+    return Entry(Entry::Type::kNull);
 }
 }  // namespace yaml
