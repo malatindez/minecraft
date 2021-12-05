@@ -17,7 +17,7 @@ void initOpenGL(int major = 3, int minor = 3) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-  GLFWwindow* window = glfwCreateWindow(1000, 1000, "shader test", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(1000, 1000, "shader test", nullptr, nullptr);
   ASSERT_FALSE(window == NULL) << "Failed to create GLFW window" << std::endl;
   glfwMakeContextCurrent(window);
   ASSERT_TRUE(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
