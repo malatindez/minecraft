@@ -58,20 +58,20 @@ TEST(TestYamlParser, TestCollections_SequenceOfScalars) {
   ASSERT_TRUE(entry.contains("Mark McGwire"));
   ASSERT_TRUE(entry.contains("Sammy Sosa"));
   ASSERT_TRUE(entry.contains("Ken Griffey"));
-  for (std::unique_ptr<Entry> const& sub_entry : entry) {
-    ASSERT_EQ(sub_entry->type(), Entry::Type::kString);
+  for (Entry const& sub_entry : entry) {
+    ASSERT_EQ(sub_entry.type(), Entry::Type::kString);
   }
 }
-TEST(TestYamlParser, TestCollections_MappingOfSequences) {
+TEST(TestYamlParser, TestCollections_MappingOfScalarsToScalars) {
   Entry entry = Parse(R"(
 hr:  65    # Home runs
 avg: 0.278 # Batting average
 rbi: 147   # Runs Batted In)");
   ASSERT_EQ(entry.size(), 3);
-  ASSERT_TRUE(entry.is_sequence());
+  ASSERT_TRUE(entry.is_map());
   ASSERT_TRUE(entry["hr"].is_int());
   ASSERT_TRUE(entry["avg"].is_double());
-  ASSERT_TRUE(entry["rbi"].value().is_int());
+  ASSERT_TRUE(entry["rbi"].is_int());
   ASSERT_EQ(entry["hr"].to_int(), 65);
   ASSERT_EQ(entry["avg"].to_double(), 0.278);
   ASSERT_EQ(entry["rbi"], 147);  // operator== implicitly calls to_int()
@@ -132,10 +132,10 @@ TEST(TestYamlParser, TestCollections_SequenceOfSequences) {
   ASSERT_TRUE(entry[0].contains("name") && entry[0].contains("hr") &&
               entry[0].contains("avg"));
   ASSERT_TRUE(entry[1].is_sequence());
-  ASSERT_TRUE(entry[1].contains("Mark McGwire") && entry[0].contains(65) &&
+  ASSERT_TRUE(entry[1].contains("Mark McGwire") && entry[1].contains(65) &&
               entry[1].contains(0.278));
   ASSERT_TRUE(entry[2].is_sequence());
-  ASSERT_TRUE(entry[2].contains("Sammy Sosa") && entry[0].contains(63) &&
+  ASSERT_TRUE(entry[2].contains("Sammy Sosa") && entry[2].contains(63) &&
               entry[2].contains(0.288));
 }
 TEST(TestYamlParser, TestCollections_MappingOfMappings) {
@@ -145,7 +145,7 @@ Sammy Sosa: {
   hr:
     63, avg : 0.288,
  })");
-  ASSERT_EQ(entry.size(), 3);
+  ASSERT_EQ(entry.size(), 2);
   ASSERT_TRUE(entry.is_map());
   ASSERT_TRUE(entry["Mark McGwire"].is_map());
   ASSERT_EQ(entry["Mark McGwire"]["hr"].to_int(), 65);
@@ -247,7 +247,7 @@ TEST(TestYamlParser, TestStructures_MappingBetweenSequences) {
 ? [ New York Yankees,
     Atlanta Braves ]
 : [ 2001-07-02, 2001-08-12,
-    2001-08-14 ]])");
+    2001-08-14 ])");
   ASSERT_TRUE(entry.is_map());
   ASSERT_TRUE(entry[0].is_pair() && entry[0].key().is_sequence() &&
               entry[0].value().is_date());
