@@ -1,4 +1,6 @@
 #pragma once
+#include <errno.h>
+
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
@@ -10,9 +12,41 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
 namespace yaml {
 class Entry {
  public:
+  struct Iterator {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = Entry;
+    using pointer = Entry*;    // or also value_type*
+    using reference = Entry&;  // or also value_type&
+    reference operator*() { return **it; }
+    pointer operator->() { return it->get(); }
+    constexpr Iterator(std::vector<std::unique_ptr<Entry>>::iterator it)
+        : it(it) {}
+    // Prefix increment
+    constexpr Iterator& operator++() {
+      it++;
+      return *this;
+    }
+
+    // Postfix increment
+    constexpr Iterator operator++(int) {
+      Iterator tmp = *this;
+      ++(*this);
+      return tmp;
+    }
+
+    constexpr friend bool operator==(const Iterator& a, const Iterator& b) {
+      return a.it == b.it;
+    };
+
+   private:
+    std::vector<std::unique_ptr<Entry>>::iterator it;
+  };
+
   enum class Type : unsigned char {
     kBool,
     kDate,
@@ -87,8 +121,8 @@ class Entry {
       : parent_(parent) {
     operator=(other);
   }
-  constexpr auto begin() const noexcept { return entries_.begin(); }
-  constexpr auto end() const noexcept { return entries_.end(); }
+  constexpr auto begin() noexcept { return Iterator(entries_.begin()); }
+  constexpr auto end() noexcept { return Iterator(entries_.end()); }
   size_t size() const noexcept { return entries_.size(); }
   constexpr bool is_simple_type() const noexcept {
     return !is_pair() && !is_sequence() && !is_map() && !is_set();
