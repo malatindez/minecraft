@@ -5,6 +5,7 @@
 #include <set>
 
 #include "Parser/Ini.hpp"
+#include "Utils.hpp"
 #include "gtest/gtest.h"
 namespace fs = std::filesystem;
 TEST(TEST_INI, TestSaving) {
@@ -18,13 +19,9 @@ TEST(TEST_INI, TestSaving) {
 
   conf["Controls"]["MovementForward"] = "W";
   conf["Controls"]["MovementBackwards"] = "S";
-  fs::create_directories(
-      {fs::temp_directory_path() / "minecraft_test/test_ini"});
-  std::ofstream ofs(fs::temp_directory_path() /
-                    "minecraft_test/test_ini/TestFile.ini");
   auto t = conf.Serialize();
-  ofs.write(t.c_str(), t.size());
-  ofs.close();
+  CreateFile(fs::temp_directory_path() / "minecraft_test/test_ini/TestFile.ini",
+             t.c_str(), t.size());
 }
 TEST(TEST_INI, TestLoading) {
   std::ifstream ifs(
@@ -49,9 +46,9 @@ TEST(TEST_INI, TestLoading) {
 TEST(TEST_INI, TestTrimming) {
   auto conf = ini::Ini::Deserialize(R"(
 [A]
-B = 0
-C    =      1     
-D =           5)");
+  B = 0  #comments test  23 
+   C    =      1  ; test   
+D   =           5)");
   ASSERT_EQ(conf["A"]["B"], 0);
   ASSERT_EQ(conf["A"]["C"], 1);
   ASSERT_EQ(conf["A"]["D"], 5);
@@ -59,4 +56,50 @@ D =           5)");
   ASSERT_EQ(conf["A"]["C"], "1");
   ASSERT_EQ(conf["A"]["D"], "5");
 }
+static const size_t kRandomSectionsSize = 128;
+static const size_t kRandomIntegerKeysSize = 128;
+static const size_t kRandomDoubleKeysSize = 128;
+static const size_t kRandomStringKeysSize = 128;
+static const size_t kSectionKeySize = 64;
+static const size_t kKeySize = 128;
+static const size_t kStringValueSize = 128;
+static const std::string kSectionKeyCharacters =
+    ExcludeString(kAsciiCharacters, "[]#;\\");
+static const std::string kKeyCharacters =
+    ExcludeString(kAsciiCharacters, "[]=#;\\");
+TEST(TEST_INI, RandomTest) {
+  auto conf = ini::Ini();
+  std::vector<std::string> random_sections;
+  for (size_t i = 0; i < kRandomSectionsSize; i++) {
+    auto t = utils::trim(RandomString(kSectionKeySize, kSectionKeyCharacters));
+    ini::Section& section = conf[t];
+    for (size_t i = 0; i < kRandomIntegerKeysSize; i++) {
+      section[utils::trim(RandomString(kKeySize, kKeyCharacters))] =
+          RandomInteger();
+    }
+    for (size_t i = 0; i < kRandomDoubleKeysSize; i++) {
+      section[utils::trim(RandomString(kKeySize, kKeyCharacters))] =
+          RandomLongDouble();
+    }
+    for (size_t i = 0; i < kRandomStringKeysSize; i++) {
+      section[utils::trim(RandomString(kKeySize, kKeyCharacters))] =
+          utils::trim(RandomString(kStringValueSize, kSectionKeyCharacters));
+    }
+  }
+  auto conf2 = ini::Ini::Deserialize(conf.Serialize());
+  ASSERT_EQ(conf2.size(), conf.size());
+  for (auto& [section_key, section] : conf) {
+    ASSERT_TRUE(conf2.SectionExists(section_key)) << section_key;
+    ini::Section& section2 = conf2[section_key];
+
+    ASSERT_EQ(section.get().size(), section2.size());
+
+    for (auto& [key, entry] : section.get()) {
+      ASSERT_TRUE(section2.Contains(key))
+          << section_key << "    " << key << "    " << entry.get().str();
+      ASSERT_EQ(section2[key], entry);
+    }
+  }
+}
+
 TEST(TEST_INI, TestExceptions) {}
