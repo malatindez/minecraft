@@ -22,9 +22,10 @@ class Entry {
     using value_type = Entry;
     using pointer = Entry*;    // or also value_type*
     using reference = Entry&;  // or also value_type&
-    reference operator*() { return **it; }
-    pointer operator->() { return it->get(); }
-    constexpr Iterator(std::vector<std::unique_ptr<Entry>>::iterator it)
+    [[nodiscard]] constexpr reference operator*() { return **it; }
+    [[nodiscard]] constexpr pointer operator->() { return it->get(); }
+    explicit constexpr Iterator(
+        std::vector<std::unique_ptr<Entry>>::iterator it)
         : it(it) {}
     // Prefix increment
     constexpr Iterator& operator++() {
@@ -39,9 +40,8 @@ class Entry {
       return tmp;
     }
 
-    constexpr friend bool operator==(const Iterator& a, const Iterator& b) {
-      return a.it == b.it;
-    };
+    [[nodiscard]] constexpr friend bool operator==(const Iterator& a,
+                                                   const Iterator& b) = default;
 
    private:
     std::vector<std::unique_ptr<Entry>>::iterator it;
@@ -121,33 +121,63 @@ class Entry {
       : parent_(parent) {
     operator=(other);
   }
-  constexpr auto begin() noexcept { return Iterator(entries_.begin()); }
-  constexpr auto end() noexcept { return Iterator(entries_.end()); }
-  size_t size() const noexcept { return entries_.size(); }
-  constexpr bool is_simple_type() const noexcept {
+  [[nodiscard]] constexpr auto begin() noexcept {
+    return Iterator(entries_.begin());
+  }
+  [[nodiscard]] constexpr auto end() noexcept {
+    return Iterator(entries_.end());
+  }
+  [[nodiscard]] size_t size() const noexcept { return entries_.size(); }
+  [[nodiscard]] constexpr bool is_simple_type() const noexcept {
     return !is_pair() && !is_sequence() && !is_map() && !is_set();
   }
-  constexpr bool is_bool() const noexcept { return type_ == Type::kBool; }
-  constexpr bool is_date() const noexcept { return type_ == Type::kDate; }
-  constexpr bool is_directive() const noexcept { return type_ == Type::kDir; }
-  constexpr bool is_double() const noexcept { return type_ == Type::kDouble; }
-  constexpr bool is_int() const noexcept { return type_ == Type::kInt; }
-  constexpr bool is_link() const noexcept { return type_ == Type::kLink; }
-  constexpr bool is_map() const noexcept { return type_ == Type::kMap; }
-  constexpr bool is_null() const noexcept { return type_ == Type::kNull; }
-  constexpr bool is_pair() const noexcept { return type_ == Type::kPair; }
-  constexpr bool is_sequence() const noexcept {
+  [[nodiscard]] constexpr bool is_bool() const noexcept {
+    return type_ == Type::kBool;
+  }
+  [[nodiscard]] constexpr bool is_date() const noexcept {
+    return type_ == Type::kDate;
+  }
+  [[nodiscard]] constexpr bool is_directive() const noexcept {
+    return type_ == Type::kDir;
+  }
+  [[nodiscard]] constexpr bool is_double() const noexcept {
+    return type_ == Type::kDouble;
+  }
+  [[nodiscard]] constexpr bool is_int() const noexcept {
+    return type_ == Type::kInt;
+  }
+  [[nodiscard]] constexpr bool is_link() const noexcept {
+    return type_ == Type::kLink;
+  }
+  [[nodiscard]] constexpr bool is_map() const noexcept {
+    return type_ == Type::kMap;
+  }
+  [[nodiscard]] constexpr bool is_null() const noexcept {
+    return type_ == Type::kNull;
+  }
+  [[nodiscard]] constexpr bool is_pair() const noexcept {
+    return type_ == Type::kPair;
+  }
+  [[nodiscard]] constexpr bool is_sequence() const noexcept {
     return type_ == Type::kSequence;
   }
-  constexpr bool is_set() const noexcept { return type_ == Type::kSet; }
-  constexpr bool is_string() const noexcept { return type_ == Type::kString; }
-  constexpr bool is_time() const noexcept { return type_ == Type::kTime; }
-  constexpr bool is_timestamp() const noexcept {
+  [[nodiscard]] constexpr bool is_set() const noexcept {
+    return type_ == Type::kSet;
+  }
+  [[nodiscard]] constexpr bool is_string() const noexcept {
+    return type_ == Type::kString;
+  }
+  [[nodiscard]] constexpr bool is_time() const noexcept {
+    return type_ == Type::kTime;
+  }
+  [[nodiscard]] constexpr bool is_timestamp() const noexcept {
     return type_ == Type::kTimestamp;
   }
-  constexpr bool is_uint() const noexcept { return type_ == Type::kUInt; }
+  [[nodiscard]] constexpr bool is_uint() const noexcept {
+    return type_ == Type::kUInt;
+  }
 
-  constexpr bool contains(std::string_view const& string) const {
+  [[nodiscard]] constexpr bool contains(std::string_view const& string) const {
     if (!is_sequence() && !is_map()) {
       throw std::invalid_argument("This entry is not a sequence nor a map");
     }
@@ -159,7 +189,7 @@ class Entry {
                   entry->key().to_string() == string);
         });
   }
-  constexpr bool contains(int64_t integer) const {
+  [[nodiscard]] constexpr bool contains(int64_t integer) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
@@ -168,7 +198,7 @@ class Entry {
                          return *entry == integer;
                        });
   }
-  constexpr bool contains(int32_t integer) const {
+  [[nodiscard]] constexpr bool contains(int32_t integer) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
@@ -177,7 +207,7 @@ class Entry {
                          return *entry == integer;
                        });
   }
-  constexpr bool contains(int16_t integer) const {
+  [[nodiscard]] constexpr bool contains(int16_t integer) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
@@ -186,7 +216,7 @@ class Entry {
                          return *entry == integer;
                        });
   }
-  constexpr bool contains(uint64_t integer) const {
+  [[nodiscard]] constexpr bool contains(uint64_t integer) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
@@ -195,7 +225,7 @@ class Entry {
                          return *entry == integer;
                        });
   }
-  constexpr bool contains(uint32_t integer) const {
+  [[nodiscard]] constexpr bool contains(uint32_t integer) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
@@ -204,7 +234,7 @@ class Entry {
                          return *entry == integer;
                        });
   }
-  constexpr bool contains(uint16_t integer) const {
+  [[nodiscard]] constexpr bool contains(uint16_t integer) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
@@ -213,7 +243,7 @@ class Entry {
                          return *entry == integer;
                        });
   }
-  constexpr bool contains(long double real) const {
+  [[nodiscard]] constexpr bool contains(long double real) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
@@ -222,7 +252,7 @@ class Entry {
                          return *entry == real;
                        });
   }
-  constexpr bool contains(double real) const {
+  [[nodiscard]] constexpr bool contains(double real) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
@@ -231,7 +261,7 @@ class Entry {
                          return *entry == real;
                        });
   }
-  constexpr bool contains(float real) const {
+  [[nodiscard]] constexpr bool contains(float real) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
@@ -241,28 +271,30 @@ class Entry {
                        });
   }
 
-  bool operator==(Entry const& other) const noexcept;
-  bool operator==(std::string_view const& other) const noexcept;
-  bool operator==(int64_t const& other) const noexcept;
-  bool operator==(int32_t const& other) const noexcept;
-  bool operator==(int16_t const& other) const noexcept;
-  bool operator==(uint64_t const& other) const noexcept;
-  bool operator==(uint32_t const& other) const noexcept;
-  bool operator==(uint16_t const& other) const noexcept;
-  bool operator==(long double const& other) const noexcept;
-  bool operator==(double const& other) const noexcept;
-  bool operator==(float const& other) const noexcept;
-  bool operator==(std::tm const& other) const noexcept;
-  bool operator==(std::chrono::year_month_day const& other) const noexcept;
-  bool operator==(std::chrono::hh_mm_ss<std::chrono::microseconds> const& other)
+  [[nodiscard]] bool operator==(Entry const& other) const noexcept;
+  [[nodiscard]] bool operator==(std::string_view const& other) const noexcept;
+  [[nodiscard]] bool operator==(int64_t const& other) const noexcept;
+  [[nodiscard]] bool operator==(int32_t const& other) const noexcept;
+  [[nodiscard]] bool operator==(int16_t const& other) const noexcept;
+  [[nodiscard]] bool operator==(uint64_t const& other) const noexcept;
+  [[nodiscard]] bool operator==(uint32_t const& other) const noexcept;
+  [[nodiscard]] bool operator==(uint16_t const& other) const noexcept;
+  [[nodiscard]] bool operator==(long double const& other) const noexcept;
+  [[nodiscard]] bool operator==(double const& other) const noexcept;
+  [[nodiscard]] bool operator==(float const& other) const noexcept;
+  [[nodiscard]] bool operator==(std::tm const& other) const noexcept;
+  [[nodiscard]] bool operator==(
+      std::chrono::year_month_day const& other) const noexcept;
+  [[nodiscard]] bool operator==(
+      std::chrono::hh_mm_ss<std::chrono::microseconds> const& other)
       const noexcept;
   // if the entry was not found, this function will create the new one with
   // value None
-  Entry& operator[](std::string_view const& key);
-  Entry& operator[](Entry& key);
-  Entry& operator[](size_t const& i);
-  Entry& operator[](Entry&& key);
-  Entry& operator[](Entry const& key);
+  [[nodiscard]] Entry& operator[](std::string_view const& key);
+  [[nodiscard]] Entry& operator[](Entry& key);
+  [[nodiscard]] Entry& operator[](size_t const& i);
+  [[nodiscard]] Entry& operator[](Entry&& key);
+  [[nodiscard]] Entry& operator[](Entry const& key);
   Entry& operator=(Entry& entry);
   Entry& operator=(std::string_view const& other) noexcept;
   Entry& operator=(bool const& other) noexcept;
@@ -358,33 +390,34 @@ class Entry {
     return *this;
   }
 
-  Entry& key() const;
-  Entry& value() const;
+  [[nodiscard]] Entry& key() const;
+  [[nodiscard]] Entry& value() const;
 
-  std::chrono::hh_mm_ss<std::chrono::microseconds> to_time() const;
-  std::chrono::year_month_day to_date() const;
-  std::tm to_datetime() const;
-  std::tm to_time_point() const;
+  [[nodiscard]] std::chrono::hh_mm_ss<std::chrono::microseconds> to_time()
+      const;
+  [[nodiscard]] std::chrono::year_month_day to_date() const;
+  [[nodiscard]] std::tm to_datetime() const;
+  [[nodiscard]] std::tm to_time_point() const;
 
-  long double to_double() const;
-  int64_t to_int() const;
-  uint64_t to_uint() const;
-  bool to_bool() const;
-  bool to_boolean() const;
-  std::string_view to_string() const noexcept;
+  [[nodiscard]] long double to_double() const;
+  [[nodiscard]] int64_t to_int() const;
+  [[nodiscard]] uint64_t to_uint() const;
+  [[nodiscard]] bool to_bool() const;
+  [[nodiscard]] bool to_boolean() const;
+  [[nodiscard]] std::string_view to_string() const noexcept;
 
-  Type const& type() const { return type_; }
-  std::string const& str() const { return str_; }
-  std::string const& tag() const { return tag_; }
+  [[nodiscard]] Type const& type() const { return type_; }
+  [[nodiscard]] std::string const& str() const { return str_; }
+  [[nodiscard]] std::string const& tag() const { return tag_; }
 
   void append(Entry&& entry);
   void append(std::unique_ptr<Entry> entry);
 
-  std::vector<std::string> Serialize() const noexcept;
+  [[nodiscard]] std::vector<std::string> Serialize() const noexcept;
 
-  Entry* parent() const noexcept { return parent_; }
+  [[nodiscard]] Entry* parent() const noexcept { return parent_; }
 
-  Entry const& link_value() const {
+  [[nodiscard]] Entry const& link_value() const {
     if (!is_link()) {
       throw std::invalid_argument("This entry is not a boolean");
     }
