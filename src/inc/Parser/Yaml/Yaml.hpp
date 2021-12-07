@@ -412,7 +412,7 @@ class Entry {
   };
   struct Double : public AbstractValue {
     long double double_;
-    explicit Double(double double_) : double_(double_) {}
+    explicit Double(long double double_) : double_(double_) {}
   };
   struct Boolean : public AbstractValue {
     bool boolean_;

@@ -663,7 +663,7 @@ std::unique_ptr<Entry> ParseLine(std::string_view input_line) {
 std::unique_ptr<Entry> Parse(std::span<std::string_view> const span);
 
 void remove_empty_strings(std::vector<std::string_view>& vec) {
- std::erase_if(vec, [](std::string_view const& s) { return s.empty(); });
+  std::erase_if(vec, [](std::string_view const& s) { return s.empty(); });
 }
 
 std::unique_ptr<Entry> ParsePair(std::span<std::string_view> const span) {
@@ -685,14 +685,17 @@ std::unique_ptr<Entry> ParseMap(std::span<std::string_view> const& span) {
     map_vec[0] = map_vec[0].substr(map_vec[0].find('{') + 1);
 
     auto rit = map_vec.rbegin();
-    // while true because if no closing square bracket is found then
-    // the it++ will throw an exception
-    while (true) {
+    bool flag = false;
+    while (rit != map_vec.rend()) {
       if (auto k = rit->rfind("}"); k != std::string::npos) {
+        flag = true;
         *rit = std::string_view(rit->begin(), rit->begin() + k);
         break;
       }
       rit++;
+    }
+    if (!flag) {
+      throw yaml::InvalidSyntax("invalid syntax exception");
     }
     remove_empty_strings(map_vec);
     auto it = map_vec.begin();
@@ -927,33 +930,32 @@ std::unique_ptr<Entry> Parse(std::span<std::string_view> const span) {
   } else if (span.size() == 1) {
     return_value = ParseLine(span[0]);
   } else if (ltrim(span[0])[0] == '|') {
-      std::string t{};
-      for (auto i = span.begin() + 1; i != span.end(); i++) {
-          t += *i;
-          t += '\n';
-      }
-      return_value = std::make_unique<Entry>(t);
+    std::string t{};
+    for (auto i = span.begin() + 1; i != span.end(); i++) {
+      t += *i;
+      t += '\n';
+    }
+    return_value = std::make_unique<Entry>(t);
   } else if (ltrim(span[0])[0] == '>') {
-      std::string t{};
-      for (auto i = span.begin() + 1; i != span.end(); i++) {
-          t += *i;
-          t += ' ';
-      }
-      return_value = std::make_unique<Entry>(t);
-  }
-  else {
-      std::string t{};
-      for (auto i = span.begin() + 1; i != span.end(); i++) {
-          t += *i;
-          t += ' ';
-      }
-      return_value = std::make_unique<Entry>(t);
+    std::string t{};
+    for (auto i = span.begin() + 1; i != span.end(); i++) {
+      t += *i;
+      t += ' ';
+    }
+    return_value = std::make_unique<Entry>(t);
+  } else {
+    std::string t{};
+    for (auto i = span.begin() + 1; i != span.end(); i++) {
+      t += *i;
+      t += ' ';
+    }
+    return_value = std::make_unique<Entry>(t);
   }
   return std::move(return_value);
 }
 Entry Parse(std::string_view const& string) {
   std::vector<std::string_view> lines;
-  
+
   auto i = (size_t)(-1);
   do {
     size_t j = string.find("\n", i + 1);
