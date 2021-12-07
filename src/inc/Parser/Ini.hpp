@@ -30,13 +30,13 @@ class Entry {
   std::string const& to_string() const noexcept { return value_; }
   std::string const& str() const noexcept { return value_; }
 
-  int64_t to_int() const {
+  [[nodiscard]] int64_t to_int() const {
     if (type_ != Type::kInt64) {
       throw TypeConversionException("This entry is not an integer!");
     }
     return static_cast<Int*>(data_.get())->value;
   }
-  long double to_double() const {
+  [[nodiscard]] long double to_double() const {
     if (type_ != Type::kLongDouble) {
       throw TypeConversionException("This entry is not a long double!");
     }
@@ -77,7 +77,7 @@ class Entry {
     return *this;
   }
   template <typename T>
-  constexpr auto operator<=>(T t) const {
+  [[nodiscard]] constexpr auto operator<=>(T t) const {
     if (type_ == Type::kString) {
       throw TypeConversionException("This entry is a string!");
     }
@@ -88,7 +88,7 @@ class Entry {
     }
   }
   template <typename T>
-  constexpr std::enable_if_t<
+  [[nodiscard]] constexpr std::enable_if_t<
       std::is_floating_point_v<T> || std::is_integral_v<T>, bool>
   operator==(T t) const {
     if (type_ == Type::kInt64) {
@@ -100,10 +100,10 @@ class Entry {
   }
   template <typename T>
   constexpr std::enable_if_t<std::is_constructible_v<std::string, T>, bool>
-  operator==(T t) const {
+      [[nodiscard]] operator==(T t) const {
     return value_ == t;
   }
-  bool operator==(Entry const& t) const noexcept {
+  [[nodiscard]] bool operator==(Entry const& t) const noexcept {
     return type_ == t.type_ && value_ == t.value_;
   }
 
@@ -138,13 +138,13 @@ class Section {
     using reference =
         std::pair<std::string_view,
                   std::reference_wrapper<Entry>>&;  // or also value_type&
-    reference operator*() {
+    [[nodiscard]] reference operator*() {
       if (buf == nullptr) {
         buf = std::make_unique<value_type>(it->first, *it->second);
       }
       return *buf;
     }
-    pointer operator->() {
+    [[nodiscard]] pointer operator->() {
       if (buf == nullptr) {
         buf = std::make_unique<value_type>(it->first, *it->second);
       }
@@ -166,7 +166,7 @@ class Section {
       return tmp;
     }
 
-    friend bool operator==(const EntryIterator& a, const EntryIterator& b) {
+    [[nodiscard]] friend bool operator==(const EntryIterator& a, const EntryIterator& b) {
       return a.it == b.it;
     };
 
@@ -177,33 +177,33 @@ class Section {
   };
 
   template <typename T>
-  T const& GetValue(std::string const& key) const;
+  [[nodiscard]] T const& GetValue(std::string const& key) const;
 
-  Entry& operator[](std::string_view key);
+  [[nodiscard]] Entry& operator[](std::string_view key);
 
   // Always returns the string value, even of the object of integer or double
   // type
-  std::string_view GetString(std::string const& key);
-  long double GetDouble(std::string const& key);
-  int64_t GetInt(std::string const& key);
+  [[nodiscard]] std::string_view GetString(std::string const& key);
+  [[nodiscard]] long double GetDouble(std::string const& key);
+  [[nodiscard]] int64_t GetInt(std::string const& key);
 
   template <typename T>
   void SetValue(std::string const& key, T value) noexcept {
     (*this)[key] = value;
   }
 
-  std::string Serialize() const noexcept;
+  [[nodiscard]] std::string Serialize() const noexcept;
 
-  EntryIterator begin() noexcept { return EntryIterator(dict_.begin()); }
-  EntryIterator end() noexcept { return EntryIterator(dict_.end()); }
+  [[nodiscard]] EntryIterator begin() noexcept { return EntryIterator(dict_.begin()); }
+  [[nodiscard]] EntryIterator end() noexcept { return EntryIterator(dict_.end()); }
 
-  bool EntryExists(std::string_view const& key) const noexcept {
+  [[nodiscard]] bool EntryExists(std::string_view const& key) const noexcept {
     return Contains(key);
   }
-  bool Contains(std::string_view const& key) const noexcept {
+  [[nodiscard]] bool Contains(std::string_view const& key) const noexcept {
     return dict_.contains(std::string(key));
   }
-  size_t size() const noexcept { return dict_.size(); }
+  [[nodiscard]] size_t size() const noexcept { return dict_.size(); }
 
  protected:
   Section() = default;
@@ -268,22 +268,22 @@ class Ini {
 
   Ini() = default;
 
-  Section& operator[](std::string_view key);
+  [[nodiscard]] Section& operator[](std::string_view key);
 
-  Section& CreateSection(std::string const& key);
-  std::string Serialize() const noexcept;
-  static Ini Deserialize(std::string_view const& data);
+  [[nodiscard]] Section& CreateSection(std::string const& key);
+  [[nodiscard]] std::string Serialize() const noexcept;
+  [[nodiscard]] static Ini Deserialize(std::string_view const& data);
 
-  bool SectionExists(std::string_view const& key) const noexcept {
+  [[nodiscard]] bool SectionExists(std::string_view const& key) const noexcept {
     return Contains(key);
   }
-  bool Contains(std::string_view const& key) const noexcept {
+  [[nodiscard]] bool Contains(std::string_view const& key) const noexcept {
     return dict_.contains(std::string(key));
   }
-  SectionIterator begin() noexcept { return SectionIterator(dict_.begin()); }
-  SectionIterator end() noexcept { return SectionIterator(dict_.end()); }
+  [[nodiscard]] SectionIterator begin() noexcept { return SectionIterator(dict_.begin()); }
+  [[nodiscard]] SectionIterator end() noexcept { return SectionIterator(dict_.end()); }
 
-  size_t size() const noexcept { return dict_.size(); }
+  [[nodiscard]] size_t size() const noexcept { return dict_.size(); }
 
  private:
   friend inline void DeserializeLine(Ini& ini, std::string const& section,
