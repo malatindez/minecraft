@@ -6,11 +6,15 @@ T const& Section::GetValue(std::string const& key) const {
   return operator[]<T>(key);
 }
 
-Entry& Section::operator[](std::string const& key) {
-  if (!dict_.contains(key)) {
-    dict_[key] = std::make_unique<Entry>();
+Entry& Section::operator[](std::string_view key) {
+  if (utils::trimview(key) != key) {
+    throw std::invalid_argument("The input string should be trimmed!");
   }
-  return *dict_[key];
+  std::string t{key};
+  if (!dict_.contains(t)) {
+    dict_[t] = std::make_unique<Entry>();
+  }
+  return *dict_[t];
 }
 
 // Always returns the string value, even of the object of integer or double
@@ -34,24 +38,11 @@ int64_t Section::GetInt(std::string const& key) {
   return dict_[key]->to_int();
 }
 
-inline void Replace(std::string& str, std::string_view const& find,
-                    std::string_view const& replace) noexcept {
-  auto i = (size_t)-1;
-  while (true) {
-    i = str.find(find, i + 1);
-    if (i == std::string::npos) {
-      break;
-    }
-    str.replace(i, find.length(), replace);
-  }
-}
-
 std::string Section::Serialize() const noexcept {
-  static auto format = [](std::string_view const& s) {
+  static constexpr auto format = [](std::string_view const& s) {
     std::string str(s);
     std::erase(str, '\n');
     std::erase(str, '\r');
-    Replace(str, "=", "\\=");
     return str;
   };
   std::string return_value;
@@ -61,15 +52,22 @@ std::string Section::Serialize() const noexcept {
   return return_value;
 }
 
-Section& Ini::operator[](std::string const& key) {
-  if (!dict_.contains(key)) {
+Section& Ini::operator[](std::string_view key) {
+  if (utils::trimview(key) != key) {
+    throw std::invalid_argument("The input string should be trimmed!");
+  }
+  std::string t{key};
+  if (!dict_.contains(t)) {
     // just a temporary structure to call a protected construtor
     struct T : Section {};
-    dict_[key] = std::make_unique<T>();
+    dict_[t] = std::make_unique<T>();
   }
-  return *dict_[key];
+  return *dict_[t];
 }
 Section& Ini::CreateSection(std::string const& key) {
+  if (utils::trimview(key) != key) {
+    throw std::invalid_argument("The input string should be trimmed!");
+  }
   if (!dict_.contains(key)) {
     // just a temporary structure to call a protected construtor
     struct T : Section {};
@@ -97,6 +95,7 @@ Ini Ini::Deserialize(std::string_view const& str) {
       } else {
         DeserializeLine(return_value, current_section, line);
       }
+      skip = false;
       line = "";
     } else if ((str[i] == ';' || str[i] == '#') &&
                (i == 0 || str[i - 1] != '\\')) {
@@ -107,31 +106,10 @@ Ini Ini::Deserialize(std::string_view const& str) {
     i++;
   }
   if (line != "") {
-      DeserializeLine(return_value, current_section, line);
+    DeserializeLine(return_value, current_section, line);
   }
 
   return return_value;
-}
-
-// trim from start (in place)
-constexpr std::string_view ltrim(std::string_view const& s) {
-  return std::string_view(
-      std::find_if(s.begin(), s.end(),
-                   [](unsigned char ch) { return !std::isspace(ch); }),
-      s.end());
-}
-
-// trim from end (in place)
-constexpr std::string_view rtrim(std::string_view const& s) {
-  return std::string_view(
-      s.begin(), std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-                   return !std::isspace(ch);
-                 }).base());
-}
-
-// trim from both ends (in place)
-constexpr std::string_view trim(std::string_view const& s) {
-  return ltrim(rtrim(s));
 }
 
 inline void DeserializeLine(Ini& ini, std::string const& section,
@@ -149,10 +127,11 @@ inline void DeserializeLine(Ini& ini, std::string const& section,
     return;
   }
 
-  std::string key{trim(std::string_view{line.begin(), line.begin() + pos})};
-  std::string value{trim(std::string_view{line.begin() + pos + 1, line.end()})};
-  Replace(key, "\\=", "=");
-  Replace(value, "\\=", "=");
+  std::string key{
+      utils::trimview(std::string_view{line.begin(), line.begin() + pos})};
+  std::string value{
+      utils::trimview(std::string_view{line.begin() + pos + 1, line.end()})};
+
   char* pEnd;
   int64_t ll = strtoll(value.c_str(), &pEnd, 10);
   if (value.c_str() != pEnd && *pEnd == '\0') {
