@@ -12,39 +12,20 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
+#include "Utils/Utils.hpp"
 namespace yaml {
 class Entry {
  public:
-  struct Iterator {
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type = Entry;
-    using pointer = Entry*;    // or also value_type*
-    using reference = Entry&;  // or also value_type&
-    [[nodiscard]] constexpr reference operator*() { return **it; }
-    [[nodiscard]] constexpr pointer operator->() { return it->get(); }
-    explicit constexpr Iterator(
-        std::vector<std::unique_ptr<Entry>>::iterator it)
-        : it(it) {}
-    // Prefix increment
-    constexpr Iterator& operator++() {
-      it++;
-      return *this;
-    }
+  struct Iterator : public utils::BaseIteratorWrapper<std::vector<std::unique_ptr<Entry>>::iterator, Entry> {
+      using utils::BaseIteratorWrapper<std::vector<std::unique_ptr<Entry>>::iterator, Entry>::BaseIteratorWrapper;
+    [[nodiscard]] reference operator*() final { return **base_iterator(); }
+    [[nodiscard]] pointer operator->() final { return base_iterator()->get(); }
+  };
 
-    // Postfix increment
-    constexpr Iterator operator++(int) {
-      Iterator tmp = *this;
-      ++(*this);
-      return tmp;
-    }
-
-    [[nodiscard]] constexpr friend bool operator==(const Iterator& a,
-                                                   const Iterator& b) = default;
-
-   private:
-    std::vector<std::unique_ptr<Entry>>::iterator it;
+  struct ConstIterator : public utils::BaseIteratorWrapper<std::vector<std::unique_ptr<Entry>>::const_iterator, const Entry> {
+      using utils::BaseIteratorWrapper<std::vector<std::unique_ptr<Entry>>::const_iterator, const Entry>::BaseIteratorWrapper;
+      [[nodiscard]] reference operator*() final { return **base_iterator(); }
+      [[nodiscard]] pointer operator->() final { return base_iterator()->get(); }
   };
 
   enum class Type : unsigned char {
@@ -127,6 +108,13 @@ class Entry {
   [[nodiscard]] constexpr auto end() noexcept {
     return Iterator(entries_.end());
   }
+  [[nodiscard]] constexpr auto begin() const noexcept {
+      return ConstIterator(entries_.begin());
+  }
+  [[nodiscard]] constexpr auto end() const noexcept {
+      return ConstIterator(entries_.end());
+  }
+
   [[nodiscard]] size_t size() const noexcept { return entries_.size(); }
   [[nodiscard]] constexpr bool is_simple_type() const noexcept {
     return !is_pair() && !is_sequence() && !is_map() && !is_set();
