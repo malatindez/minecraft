@@ -12,20 +12,28 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
 #include "Utils/Utils.hpp"
 namespace yaml {
 class Entry {
  public:
-  struct Iterator : public utils::BaseIteratorWrapper<std::vector<std::unique_ptr<Entry>>::iterator, Entry> {
-      using utils::BaseIteratorWrapper<std::vector<std::unique_ptr<Entry>>::iterator, Entry>::BaseIteratorWrapper;
+  struct Iterator : public utils::BaseIteratorWrapper<
+                        std::vector<std::unique_ptr<Entry>>::iterator, Entry> {
+    using utils::BaseIteratorWrapper<
+        std::vector<std::unique_ptr<Entry>>::iterator,
+        Entry>::BaseIteratorWrapper;
     [[nodiscard]] reference operator*() final { return **base_iterator(); }
     [[nodiscard]] pointer operator->() final { return base_iterator()->get(); }
   };
 
-  struct ConstIterator : public utils::BaseIteratorWrapper<std::vector<std::unique_ptr<Entry>>::const_iterator, const Entry> {
-      using utils::BaseIteratorWrapper<std::vector<std::unique_ptr<Entry>>::const_iterator, const Entry>::BaseIteratorWrapper;
-      [[nodiscard]] reference operator*() final { return **base_iterator(); }
-      [[nodiscard]] pointer operator->() final { return base_iterator()->get(); }
+  struct ConstIterator
+      : public utils::BaseIteratorWrapper<
+            std::vector<std::unique_ptr<Entry>>::const_iterator, const Entry> {
+    using utils::BaseIteratorWrapper<
+        std::vector<std::unique_ptr<Entry>>::const_iterator,
+        const Entry>::BaseIteratorWrapper;
+    [[nodiscard]] reference operator*() final { return **base_iterator(); }
+    [[nodiscard]] pointer operator->() final { return base_iterator()->get(); }
   };
 
   enum class Type : unsigned char {
@@ -102,17 +110,13 @@ class Entry {
       : parent_(parent) {
     operator=(other);
   }
-  [[nodiscard]] constexpr auto begin() noexcept {
-    return Iterator(entries_.begin());
+  [[nodiscard]] auto begin() noexcept { return Iterator(entries_.begin()); }
+  [[nodiscard]] auto end() noexcept { return Iterator(entries_.end()); }
+  [[nodiscard]] auto begin() const noexcept {
+    return ConstIterator(entries_.begin());
   }
-  [[nodiscard]] constexpr auto end() noexcept {
-    return Iterator(entries_.end());
-  }
-  [[nodiscard]] constexpr auto begin() const noexcept {
-      return ConstIterator(entries_.begin());
-  }
-  [[nodiscard]] constexpr auto end() const noexcept {
-      return ConstIterator(entries_.end());
+  [[nodiscard]] auto end() const noexcept {
+    return ConstIterator(entries_.end());
   }
 
   [[nodiscard]] size_t size() const noexcept { return entries_.size(); }
