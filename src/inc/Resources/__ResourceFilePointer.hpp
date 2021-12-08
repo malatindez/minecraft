@@ -2,6 +2,7 @@
 #include <fstream>
 #include <memory>
 #include <mutex>
+
 namespace resource {
 template <typename T>
 class __AtomicSharedPtr {
@@ -9,7 +10,7 @@ class __AtomicSharedPtr {
   template <typename T>
   class __Locked : public std::shared_ptr<T> {
    public:
-    ~__Locked() {
+    constexpr ~__Locked() {
       if (mutex_) {
         mutex_->unlock();
       }
@@ -20,8 +21,8 @@ class __AtomicSharedPtr {
     __Locked& operator=(__Locked const& other) noexcept = delete;
 
    private:
-    __Locked(std::shared_ptr<std::mutex> mutex, std::shared_ptr<T> obj,
-             bool try_lock)
+    constexpr __Locked(std::shared_ptr<std::mutex> mutex,
+                       std::shared_ptr<T> obj, bool try_lock)
         : mutex_(mutex), std::shared_ptr<T>(obj) {
       if (try_lock) {
         if (!mutex_->try_lock()) {
@@ -33,14 +34,16 @@ class __AtomicSharedPtr {
       }
     }
     // used to return an empty value in TryLock
-    __Locked() {}
+    constexpr __Locked() {}
     friend __AtomicSharedPtr;
     std::shared_ptr<std::mutex> mutex_;
   };
   // Don't forget to delete retrieved pointers first, otherwise the program will
   // be terminated.
-  __Locked<T> Lock() const noexcept { return __Locked<T>(mutex_, obj_, false); }
-  __Locked<T> TryLock() const noexcept {
+  constexpr __Locked<T> Lock() const noexcept {
+    return __Locked<T>(mutex_, obj_, false);
+  }
+  constexpr __Locked<T> TryLock() const noexcept {
     return __Locked<T>(mutex_, obj_, true);
   }
   explicit __AtomicSharedPtr() : mutex_(nullptr), obj_(nullptr) {}
