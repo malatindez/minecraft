@@ -1,7 +1,11 @@
 #include "Resources.hpp"
-using namespace resource;
-
-Entry const& Resources::LoadResources(std::filesystem::path path_to_file) {
+static std::shared_mutex resource_mutex_;
+static std::vector<std::shared_ptr<resource::Entry>> tree_;
+static std::vector<
+    std::pair<std::filesystem::path, resource::AtomicIfstreamPointer>>
+    resource_handles_;
+namespace resource {
+Entry const& LoadResources(std::filesystem::path path_to_file) {
   auto resource = AtomicIfstreamPointer(
       std::make_shared<std::ifstream>(path_to_file, std::ios::binary));
   if (!resource.Lock()->is_open()) {
@@ -14,7 +18,7 @@ Entry const& Resources::LoadResources(std::filesystem::path path_to_file) {
   resource_handles_.emplace_back(path_to_file, resource);
   return *dir;
 }
-void Resources::UnloadResources(std::filesystem::path const& path_to_file) {
+void UnloadResources(std::filesystem::path const& path_to_file) {
   std::unique_lock lock(resource_mutex_);
   {
     AtomicIfstreamPointer ref;
@@ -38,8 +42,4 @@ void Resources::UnloadResources(std::filesystem::path const& path_to_file) {
     resource_handles_.erase(it);
   }
 }
-
-std::shared_mutex Resources::resource_mutex_;
-std::vector<std::shared_ptr<Entry>> Resources::tree_;
-std::vector<std::pair<std::filesystem::path, AtomicIfstreamPointer>>
-    Resources::resource_handles_;
+}  // namespace resource

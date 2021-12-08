@@ -10,6 +10,7 @@
 #include "gtest/gtest.h"
 
 namespace fs = std::filesystem;
+using namespace resource;
 
 void initOpenGL(int major = 3, int minor = 3) {
   glfwInit();
@@ -35,11 +36,11 @@ class TestShader : public ::testing::Test {
         << "Pack function should not throw any exceptions. Check TestResources "
            "for more information.";
     ASSERT_NO_THROW(shaders_ = std::make_shared<Entry>(
-                        Resources::LoadResources(shader_pack)));
+                        resource::LoadResources(shader_pack)));
   }
   static void TearDownTestSuite() {
     glfwTerminate();
-    ASSERT_NO_THROW(Resources::UnloadResources(shader_pack));
+    ASSERT_NO_THROW(resource::UnloadResources(shader_pack));
     fs::remove_all(shader_pack);
   }
   static fs::path shader_pack;

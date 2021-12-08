@@ -1,4 +1,3 @@
-#include <codecvt>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -7,7 +6,6 @@
 #include <shared_mutex>
 
 #include "Entry.hpp"
-using namespace resource;
 /*
  *  A simple singleton class that loads and unpacks different resources from
  *    .res files. You can separate resources into multiple files, pass them to
@@ -38,20 +36,12 @@ using namespace resource;
  * ...                      }
  * ...      : k           }
  */
-class Resources {
- public:
-  /*
-   * Function to load resources from .res file
-   * local_path is used to modify folder, within the loaded resources will be
-   * located. the name of .res file should be unique.
-   */
-  static Entry const& LoadResources(std::filesystem::path path_to_file);
-  static void UnloadResources(std::filesystem::path const& path_to_file);
-  static std::shared_ptr<Entry> GetResourceFolder() {}
-
- private:
-  static std::shared_mutex resource_mutex_;
-  static std::vector<std::shared_ptr<Entry>> tree_;
-  static std::vector<std::pair<std::filesystem::path, AtomicIfstreamPointer>>
-      resource_handles_;
-};
+namespace resource {
+/*
+ * Function to load resources from .res file
+ * local_path is used to modify folder, where loaded resources will be
+ * located. the name of .res file should be unique.
+ */
+Entry const& LoadResources(std::filesystem::path path_to_file);
+void UnloadResources(std::filesystem::path const& path_to_file);
+}  // namespace resource

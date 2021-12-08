@@ -5,7 +5,7 @@
 #include "Utils.hpp"
 #include "gtest/gtest.h"
 namespace fs = std::filesystem;
-
+using namespace resource;
 static const std::vector<std::string> kFixedTestfiles = {"a/b.txt", "a/b/c.txt",
                                                          "a/b/c/d.txt"};
 
@@ -52,12 +52,12 @@ TEST_F(TestResources, TestPacking) {
       << "Pack function shouldn't throw any exceptions";
 }
 TEST_F(TestResources, TestLoading) {
-  ASSERT_NO_THROW(Resources::LoadResources(dir_ / "test.pack"));
-  ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
+  ASSERT_NO_THROW(resource::LoadResources(dir_ / "test.pack"));
+  ASSERT_NO_THROW(resource::UnloadResources(dir_ / "test.pack"));
 }
 
 TEST_F(TestResources, FixedFileLoading) {
-  auto resources_ = Resources::LoadResources(dir_ / "test.pack");
+  auto resources_ = resource::LoadResources(dir_ / "test.pack");
   for (std::string const& path : kFixedTestfiles) {
     ASSERT_TRUE(resources_.FileExists(path))
         << "file " << path << " doesn't exist within the resource file";
@@ -66,10 +66,10 @@ TEST_F(TestResources, FixedFileLoading) {
     ASSERT_TRUE(resources_.GetFile(path).ToString() == path)
         << "File content is broken";
   }
-  ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
+  ASSERT_NO_THROW(resource::UnloadResources(dir_ / "test.pack"));
 }
 TEST_F(TestResources, RandomFileLoading) {
-  auto resources_ = Resources::LoadResources(dir_ / "test.pack");
+  auto resources_ = resource::LoadResources(dir_ / "test.pack");
   for (std::filesystem::path const& file : TestResources::unicode_files_) {
     ASSERT_TRUE(resources_.FileExists(file.string()))
         << "file " << file << " doesn't exist within the resource file";
@@ -89,11 +89,11 @@ TEST_F(TestResources, RandomFileLoading) {
   for (Entry const& file : resources_ / "unicode_test") {
     ASSERT_TRUE(file.is_file());
   }
-  ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
+  ASSERT_NO_THROW(resource::UnloadResources(dir_ / "test.pack"));
 }
 const uint16_t kThreadAmount = 32;
 TEST_F(TestResources, TestMultithreadedRandomFileLoading) {
-  auto resources_ = Resources::LoadResources(dir_ / "test.pack");
+  auto resources_ = resource::LoadResources(dir_ / "test.pack");
   std::condition_variable cv;
   std::mutex m;
   std::mutex counter_mutex;
@@ -134,5 +134,5 @@ TEST_F(TestResources, TestMultithreadedRandomFileLoading) {
   for (auto& thread : threads) {
     thread.join();
   }
-  ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
+  ASSERT_NO_THROW(resource::UnloadResources(dir_ / "test.pack"));
 }
