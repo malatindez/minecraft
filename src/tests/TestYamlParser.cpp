@@ -52,6 +52,11 @@ TEST(TestYamlParser, BasicTest) {
     str.insert(str.size(), i);
     str += '\n';
   }
+  for (Entry const& t : entry) {
+      for (Entry const& y : t) {
+          ASSERT_NO_THROW(t == y);
+      }
+  }
 }
 TEST(TestYamlParser, TestCollections_SequenceOfScalars) {
   Entry entry = Parse(R"(
