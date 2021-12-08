@@ -109,7 +109,7 @@ Entry::GetIfExists(std::string_view const key) const noexcept {
     }
     // wait until data_ is initialized in another thread
     { auto lock = resource_file_ptr_.Lock(); }
-    return data();
+    return data_internal();
   }
   return data_->lock();
 }
@@ -126,7 +126,8 @@ uint64_t Entry::CalculateDirSize() const noexcept {
   auto dl = [](uint64_t a, std::unique_ptr<Entry> const& b) {
     return a + b->size();
   };
-  return std::accumulate(entries_->begin(), entries_->end(), (uint64_t)0, dl);
+  return std::accumulate(entries_holder_->begin(), entries_holder_->end(),
+                         (uint64_t)0, dl);
   return 0;
 }
 
@@ -135,7 +136,7 @@ Entry::Entry(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr,
     : data_begin_(begin),
       resource_file_ptr_(resource_file_ptr),
       is_file_(is_file) {
-  entries_ = std::make_shared<std::vector<std::unique_ptr<Entry>>>();
+  entries_holder_ = std::make_shared<std::vector<std::unique_ptr<Entry>>>();
   data_ = std::make_shared<std::weak_ptr<std::vector<char>>>();
   // lock the resource file
   {
@@ -184,7 +185,7 @@ Entry::Entry(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr,
       directories_.push_back(std::reference_wrapper<const Entry>(*value));
     }
     entry_map_.try_emplace(key, std::reference_wrapper<const Entry>(*value));
-    entries_->emplace_back(std::move(value));
+    entries_holder_->emplace_back(std::move(value));
   }
   size_ = CalculateDirSize() + size_;
 }

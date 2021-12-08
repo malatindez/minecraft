@@ -86,6 +86,9 @@ TEST_F(TestResources, RandomFileLoading) {
         << "Content of the file" << file << "is broken";
     fileStream.close();
   }
+  for (Entry const& file : resources_ / "unicode_test") {
+    ASSERT_TRUE(file.is_file());
+  }
   ASSERT_NO_THROW(Resources::UnloadResources(dir_ / "test.pack"));
 }
 const uint16_t kThreadAmount = 32;

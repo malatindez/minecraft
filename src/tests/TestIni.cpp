@@ -56,13 +56,13 @@ D   =           5)");
   ASSERT_EQ(conf["A"]["C"], "1");
   ASSERT_EQ(conf["A"]["D"], "5");
 }
-static const size_t kRandomSectionsSize = 128;
-static const size_t kRandomIntegerKeysSize = 128;
-static const size_t kRandomDoubleKeysSize = 128;
-static const size_t kRandomStringKeysSize = 128;
+static const size_t kRandomSectionsSize = 32;
+static const size_t kRandomIntegerKeysSize = 64;
+static const size_t kRandomDoubleKeysSize = 64;
+static const size_t kRandomStringKeysSize = 64;
 static const size_t kSectionKeySize = 64;
-static const size_t kKeySize = 128;
-static const size_t kStringValueSize = 128;
+static const size_t kKeySize = 32;
+static const size_t kStringValueSize = 32;
 static const std::string kSectionKeyCharacters =
     ExcludeString(kAsciiCharacters, "[]#;\\");
 static const std::string kKeyCharacters =

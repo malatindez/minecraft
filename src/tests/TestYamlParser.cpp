@@ -53,9 +53,9 @@ TEST(TestYamlParser, BasicTest) {
     str += '\n';
   }
   for (Entry const& t : entry) {
-      for (Entry const& y : t) {
-          ASSERT_NO_THROW(t == y);
-      }
+    for (Entry const& y : t) {
+      ASSERT_NO_THROW(t == y);
+    }
   }
 }
 TEST(TestYamlParser, TestCollections_SequenceOfScalars) {

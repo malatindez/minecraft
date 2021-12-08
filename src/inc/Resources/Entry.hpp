@@ -10,7 +10,7 @@
 
 namespace resource {
 class InvalidPathException : public std::runtime_error {
-public:
+ public:
   using std::runtime_error::runtime_error;
 };
 // abstract resource class
@@ -74,6 +74,9 @@ class Entry final {
   [[nodiscard]] std::string ToString() const noexcept;
   [[nodiscard]] std::string string() const noexcept;
 
+  [[nodiscard]] auto begin() const noexcept { return entries_.begin(); }
+  [[nodiscard]] auto end() const noexcept { return entries_.end(); }
+
   Entry(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr)
       : Entry(begin, resource_file_ptr, false) {}
 
@@ -93,9 +96,10 @@ class Entry final {
 
   std::vector<std::reference_wrapper<const Entry>> files_;
   std::vector<std::reference_wrapper<const Entry>> directories_;
+  std::vector<std::reference_wrapper<const Entry>> entries_;
   std::map<std::string_view, std::reference_wrapper<const Entry>, std::less<>>
       entry_map_;
-  std::shared_ptr<std::vector<std::unique_ptr<Entry>>> entries_;
+  std::shared_ptr<std::vector<std::unique_ptr<Entry>>> entries_holder_;
   std::shared_ptr<std::weak_ptr<std::vector<char>>> data_;
 };
 }  // namespace resource
