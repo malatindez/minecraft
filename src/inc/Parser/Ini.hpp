@@ -99,8 +99,9 @@ class Entry {
     return false;
   }
   template <typename T>
-  constexpr std::enable_if_t<std::is_constructible_v<std::string, T>, bool>
-      [[nodiscard]] operator==(T t) const {
+  constexpr std::enable_if_t<std::is_constructible_v<std::string, T>,
+                             bool> [[nodiscard]]
+  operator==(T t) const {
     return value_ == t;
   }
   [[nodiscard]] bool operator==(Entry const& t) const noexcept {
@@ -126,54 +127,56 @@ class Section {
  public:
   friend class Ini;
   // Wrapper that converts map<string, Entry*> to map<string_view, Entry&>
-  class EntryIterator {
+  template <typename T>
+  using wrap = std::reference_wrapper<T>;
+  using iterator_t = utils::BaseIteratorWrapper<
+      std::map<std::string, std::unique_ptr<Entry>, std::less<>>::iterator,
+      std::pair<std::string_view, wrap<Entry>>>;
+  using const_iterator_t = utils::BaseIteratorWrapper<
+      std::map<std::string, std::unique_ptr<Entry>,
+               std::less<>>::const_iterator,
+      std::pair<std::string_view, wrap<const Entry>>>;
+
+  class Iterator : public iterator_t {
    public:
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type =
-        std::pair<std::string_view, std::reference_wrapper<Entry>>;
-    using pointer =
-        std::pair<std::string_view,
-                  std::reference_wrapper<Entry>>*;  // or also value_type*
-    using reference =
-        std::pair<std::string_view,
-                  std::reference_wrapper<Entry>>&;  // or also value_type&
-    [[nodiscard]] reference operator*() {
+    using iterator_t::BaseIteratorWrapper;
+    [[nodiscard]] reference operator*() final {
       if (buf == nullptr) {
-        buf = std::make_unique<value_type>(it->first, *it->second);
+        buf = std::make_shared<value_type>(base_iterator()->first,
+                                           *base_iterator()->second);
       }
       return *buf;
     }
-    [[nodiscard]] pointer operator->() {
+    [[nodiscard]] pointer operator->() final {
       if (buf == nullptr) {
-        buf = std::make_unique<value_type>(it->first, *it->second);
+        buf = std::make_shared<value_type>(base_iterator()->first,
+                                           *base_iterator()->second);
       }
       return &*buf;
     }
-    EntryIterator(
-        std::map<std::string, std::unique_ptr<Entry>, std::less<>>::iterator it)
-        : it(it) {}
-    // Prefix increment
-    EntryIterator& operator++() {
-      it++;
-      return *this;
-    }
-
-    // Postfix increment
-    EntryIterator operator++(int) {
-      EntryIterator tmp = *this;
-      ++(*this);
-      return tmp;
-    }
-
-    [[nodiscard]] friend bool operator==(const EntryIterator& a, const EntryIterator& b) {
-      return a.it == b.it;
-    };
 
    private:
-    std::map<std::string, std::unique_ptr<Entry>, std::less<>>::iterator it;
-    std::shared_ptr<std::pair<std::string_view, std::reference_wrapper<Entry>>>
-        buf = nullptr;
+    std::shared_ptr<value_type> buf = nullptr;
+  };
+  class ConstIterator : public const_iterator_t {
+    using const_iterator_t::BaseIteratorWrapper;
+    [[nodiscard]] reference operator*() final {
+      if (buf == nullptr) {
+        buf = std::make_shared<value_type>(base_iterator()->first,
+                                           *base_iterator()->second);
+      }
+      return *buf;
+    }
+    [[nodiscard]] pointer operator->() final {
+      if (buf == nullptr) {
+        buf = std::make_shared<value_type>(base_iterator()->first,
+                                           *base_iterator()->second);
+      }
+      return &*buf;
+    }
+
+   private:
+    std::shared_ptr<value_type> buf = nullptr;
   };
 
   template <typename T>
@@ -194,8 +197,20 @@ class Section {
 
   [[nodiscard]] std::string Serialize() const noexcept;
 
-  [[nodiscard]] EntryIterator begin() noexcept { return EntryIterator(dict_.begin()); }
-  [[nodiscard]] EntryIterator end() noexcept { return EntryIterator(dict_.end()); }
+  [[nodiscard]] Iterator begin() noexcept { return Iterator(dict_.begin()); }
+  [[nodiscard]] Iterator end() noexcept { return Iterator(dict_.end()); }
+  [[nodiscard]] ConstIterator begin() const noexcept {
+    return ConstIterator(dict_.cbegin());
+  }
+  [[nodiscard]] ConstIterator end() const noexcept {
+    return ConstIterator(dict_.cend());
+  }
+  [[nodiscard]] ConstIterator cbegin() const noexcept {
+    return ConstIterator(dict_.cbegin());
+  }
+  [[nodiscard]] ConstIterator cend() const noexcept {
+    return ConstIterator(dict_.cend());
+  }
 
   [[nodiscard]] bool EntryExists(std::string_view const& key) const noexcept {
     return Contains(key);
@@ -214,63 +229,63 @@ class Section {
 
 class Ini {
  public:
-  // Wrapper that converts map<string, Section*> to map<string_view, Section&>
-  class SectionIterator {
+  template <typename T>
+  using wrap = std::reference_wrapper<T>;
+  using iterator_t = utils::BaseIteratorWrapper<
+      std::map<std::string, std::unique_ptr<Section>, std::less<>>::iterator,
+      std::pair<std::string_view, wrap<Section>>>;
+  using const_iterator_t = utils::BaseIteratorWrapper<
+      std::map<std::string, std::unique_ptr<Section>,
+               std::less<>>::const_iterator,
+      std::pair<std::string_view, wrap<const Section>>>;
+  class Iterator : public iterator_t {
    public:
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type =
-        std::pair<std::string_view, std::reference_wrapper<Section>>;
-    using pointer =
-        std::pair<std::string_view,
-                  std::reference_wrapper<Section>>*;  // or also value_type*
-    using reference =
-        std::pair<std::string_view,
-                  std::reference_wrapper<Section>>&;  // or also value_type&
-    reference operator*() {
+    using iterator_t::BaseIteratorWrapper;
+    [[nodiscard]] reference operator*() final {
       if (buf == nullptr) {
-        buf = std::make_unique<value_type>(it->first, *it->second);
+        buf = std::make_shared<value_type>(base_iterator()->first,
+                                           *base_iterator()->second);
       }
       return *buf;
     }
-    pointer operator->() {
+    [[nodiscard]] pointer operator->() final {
       if (buf == nullptr) {
-        buf = std::make_unique<value_type>(it->first, *it->second);
+        buf = std::make_shared<value_type>(base_iterator()->first,
+                                           *base_iterator()->second);
       }
       return &*buf;
     }
-    SectionIterator(std::map<std::string, std::unique_ptr<Section>,
-                             std::less<>>::iterator it)
-        : it(it) {}
-    // Prefix increment
-    SectionIterator& operator++() {
-      it++;
-      return *this;
-    }
-
-    // Postfix increment
-    SectionIterator operator++(int) {
-      SectionIterator tmp = *this;
-      ++(*this);
-      return tmp;
-    }
-
-    friend bool operator==(const SectionIterator& a, const SectionIterator& b) {
-      return a.it == b.it;
-    };
 
    private:
-    std::map<std::string, std::unique_ptr<Section>, std::less<>>::iterator it;
-    std::shared_ptr<
-        std::pair<std::string_view, std::reference_wrapper<Section>>>
-        buf = nullptr;
+    std::shared_ptr<value_type> buf = nullptr;
   };
 
+  class ConstIterator : public const_iterator_t {
+   public:
+    using const_iterator_t::BaseIteratorWrapper;
+    [[nodiscard]] reference operator*() final {
+      if (buf == nullptr) {
+        buf = std::make_shared<value_type>(base_iterator()->first,
+                                           *base_iterator()->second);
+      }
+      return *buf;
+    }
+    [[nodiscard]] pointer operator->() final {
+      if (buf == nullptr) {
+        buf = std::make_shared<value_type>(base_iterator()->first,
+                                           *base_iterator()->second);
+      }
+      return &*buf;
+    }
+
+   private:
+    std::shared_ptr<value_type> buf = nullptr;
+  };
   Ini() = default;
 
   [[nodiscard]] Section& operator[](std::string_view key);
 
-  [[nodiscard]] Section& CreateSection(std::string const& key);
+  Section& CreateSection(std::string const& key);
   [[nodiscard]] std::string Serialize() const noexcept;
   [[nodiscard]] static Ini Deserialize(std::string_view const& data);
 
@@ -280,10 +295,23 @@ class Ini {
   [[nodiscard]] bool Contains(std::string_view const& key) const noexcept {
     return dict_.contains(std::string(key));
   }
-  [[nodiscard]] SectionIterator begin() noexcept { return SectionIterator(dict_.begin()); }
-  [[nodiscard]] SectionIterator end() noexcept { return SectionIterator(dict_.end()); }
 
   [[nodiscard]] size_t size() const noexcept { return dict_.size(); }
+
+  [[nodiscard]] Iterator begin() noexcept { return Iterator(dict_.begin()); }
+  [[nodiscard]] Iterator end() noexcept { return Iterator(dict_.end()); }
+  [[nodiscard]] ConstIterator begin() const noexcept {
+    return ConstIterator(dict_.begin());
+  }
+  [[nodiscard]] ConstIterator end() const noexcept {
+    return ConstIterator(dict_.end());
+  }
+  [[nodiscard]] ConstIterator cbegin() const noexcept {
+    return ConstIterator(dict_.begin());
+  }
+  [[nodiscard]] ConstIterator cend() const noexcept {
+    return ConstIterator(dict_.end());
+  }
 
  private:
   friend inline void DeserializeLine(Ini& ini, std::string const& section,
