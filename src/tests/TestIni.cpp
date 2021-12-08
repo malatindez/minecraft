@@ -88,13 +88,13 @@ TEST(TEST_INI, RandomTest) {
   }
   auto conf2 = ini::Ini::Deserialize(conf.Serialize());
   ASSERT_EQ(conf2.size(), conf.size());
-  for (auto& [section_key, section] : conf) {
+  for (auto const& [section_key, section] : conf) {
     ASSERT_TRUE(conf2.SectionExists(section_key)) << section_key;
     ini::Section& section2 = conf2[section_key];
 
     ASSERT_EQ(section.get().size(), section2.size());
 
-    for (auto& [key, entry] : section.get()) {
+    for (auto const& [key, entry] : section.get()) {
       ASSERT_TRUE(section2.Contains(key))
           << section_key << "    " << key << "    " << entry.get().str();
       ASSERT_EQ(section2[key], entry);
