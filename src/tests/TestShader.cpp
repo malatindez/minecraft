@@ -17,7 +17,8 @@ void initOpenGL(int major = 3, int minor = 3) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-  GLFWwindow* window = glfwCreateWindow(1000, 1000, "shader test", nullptr, nullptr);
+  GLFWwindow* window =
+      glfwCreateWindow(1000, 1000, "shader test", nullptr, nullptr);
   ASSERT_FALSE(window == NULL) << "Failed to create GLFW window" << std::endl;
   glfwMakeContextCurrent(window);
   ASSERT_TRUE(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -33,7 +34,7 @@ class TestShader : public ::testing::Test {
     ASSERT_NO_THROW(resource::packer::Pack(vec, shader_pack))
         << "Pack function should not throw any exceptions. Check TestResources "
            "for more information.";
-    ASSERT_NO_THROW(shaders_ = std::make_shared<Directory>(
+    ASSERT_NO_THROW(shaders_ = std::make_shared<Entry>(
                         Resources::LoadResources(shader_pack)));
   }
   static void TearDownTestSuite() {
@@ -42,27 +43,27 @@ class TestShader : public ::testing::Test {
     fs::remove_all(shader_pack);
   }
   static fs::path shader_pack;
-  static std::shared_ptr<Directory> shaders_;
+  static std::shared_ptr<Entry> shaders_;
 };
 fs::path TestShader::shader_pack;
-std::shared_ptr<Directory> TestShader::shaders_;
+std::shared_ptr<Entry> TestShader::shaders_;
 
 TEST_F(TestShader, TestLoading) {
   initOpenGL(3, 3);
   std::shared_ptr<Shader> shader;
-  ASSERT_NO_THROW(shader = std::make_shared<Shader>(
-                      shaders_->GetFile("TestShader/test.vert"),
-                      shaders_->GetFile("TestShader/test.frag"),
-                      shaders_->GetFile("TestShader/test.geom")));
+  ASSERT_NO_THROW(
+      shader = std::make_shared<Shader>(shaders_->Get("TestShader/test.vert"),
+                                        shaders_->Get("TestShader/test.frag"),
+                                        shaders_->Get("TestShader/test.geom")));
 }
 
 TEST_F(TestShader, TestSettersExceptions) {
   initOpenGL(3, 3);
   std::shared_ptr<Shader> shader;
-  ASSERT_NO_THROW(shader = std::make_shared<Shader>(
-                      shaders_->GetFile("TestShader/test.vert"),
-                      shaders_->GetFile("TestShader/test.frag"),
-                      shaders_->GetFile("TestShader/test.geom")));
+  ASSERT_NO_THROW(
+      shader = std::make_shared<Shader>(shaders_->Get("TestShader/test.vert"),
+                                        shaders_->Get("TestShader/test.frag"),
+                                        shaders_->Get("TestShader/test.geom")));
   shader->Use();
   ASSERT_THROW(shader->set_bool("a", false), std::invalid_argument);
   ASSERT_THROW(shader->set_int("b", 0), std::invalid_argument);
