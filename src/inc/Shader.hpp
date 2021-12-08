@@ -10,7 +10,7 @@
 #include <string>
 #include <type_traits>
 
-#include "Resources/file.hpp"
+#include "Resources/Entry.hpp"
 class Shader {
  public:
   // constructor generates the shader on the fly
@@ -18,11 +18,11 @@ class Shader {
   Shader(std::string const& vertex_shader_code,
          std::string const& fragment_shader_code,
          std::string const& geometry_shader_code = "");
-  Shader(resource::File const& vertex_shader_file,
-         resource::File const& fragment_shader_file);
-  Shader(resource::File const& vertex_shader_file,
-         resource::File const& fragment_shader_file,
-         resource::File const& geometry_shader_file);
+  Shader(resource::Entry const& vertex_shader_file,
+         resource::Entry const& fragment_shader_file);
+  Shader(resource::Entry const& vertex_shader_file,
+         resource::Entry const& fragment_shader_file,
+         resource::Entry const& geometry_shader_file);
   ~Shader();
   // activate the shader
   void Use() { glUseProgram(*id_); }

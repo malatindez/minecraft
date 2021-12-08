@@ -60,12 +60,12 @@ Shader::Shader(std::string const& vertexShaderCode,
   glDeleteShader(fragment);
   if (geometryShaderCode.size() != 0) glDeleteShader(geometry);
 }
-Shader::Shader(resource::File const& vertex_shader_file,
-               resource::File const& fragment_shader_file)
+Shader::Shader(resource::Entry const& vertex_shader_file,
+               resource::Entry const& fragment_shader_file)
     : Shader(vertex_shader_file.string(), fragment_shader_file.string()) {}
-Shader::Shader(resource::File const& vertex_shader_file,
-               resource::File const& fragment_shader_file,
-               resource::File const& geometry_shader_file)
+Shader::Shader(resource::Entry const& vertex_shader_file,
+               resource::Entry const& fragment_shader_file,
+               resource::Entry const& geometry_shader_file)
     : Shader(vertex_shader_file.string(), fragment_shader_file.string(),
              geometry_shader_file.string()) {}
 Shader::~Shader() {
