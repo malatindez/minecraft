@@ -1,5 +1,12 @@
 # load libraries glfw
 set(GLFW_DIR "${LIB_DIR}/glfw")
+set(GLAD_DIR "${LIB_DIR}/glad")
+set(GLM_DIR "${LIB_DIR}/glm")
+set(STB_DIR "${LIB_DIR}/stb")
+set(FREETYPE_DIR "${LIB_DIR}/freetype")
+set(GTEST_DIR "${LIB_DIR}/googletest")
+set(SPDLOG_DIR "${LIB_DIR}/spdlog")
+
 set(GLFW_BUILD_EXAMPLES
     OFF
     CACHE INTERNAL "Build the GLFW example programs")
@@ -13,17 +20,15 @@ set(GLFW_INSTALL
     OFF
     CACHE INTERNAL "Generate installation target")
 add_subdirectory("${GLFW_DIR}" EXCLUDE_FROM_ALL)
+
 # glad
-set(GLAD_DIR "${LIB_DIR}/glad")
 add_library("glad" STATIC EXCLUDE_FROM_ALL "${GLAD_DIR}/src/glad.c")
 target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
+
 # glm
-set(GLM_DIR "${LIB_DIR}/glm")
 add_subdirectory("${GLM_DIR}" EXCLUDE_FROM_ALL)
-# stb
-set(STB_DIR "${LIB_DIR}/stb")
+
 # freetype
-set(FREETYPE_DIR "${LIB_DIR}/freetype")
 set(FT_DISABLE_ZLIB ON)
 set(FT_DISABLE_BZIP2 ON)
 set(FT_DISABLE_PNG ON)
@@ -31,13 +36,17 @@ set(FT_DISABLE_HARFBUZZ ON)
 set(FT_DISABLE_BROTLI ON)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 add_subdirectory("${FREETYPE_DIR}" EXCLUDE_FROM_ALL)
+
 # google test
-set(GTEST_DIR "${LIB_DIR}/googletest")
 set(gtest_force_shared_crt
     ON
     CACHE BOOL "" FORCE)
 
 add_subdirectory(${GTEST_DIR} EXCLUDE_FROM_ALL)
+
+#spdlog
+add_subdirectory("${SPDLOG_DIR}" EXCLUDE_FROM_ALL)
+
 
 function(target_add_glfw TARGET)
   target_include_directories("${TARGET}" PRIVATE "${GLFW_DIR}/include")
@@ -68,6 +77,10 @@ function(target_add_gtest TARGET)
   include_directories(${INCLUDES})
 endfunction(target_add_gtest)
 
+function(target_add_spdlog TARGET)
+  target_include_directories("${TARGET}" PRIVATE "${SPDLOG_DIR}/include")
+endfunction(target_add_spdlog)
+
 function(target_add_libraries TARGET)
   if("${ARGN}" MATCHES "[gG][lL][fF][wW]")
     target_add_glfw(${TARGET})
@@ -86,5 +99,8 @@ function(target_add_libraries TARGET)
   endif()
   if("${ARGN}" MATCHES "[gG]([oO]{2}[gG][lL][eE]){0,1}[_]{0,1}[tT][eE][sS][tT]")
     target_add_gtest(${TARGET})
+  endif()
+  if("${ARGN}" MATCHES "[sS][pP][dD][lL][oO][gG]")
+    target_add_spdlog(${TARGET})
   endif()
 endfunction(target_add_libraries)
