@@ -1,7 +1,6 @@
-
-block:
-  sides:
-    default: stone.png
-  specular:
-    default: not_specular.png
-  hardness: 4
+type: block
+sides:
+  default: stone.png
+specular:
+  default: not_specular.png
+hardness: 4

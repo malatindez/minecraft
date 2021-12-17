@@ -1,8 +1,8 @@
-block:
-  sides:
-    default: grass_side.png
-    top: grass_top.png
-    bottom: dirt.png
-  specular:
-    default: not_specular.png
-  hardness: 2
+type: block
+sides:
+  default: grass_side.png
+  top: grass_top.png
+  bottom: dirt.png
+specular:
+  default: not_specular.png
+hardness: 2

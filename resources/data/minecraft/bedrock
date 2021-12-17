@@ -1,7 +1,7 @@
-block:
-  sides:
-    default: bedrock.png
-  specular:
-    default: not_specular.png
-  hardness: 16384
-  breakable: false
+type: block
+sides:
+  default: bedrock.png
+specular:
+  default: not_specular.png
+hardness: 16384
+breakable: false

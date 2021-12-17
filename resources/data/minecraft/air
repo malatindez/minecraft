@@ -1,10 +1,10 @@
-block:
-  sides:
-    default:
-  specular:
-    default: not_specular.png
-  hardness: 0
-  transparent: true
-  interactable: false
-  solid: false
-  breakable: false
+type: block
+sides:
+  default:
+specular:
+  default: not_specular.png
+hardness: 0
+transparent: true
+interactable: false
+solid: false
+breakable: false

@@ -1,19 +1,19 @@
-block: # could be either item or block. Searches for textures in respective folders
+type: block # could be either item or block. Searches for textures in respective folders
+sides:
+  default: dirt.png
+  top:
   sides:
-    default: dirt.png
-    top:
-    sides:
-    bottom:
-    north:
-    east:
-    south:
-    west:
-  specular:
-    default: not_specular.png
-  hardness: 10 # amount of seconds which it takes to break a block without an instrument
-  transparent: false # default
-  interactable: false # default
-  solid: true # default
-  breakable: true # default
-  tile: false # # default
-  # you can define here additional variables to use them within the tile logic
+  bottom:
+  north:
+  east:
+  south:
+  west:
+specular:
+  default: not_specular.png
+hardness: 10 # amount of seconds which it takes to break a block without an instrument
+transparent: false # default
+interactable: false # default
+solid: true # default
+breakable: true # default
+tile: false # # default
+# you can define here additional variables to use them within the tile logic

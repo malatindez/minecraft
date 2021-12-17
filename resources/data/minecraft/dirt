@@ -1,6 +1,6 @@
-block:
-  sides:
-    default: dirt.png
-  specular:
-    default: not_specular.png
-  hardness: 1
+type: block
+sides:
+  default: dirt.png
+specular:
+  default: not_specular.png
+hardness: 1
