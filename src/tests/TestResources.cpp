@@ -101,23 +101,23 @@ TEST_F(TestResources, TestMultithreadedRandomFileLoading) {
   using ptr_vec = std::vector<std::shared_ptr<std::vector<char>>>;
   ptr_vec pointers(kThreadAmount);
 
-  auto thread_function = [&](ptr_vec::iterator itr) {
+  auto thread_function = [&m, &counter, &cv, &counter_mutex, &resources_](ptr_vec::iterator itr) {
     for (std::filesystem::path const& file : TestResources::unicode_files_) {
-      std::unique_lock<std::mutex> lk(m);
+      std::unique_lock lk(m);
       counter++;
       cv.wait(lk);
       ASSERT_TRUE(*itr = resources_.GetFile(file.string()).data())
           << "file " << file << " doesn't exist within the resource file";
-      std::unique_lock<std::mutex> t(counter_mutex);
+      std::unique_lock t(counter_mutex);
     }
   };
-  std::vector<std::thread> threads;
+  std::vector<std::jthread> threads;
   for (auto itr = pointers.begin(); itr != pointers.end(); itr++) {
-    threads.push_back(std::thread(thread_function, itr));
+    threads.emplace_back(thread_function, itr);
   }
 
   // thread synchronization
-  for (std::filesystem::path const& file : TestResources::unicode_files_) {
+  for (size_t i = 0; i < unicode_files_.size(); i++) {
     using namespace std::chrono_literals;
     while (counter != kThreadAmount) {
       std::this_thread::sleep_for(1ms);
