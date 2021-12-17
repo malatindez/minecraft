@@ -142,10 +142,10 @@ const std::string kProhibitedCharacters = ProhibitedCharactersInFilename();
 }
 
 [[nodiscard]] std::string RandomString(size_t const& size,
-                                       std::string including) {
+                                       std::string const& including) {
   std::string return_value;
   return_value.reserve(size);
-  const std::uniform_int_distribution<size_t> dis{0, including.size()};
+  const std::uniform_int_distribution<size_t> dis{0, including.size() - 1};
   for (size_t i = 0; i < size; i++) {
     return_value += including[dis(gen)];
   }
