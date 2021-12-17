@@ -34,33 +34,13 @@ Entry::Entry(std::string_view const& other, Entry* parent) noexcept
     : parent_(parent) {
   operator=(other);
 }
-Entry::Entry(int64_t const& other, Entry* parent) noexcept : parent_(parent) {
-  operator=(other);
+template <std::integral T>
+Entry::Entry(T const& other, Entry* parent) noexcept : parent_(parent) {
+    operator=(other);
 }
-Entry::Entry(int32_t const& other, Entry* parent) noexcept : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(int16_t const& other, Entry* parent) noexcept : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(uint64_t const& other, Entry* parent) noexcept : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(uint32_t const& other, Entry* parent) noexcept : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(uint16_t const& other, Entry* parent) noexcept : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(long double const& other, Entry* parent) noexcept
-    : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(double const& other, Entry* parent) noexcept : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(float const& other, Entry* parent) noexcept : parent_(parent) {
-  operator=(other);
+template <std::floating_point T>
+Entry::Entry(T const& other, Entry* parent) noexcept : parent_(parent) {
+    operator=(other);
 }
 Entry::Entry(std::tm const& other, Entry* parent) noexcept : parent_(parent) {
   operator=(other);
@@ -228,7 +208,8 @@ Entry& Entry::operator=(bool const& other) noexcept {
   tag_ = "";
   return *this;
 }
-Entry& Entry::operator=(int64_t const& other) noexcept {
+template<std::integral T>
+Entry& Entry::operator=(T const& other) noexcept {
   entries_.clear();
   type_ = Entry::Type::kInt;
   str_ = std::to_string(other);
@@ -236,63 +217,8 @@ Entry& Entry::operator=(int64_t const& other) noexcept {
   tag_ = "";
   return *this;
 }
-Entry& Entry::operator=(int32_t const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kInt;
-  str_ = std::to_string(other);
-  data_ = std::make_unique<Integer>(other);
-  tag_ = "";
-  return *this;
-}
-Entry& Entry::operator=(int16_t const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kInt;
-  str_ = std::to_string(other);
-  data_ = std::make_unique<Integer>(other);
-  tag_ = "";
-  return *this;
-}
-Entry& Entry::operator=(uint64_t const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kUInt;
-  str_ = std::to_string(other);
-  data_ = std::make_unique<UnsignedInteger>(other);
-  tag_ = "";
-  return *this;
-}
-Entry& Entry::operator=(uint32_t const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kUInt;
-  str_ = std::to_string(other);
-  data_ = std::make_unique<UnsignedInteger>(other);
-  tag_ = "";
-  return *this;
-}
-Entry& Entry::operator=(uint16_t const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kUInt;
-  str_ = std::to_string(other);
-  data_ = std::make_unique<UnsignedInteger>(other);
-  tag_ = "";
-  return *this;
-}
-Entry& Entry::operator=(long double const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kDouble;
-  str_ = std::to_string(other);
-  data_ = std::make_unique<Double>(other);
-  tag_ = "";
-  return *this;
-}
-Entry& Entry::operator=(double const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kDouble;
-  str_ = std::to_string(other);
-  data_ = std::make_unique<Double>(other);
-  tag_ = "";
-  return *this;
-}
-Entry& Entry::operator=(float const& other) noexcept {
+template<std::floating_point T>
+Entry& Entry::operator=(T const& other) noexcept {
   entries_.clear();
   type_ = Entry::Type::kDouble;
   str_ = std::to_string(other);
@@ -966,5 +892,11 @@ Entry Parse(std::string_view const& string) {
 
   std::unique_ptr<Entry> t = Parse(lines);
   return Entry(std::move(*t.get()));
+}
+std::optional<Entry> ParseNoexcept(std::string_view const& string) noexcept {
+  try {
+      return std::optional<Entry>{ Parse(string) };
+  } catch (std::exception e) {}
+  return std::nullopt;
 }
 }  // namespace yaml

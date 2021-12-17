@@ -61,15 +61,10 @@ class Entry {
                  Entry* parent = nullptr) noexcept;
   explicit Entry(std::string_view const& other,
                  Entry* parent = nullptr) noexcept;
-  explicit Entry(int64_t const& other, Entry* parent = nullptr) noexcept;
-  explicit Entry(int32_t const& other, Entry* parent = nullptr) noexcept;
-  explicit Entry(int16_t const& other, Entry* parent = nullptr) noexcept;
-  explicit Entry(uint64_t const& other, Entry* parent = nullptr) noexcept;
-  explicit Entry(uint32_t const& other, Entry* parent = nullptr) noexcept;
-  explicit Entry(uint16_t const& other, Entry* parent = nullptr) noexcept;
-  explicit Entry(long double const& other, Entry* parent = nullptr) noexcept;
-  explicit Entry(double const& other, Entry* parent = nullptr) noexcept;
-  explicit Entry(float const& other, Entry* parent = nullptr) noexcept;
+  template <std::integral T>
+  explicit Entry(T const& other, Entry* parent = nullptr) noexcept;
+  template <std::floating_point T>
+  explicit Entry(T const& other, Entry* parent = nullptr) noexcept;
   explicit Entry(std::tm const& other, Entry* parent = nullptr) noexcept;
   explicit Entry(std::chrono::year_month_day const& other,
                  Entry* parent = nullptr) noexcept;
@@ -290,15 +285,10 @@ class Entry {
   Entry& operator=(Entry& entry);
   Entry& operator=(std::string_view const& other) noexcept;
   Entry& operator=(bool const& other) noexcept;
-  Entry& operator=(int64_t const& other) noexcept;
-  Entry& operator=(int32_t const& other) noexcept;
-  Entry& operator=(int16_t const& other) noexcept;
-  Entry& operator=(uint64_t const& other) noexcept;
-  Entry& operator=(uint32_t const& other) noexcept;
-  Entry& operator=(uint16_t const& other) noexcept;
-  Entry& operator=(long double const& other) noexcept;
-  Entry& operator=(double const& other) noexcept;
-  Entry& operator=(float const& other) noexcept;
+  template<std::integral T>
+  Entry& operator=(T const& other) noexcept;
+  template<std::floating_point T>
+  Entry& operator=(T const& other) noexcept;
   Entry& operator=(std::tm const& other) noexcept;
   Entry& operator=(std::chrono::year_month_day const& other) noexcept;
   Entry& operator=(
@@ -491,4 +481,5 @@ class InvalidSyntax : public std::invalid_argument {
   using std::invalid_argument::invalid_argument;
 };
 Entry Parse(std::string_view const& string);
+std::optional<Entry> ParseNoexcept(std::string_view const& string) noexcept;
 }  // namespace yaml
