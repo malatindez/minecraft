@@ -15,7 +15,7 @@ Entry& Section::operator[](std::string_view key) {
   return dict_.at(t);
 }
 [[nodiscard]] Entry const& Section::at(std::string_view const key) const {
-    return dict_.at(std::string{ key });
+  return dict_.at(std::string{key});
 }
 
 // Always returns the string value, even of the object of integer or double
@@ -98,9 +98,10 @@ Ini::Ini(std::string_view const str) {
   }
 }
 Ini Ini::Deserialize(std::string_view const str) { return Ini(str); }
-    
+
 inline void Ini::DeserializeLine(std::string const& section,
                                  std::string& line) {
+  // creating temporary object because Section() constructor is private
   dict_.try_emplace(section, Section());
   size_t pos = line.find('=');
   while (pos != std::string::npos && pos != 0 && line[pos - 1] == '\\') {
@@ -110,7 +111,7 @@ inline void Ini::DeserializeLine(std::string const& section,
     return;
   }
   std::string key{
-      utils::trimview(std::string_view{ line.begin(), line.begin() + pos })};
+      utils::trimview(std::string_view{line.begin(), line.begin() + pos})};
   std::string value{
       utils::trimview(std::string_view{line.begin() + pos + 1, line.end()})};
 

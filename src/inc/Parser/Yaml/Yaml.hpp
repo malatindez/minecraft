@@ -56,7 +56,7 @@ class Entry {
   ~Entry() = default;
   explicit Entry(Type type, Entry* parent = nullptr) noexcept;
   explicit Entry(Entry&& entry, Entry* parent = nullptr) noexcept;
-  explicit Entry(Entry& entry, Entry* parent = nullptr) noexcept;
+  explicit Entry(Entry& entry, Entry* parent = nullptr);
   explicit Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value,
                  Entry* parent = nullptr) noexcept;
   explicit Entry(std::string_view const& other,
@@ -285,9 +285,9 @@ class Entry {
   Entry& operator=(Entry& entry);
   Entry& operator=(std::string_view const& other) noexcept;
   Entry& operator=(bool const& other) noexcept;
-  template<std::integral T>
+  template <std::integral T>
   Entry& operator=(T const& other) noexcept;
-  template<std::floating_point T>
+  template <std::floating_point T>
   Entry& operator=(T const& other) noexcept;
   Entry& operator=(std::tm const& other) noexcept;
   Entry& operator=(std::chrono::year_month_day const& other) noexcept;

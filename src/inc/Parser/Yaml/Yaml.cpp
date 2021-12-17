@@ -15,7 +15,7 @@ Entry::Entry(Entry&& entry, Entry* parent) noexcept
     parent_ = parent;
   }
 }
-Entry::Entry(Entry& entry, Entry* parent) noexcept : parent_(entry.parent_) {
+Entry::Entry(Entry& entry, Entry* parent) : parent_(entry.parent_) {
   operator=(entry);
   if (parent != nullptr) {
     parent_ = parent;
@@ -36,11 +36,11 @@ Entry::Entry(std::string_view const& other, Entry* parent) noexcept
 }
 template <std::integral T>
 Entry::Entry(T const& other, Entry* parent) noexcept : parent_(parent) {
-    operator=(other);
+  operator=(other);
 }
 template <std::floating_point T>
 Entry::Entry(T const& other, Entry* parent) noexcept : parent_(parent) {
-    operator=(other);
+  operator=(other);
 }
 Entry::Entry(std::tm const& other, Entry* parent) noexcept : parent_(parent) {
   operator=(other);
@@ -208,7 +208,7 @@ Entry& Entry::operator=(bool const& other) noexcept {
   tag_ = "";
   return *this;
 }
-template<std::integral T>
+template <std::integral T>
 Entry& Entry::operator=(T const& other) noexcept {
   entries_.clear();
   type_ = Entry::Type::kInt;
@@ -217,7 +217,7 @@ Entry& Entry::operator=(T const& other) noexcept {
   tag_ = "";
   return *this;
 }
-template<std::floating_point T>
+template <std::floating_point T>
 Entry& Entry::operator=(T const& other) noexcept {
   entries_.clear();
   type_ = Entry::Type::kDouble;
@@ -895,8 +895,9 @@ Entry Parse(std::string_view const& string) {
 }
 std::optional<Entry> ParseNoexcept(std::string_view const& string) noexcept {
   try {
-      return std::optional<Entry>{ Parse(string) };
-  } catch (std::exception e) {}
+    return std::optional<Entry>{Parse(string)};
+  } catch (std::exception e) {
+  }
   return std::nullopt;
 }
 }  // namespace yaml
