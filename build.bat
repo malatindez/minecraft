@@ -5,3 +5,4 @@ cmake .. .
 cmake --build . --config Release
 .\Release\runUnitTests.exe
 explorer .
+pause
