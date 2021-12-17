@@ -90,14 +90,14 @@ TEST(TEST_INI, RandomTest) {
   ASSERT_EQ(conf2.size(), conf.size());
   for (auto const& [section_key, section] : conf) {
     ASSERT_TRUE(conf2.SectionExists(section_key)) << section_key;
-    ini::Section& section2 = conf2[section_key];
+    ini::Section const& section2 = conf2[section_key];
 
-    ASSERT_EQ(section.get().size(), section2.size());
+    ASSERT_EQ(section.size(), section2.size());
 
-    for (auto const& [key, entry] : section.get()) {
+    for (auto const& [key, entry] : section) {
       ASSERT_TRUE(section2.Contains(key))
-          << section_key << "    " << key << "    " << entry.get().str();
-      ASSERT_EQ(section2[key], entry);
+          << section_key << "    " << key << "    " << entry.str();
+      ASSERT_EQ(section2.at(key), entry);
     }
   }
 }
