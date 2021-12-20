@@ -84,7 +84,7 @@ Ini::Ini(std::string_view const str) {
         DeserializeLine(current_section, line);
       }
       skip = false;
-      line = "";
+      line.clear();
     } else if ((str[i] == ';' || str[i] == '#') &&
                (i == 0 || str[i - 1] != '\\')) {
       skip = true;
@@ -93,7 +93,7 @@ Ini::Ini(std::string_view const str) {
     }
     i++;
   }
-  if (line != "") {
+  if (!line.empty()) {
     DeserializeLine(current_section, line);
   }
 }

@@ -11,6 +11,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "Utils/Utils.hpp"
@@ -62,9 +63,15 @@ class Entry {
   explicit Entry(std::string_view const& other,
                  Entry* parent = nullptr) noexcept;
   template <std::integral T>
-  explicit Entry(T const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(T const& other, Entry* parent = nullptr) noexcept
+      : parent_(parent) {
+    operator=(other);
+  }
   template <std::floating_point T>
-  explicit Entry(T const& other, Entry* parent = nullptr) noexcept;
+  explicit Entry(T const& other, Entry* parent = nullptr) noexcept
+      : parent_(parent) {
+    operator=(other);
+  }
   explicit Entry(std::tm const& other, Entry* parent = nullptr) noexcept;
   explicit Entry(std::chrono::year_month_day const& other,
                  Entry* parent = nullptr) noexcept;
@@ -260,15 +267,15 @@ class Entry {
 
   [[nodiscard]] bool operator==(Entry const& other) const noexcept;
   [[nodiscard]] bool operator==(std::string_view const& other) const noexcept;
-  [[nodiscard]] bool operator==(int64_t const& other) const noexcept;
-  [[nodiscard]] bool operator==(int32_t const& other) const noexcept;
-  [[nodiscard]] bool operator==(int16_t const& other) const noexcept;
-  [[nodiscard]] bool operator==(uint64_t const& other) const noexcept;
-  [[nodiscard]] bool operator==(uint32_t const& other) const noexcept;
-  [[nodiscard]] bool operator==(uint16_t const& other) const noexcept;
-  [[nodiscard]] bool operator==(long double const& other) const noexcept;
-  [[nodiscard]] bool operator==(double const& other) const noexcept;
-  [[nodiscard]] bool operator==(float const& other) const noexcept;
+
+  template <std::integral T>
+  [[nodiscard]] bool operator==(T const& other) const noexcept {
+    return is_int() && to_int() == other;
+  }
+  template <std::floating_point T>
+  [[nodiscard]] bool operator==(T const& other) const noexcept {
+    return is_double() && to_double() == other;
+  }
   [[nodiscard]] bool operator==(std::tm const& other) const noexcept;
   [[nodiscard]] bool operator==(
       std::chrono::year_month_day const& other) const noexcept;
@@ -286,9 +293,23 @@ class Entry {
   Entry& operator=(std::string_view const& other) noexcept;
   Entry& operator=(bool const& other) noexcept;
   template <std::integral T>
-  Entry& operator=(T const& other) noexcept;
+  Entry& operator=(T const& other) noexcept {
+    entries_.clear();
+    type_ = Type::kInt;
+    str_ = std::to_string(other);
+    data_ = (int64_t)other;
+    tag_.clear();
+    return *this;
+  }
   template <std::floating_point T>
-  Entry& operator=(T const& other) noexcept;
+  Entry& operator=(T const& other) noexcept {
+    entries_.clear();
+    type_ = Type::kDouble;
+    str_ = std::to_string(other);
+    data_ = (long double)other;
+    tag_.clear();
+    return *this;
+  }
   Entry& operator=(std::tm const& other) noexcept;
   Entry& operator=(std::chrono::year_month_day const& other) noexcept;
   Entry& operator=(
@@ -298,18 +319,18 @@ class Entry {
   template <typename T>
   Entry& operator=(std::vector<T>&& other) noexcept {
     entries_.clear();
-    type_ = Entry::Type::kSequence;
-    for (auto const& t : other) {
+    type_ = Type::kSequence;
+    for (auto& t : other) {
       entries_.emplace_back(std::move(t), this);
     }
-    tag_ = "";
-    str_ = "";
+    tag_.clear();
+    str_.clear();
     return *this;
   }
   template <typename T1, typename T2>
   Entry& operator=(std::map<T1, T2>&& other) noexcept {
     entries_.clear();
-    type_ = Entry::Type::kMap;
+    type_ = Type::kMap;
     for (auto const& [t1, t2] : other) {
       // Call an Entry() with two entries as parameters
       auto const& test = entries_.emplace_back(std::make_unique<Entry>(
@@ -317,14 +338,14 @@ class Entry {
       bool a = test->key().parent() == test.get();
       bool b = test->value().parent() == test.get();
     }
-    tag_ = "";
-    str_ = "";
+    tag_.clear();
+    str_.clear();
     return *this;
   }
   template <typename T>
   Entry& operator=(std::set<T>&& other) noexcept {
     entries_.clear();
-    type_ = Entry::Type::kSet;
+    type_ = Type::kSet;
     for (auto const& t : other) {
       // Call an Entry() with two entries as parameters, the value is set to be
       // Null
@@ -338,31 +359,31 @@ class Entry {
   template <typename T>
   Entry& operator=(std::vector<T> const& other) noexcept {
     entries_.clear();
-    type_ = Entry::Type::kSequence;
+    type_ = Type::kSequence;
     for (auto const& t : other) {
       entries_.emplace_back(std::make_unique<Entry>(t, this));
     }
-    tag_ = "";
-    str_ = "";
+    tag_.clear();
+    str_.clear();
     return *this;
   }
   template <typename T1, typename T2>
   Entry& operator=(std::map<T1, T2> const& other) noexcept {
     entries_.clear();
-    type_ = Entry::Type::kMap;
+    type_ = Type::kMap;
     for (auto const& [t1, t2] : other) {
       // Call an Entry() with two entries as parameters
       entries_.emplace_back(std::make_unique<Entry>(std::move(t1)),
                             std::make_unique<Entry>(std::move(t2)), this);
     }
-    tag_ = "";
+    tag_.clear();
     str_ = Serialize();
     return *this;
   }
   template <typename T>
   Entry& operator=(std::set<T> const& other) noexcept {
     entries_.clear();
-    type_ = Entry::Type::kSet;
+    type_ = Type::kSet;
     for (auto const& t : other) {
       // Call an Entry() with two entries as parameters, value is null
       entries_.emplace_back(Entry(t), Entry(Type::kNull, nullptr), this);
@@ -403,37 +424,15 @@ class Entry {
     if (!is_link()) {
       throw std::invalid_argument("This entry is not a boolean");
     }
-    return *static_cast<Link*>(data_.get())->link_;
+    auto const& t = std::get<Entry*>(data_);
+    if (t) {
+      return *t;
+    }
+    throw std::runtime_error("The link is invalid!");
   }
 
  private:
-  struct AbstractValue {
-    virtual ~AbstractValue() = default;
-  };
-  struct Pair : public AbstractValue {
-    std::unique_ptr<Entry> key_ = nullptr;
-    std::unique_ptr<Entry> value_ = nullptr;
-    Pair(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value)
-        : key_(std::move(key)), value_(std::move(value)) {}
-  };
-  struct Integer : public AbstractValue {
-    int64_t integer_;
-    explicit Integer(int64_t integer_) : integer_(integer_) {}
-  };
-  struct UnsignedInteger : public AbstractValue {
-    uint64_t unsigned_integer_;
-    explicit UnsignedInteger(uint64_t unsigned_integer_)
-        : unsigned_integer_(unsigned_integer_) {}
-  };
-  struct Double : public AbstractValue {
-    long double double_;
-    explicit Double(long double double_) : double_(double_) {}
-  };
-  struct Boolean : public AbstractValue {
-    bool boolean_;
-    explicit Boolean(bool boolean) : boolean_(boolean) {}
-  };
-  struct TimePoint : public AbstractValue {
+  struct TimePoint final {
     std::tm datetime_;
     std::chrono::year_month_day date_;
     std::chrono::hh_mm_ss<std::chrono::microseconds> time_;
@@ -464,16 +463,14 @@ class Entry {
       datetime_.tm_sec = uint32_t(time.seconds().count());
     }
   };
-  struct Link : public AbstractValue {
-    Entry* link_;
-    explicit Link(Entry* link) : link_(link) {}
-  };
-
+  typedef std::pair<std::unique_ptr<Entry>, std::unique_ptr<Entry>> Pair;
   std::vector<std::unique_ptr<Entry>> entries_;
-  Type type_ = Entry::Type::kNull;
+  Type type_ = Type::kNull;
   std::string str_ = "";
   std::string tag_ = "";
-  std::unique_ptr<AbstractValue> data_ = nullptr;
+  std::variant<std::monostate, Pair, int64_t, uint64_t, long double, bool,
+               TimePoint, Entry*>
+      data_;
   Entry* parent_ = nullptr;
 };
 class InvalidSyntax : public std::invalid_argument {
