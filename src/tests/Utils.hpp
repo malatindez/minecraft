@@ -45,7 +45,7 @@ const std::string kAllBinaryCharacters = AllBinaryCharacters();
 [[nodiscard]] std::string RandomBinaryString(size_t const& size = 32);
 
 [[nodiscard]] std::string RandomString(
-    size_t const& size = 32, std::string including = kAsciiCharacters);
+    size_t const& size = 32, std::string const& including = kAsciiCharacters);
 
 [[nodiscard]] uint64_t RandomUint64(
     uint64_t min = std::numeric_limits<uint64_t>::min(),

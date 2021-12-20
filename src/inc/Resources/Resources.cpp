@@ -1,3 +1,8 @@
+// This is an independent project of an individual developer. Dear PVS-Studio,
+// please check it.
+
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java:
+// https://pvs-studio.com
 #include "Resources.hpp"
 static std::shared_mutex resource_mutex_;
 static std::vector<std::shared_ptr<resource::Entry>> tree_;
@@ -28,14 +33,14 @@ void UnloadResources(std::filesystem::path const& path_to_file) {
       }
     }
     auto it = tree_.begin();
-    for (; it != tree_.end() && (*it)->resource_file_ptr() == ref; it++)
+    for (; it != tree_.end() && (*it)->resource_file_ptr() == ref; ++it)
       ;
     if (it != tree_.end()) {
       tree_.erase(it);
     }
   }
   auto it = resource_handles_.begin();
-  for (; it != resource_handles_.end() && it->first != path_to_file; it++)
+  for (; it != resource_handles_.end() && it->first != path_to_file; ++it)
     ;
   if (it != resource_handles_.end()) {
     it->second.Lock()->close();

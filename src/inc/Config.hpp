@@ -3,7 +3,7 @@
 #include <mutex>
 #include <stdexcept>
 
-#include "Parser/Ini.hpp"
+#include "parsers/Ini.hpp"
 class Config final : public ini::Ini {
  public:
   static Config const& GetInstance() {

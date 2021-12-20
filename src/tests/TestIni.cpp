@@ -4,9 +4,9 @@
 #include <queue>
 #include <set>
 
-#include "Parser/Ini.hpp"
 #include "Utils.hpp"
 #include "gtest/gtest.h"
+#include "parsers/Ini.hpp"
 namespace fs = std::filesystem;
 TEST(TEST_INI, TestSaving) {
   ini::Ini conf;

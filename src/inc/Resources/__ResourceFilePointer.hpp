@@ -34,7 +34,7 @@ class __AtomicSharedPtr {
       }
     }
     // used to return an empty value in TryLock
-    constexpr __Locked() {}
+    constexpr __Locked() = default;
     friend __AtomicSharedPtr;
     std::shared_ptr<std::mutex> mutex_;
   };

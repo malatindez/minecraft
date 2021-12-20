@@ -1,5 +1,5 @@
 #include "Shader.hpp"
-static inline void CheckCompileErrors(GLuint shader, std::string type) {
+static inline void CheckCompileErrors(GLuint shader, std::string const& type) {
   GLint success;
   GLchar infoLog[1024];
   if (type != "PROGRAM") {

@@ -2,8 +2,8 @@
 #include <cmath>
 #include <iostream>
 
-#include "Parser/Yaml/Yaml.hpp"
 #include "gtest/gtest.h"
+#include "parsers/yaml/yaml.hpp"
 namespace chrono = std::chrono;
 using namespace yaml;
 

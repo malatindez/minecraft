@@ -4,12 +4,12 @@ namespace resource {
 [[nodiscard]] bool Entry::FileExists(
     std::string_view const key) const noexcept {
   auto opt = GetIfExists(key);
-  return opt.has_value() && opt.value().get().is_file();
+  return opt.has_value() && (*opt).get().is_file();
 }
 [[nodiscard]] bool Entry::DirectoryExists(
     std::string_view const key) const noexcept {
   auto opt = GetIfExists(key);
-  return opt.has_value() && opt.value().get().is_dir();
+  return opt.has_value() && (*opt).get().is_dir();
 }
 
 [[nodiscard]] bool Entry::Exists(std::string_view const key) const noexcept {
@@ -45,7 +45,7 @@ namespace resource {
     throw resource::InvalidPathException("Invalid path specified: " +
                                          std::string(key));
   }
-  return opt.value();
+  return *opt;
 }
 [[nodiscard]] static constexpr std::pair<std::string_view, std::string_view>
 lcrop_path(std::string_view const& path) noexcept {
@@ -90,6 +90,9 @@ Entry::GetIfExists(std::string_view const key) const noexcept {
 [[nodiscard]] std::string Entry::ToString() const noexcept {
   std::shared_ptr<std::vector<char>> data = this->data();
   std::string return_value;
+  if (!data) {
+    return "";
+  }
   return_value.resize(data->size());
   std::transform(data->begin(), data->end(), return_value.begin(),
                  [](char b) { return char(b); });
@@ -164,7 +167,6 @@ Entry::Entry(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr,
 
   auto data_ptr = data_internal();
   auto data = data_ptr->data();
-  std::vector<uint64_t> resources(size() / 4U);
 
   // Process files
   bool flag = true;
@@ -180,9 +182,9 @@ Entry::Entry(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr,
         std::unique_ptr<Entry>(new Entry(file_begin, resource_file_ptr, flag));
     std::string_view key{value->name_};
     if (flag) {
-      files_.push_back(std::reference_wrapper<const Entry>(*value));
+      files_.emplace_back(*value);
     } else {
-      directories_.push_back(std::reference_wrapper<const Entry>(*value));
+      directories_.emplace_back(*value);
     }
     entry_map_.try_emplace(key, std::reference_wrapper<const Entry>(*value));
     entries_holder_->emplace_back(std::move(value));
