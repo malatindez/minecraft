@@ -44,7 +44,8 @@ jobs:
           submodules: recursive
       - name: Install dependencies
         run: |
-          sudo apt-get install xorg-dev libglu1-mesa-dev
+          sudo apt update
+          sudo apt-get install xorg-dev libglu1-mesa-dev -y
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v1
