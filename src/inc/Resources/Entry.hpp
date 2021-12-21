@@ -64,6 +64,8 @@ class Entry final {
 
   [[nodiscard]] Entry const& operator[](std::string_view const key) const;
 
+  [[nodiscard]] bool operator==(Entry const& other) const noexcept;
+
   [[nodiscard]] std::optional<std::reference_wrapper<const Entry>> GetIfExists(
       std::string_view const key) const noexcept;
   // returns nullptr if the entry is a folder

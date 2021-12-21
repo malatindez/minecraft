@@ -47,6 +47,12 @@ namespace resource {
   }
   return *opt;
 }
+[[nodiscard]] bool Entry::operator==(Entry const& other) const {
+  return name == other.name_ && size_ == other.size_ &&
+         data_begin_ == other.data_begin_ &&
+         resource_file_ptr == other.resource_file_ptr_ &&
+         is_file_ == other.is_file_;
+}
 [[nodiscard]] static constexpr std::pair<std::string_view, std::string_view>
 lcrop_path(std::string_view const& path) noexcept {
   auto it = std::find_if(path.begin(), path.end(),
