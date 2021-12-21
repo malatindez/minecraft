@@ -3,10 +3,8 @@
 #include <glad/glad.h>
 
 #include <array>
-#include <parser/yaml/yaml.hpp>
+#include <parsers/yaml/yaml.hpp>
 #include <shader.hpp>
-
-#include "core/interfaces/tile-entity.hpp"
 
 namespace minecraft::core {
 // storage for block data,
@@ -43,10 +41,7 @@ class BlockBase final {
   }
   uint32_t hardness() const noexcept { return hardness_; }
 
-  static BlockBase Load(yaml::Entry const &entry) {}
-
  private:
-  std::unique_ptr<TileEntity> tile_entity_ = nullptr;
   std::array<uint32_t, 6> diffuse_textures_;
   std::array<uint32_t, 6> specular_textures_;
   uint32_t hardness_;

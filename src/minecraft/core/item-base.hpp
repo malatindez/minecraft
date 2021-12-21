@@ -17,8 +17,6 @@ class ItemBase final {
   std::string str_id() const noexcept { return str_id_; }
   uint32_t id() const noexcept { return id_; }
 
-  static ItemBase Load(yaml::Entry const &entry) {}
-
  private:
   std::string str_id_;  // minecraft:stone, minecraft:grass, etc.
   uint32_t id_;         // 1, 2, etc.

@@ -84,4 +84,15 @@ class BaseIteratorWrapper {
   iterator_type it;
 };
 
+inline bool ends_with(std::string str, std::string suffix) {
+  if (suffix.size() > str.size()) {
+    return false;
+  }
+  for (size_t i = suffix.size() - 1; i != size_t(-1); i--) {
+    if (str[str.size() - suffix.size() + i] != suffix[i]) {
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace utils

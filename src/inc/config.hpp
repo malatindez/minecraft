@@ -5,7 +5,7 @@
 
 #include "parsers/ini.hpp"
 class Config final : public ini::Ini {
-public:
+ public:
   static Config const &GetInstance() {
     static std::mutex mutex;
     if (!config_) {
@@ -27,7 +27,7 @@ public:
   Config(Config const &) = delete;
   Config &operator=(Config const &) = delete;
 
-private:
+ private:
   using ini::Ini::Ini;
   static std::unique_ptr<Config> config_;
 };
