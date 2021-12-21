@@ -12,7 +12,7 @@
 namespace fs = std::filesystem;
 using namespace resource;
 
-void initOpenGL(int major = 3, int minor = 3) {
+bool initOpenGL(int major = 3, int minor = 3) {
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
@@ -20,10 +20,11 @@ void initOpenGL(int major = 3, int minor = 3) {
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
   GLFWwindow *window =
       glfwCreateWindow(1000, 1000, "shader test", nullptr, nullptr);
-  ASSERT_FALSE(window == NULL) << "Failed to create GLFW window" << std::endl;
+  if (!window) {
+    return false;
+  }
   glfwMakeContextCurrent(window);
-  ASSERT_TRUE(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-      << "Failed to load glad" << std::endl;
+  return gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 }
 
 class TestShader : public ::testing::Test {
@@ -50,7 +51,7 @@ fs::path TestShader::shader_pack;
 std::shared_ptr<Entry> TestShader::shaders_;
 
 TEST_F(TestShader, TestLoading) {
-  initOpenGL(3, 3);
+  ASSERT_TRUE(initOpenGL(3, 3)) << "GLFW initialization failed" << std::endl;
   std::shared_ptr<Shader> shader;
   ASSERT_NO_THROW(
       shader = std::make_shared<Shader>(shaders_->Get("TestShader/test.vert"),
@@ -59,7 +60,7 @@ TEST_F(TestShader, TestLoading) {
 }
 
 TEST_F(TestShader, TestSettersExceptions) {
-  initOpenGL(3, 3);
+  ASSERT_TRUE(initOpenGL(3, 3)) << "GLFW initialization failed" << std::endl;
   std::shared_ptr<Shader> shader;
   ASSERT_NO_THROW(
       shader = std::make_shared<Shader>(shaders_->Get("TestShader/test.vert"),
@@ -105,7 +106,7 @@ TEST_F(TestShader, TestSettersExceptions) {
   ASSERT_THROW(shader->set_uvec("d", glm::uvec4(0)), std::invalid_argument);
 }
 TEST_F(TestShader, TestSetters) {
-  initOpenGL(4, 3);
+  ASSERT_TRUE(initOpenGL(4, 3)) << "GLFW initialization failed" << std::endl;
   std::shared_ptr<Shader> shader;
   ASSERT_NO_THROW(shader = std::make_shared<Shader>(
                       shaders_->GetFile("TestShader/test.vert"),
