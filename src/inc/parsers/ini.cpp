@@ -1,7 +1,8 @@
 #include "ini.hpp"
 namespace ini {
 
-template <typename T> T const &Section::GetValue(std::string const &key) const {
+template <typename T>
+T const &Section::GetValue(std::string const &key) const {
   return operator[]<T>(key);
 }
 
@@ -127,4 +128,4 @@ inline void Ini::DeserializeLine(std::string const &section,
   }
   dict_.at(section)[key] = value;
 }
-} // namespace ini
+}  // namespace ini

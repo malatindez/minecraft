@@ -3,10 +3,9 @@
 #include <spdlog/spdlog.h>
 
 #include <map>
-#include <vector>
-
 #include <parsers/yaml/Yaml.hpp>
 #include <resources/resources.hpp>
+#include <vector>
 
 #include "core/block-base.hpp"
 #include "core/interfaces/updatable.hpp"
@@ -14,7 +13,7 @@
 
 namespace minecraft::core {
 class Core final {
-public:
+ public:
   using BlockBaseMap = std::map<std::string, BlockBase>;
   using ItemBaseMap = std::map<std::string, ItemBase>;
 
@@ -29,7 +28,7 @@ public:
   constexpr BlockBaseMap const &blocks() const noexcept { return *blocks_; }
   constexpr ItemBaseMap const &items() const noexcept { return *items_; }
 
-private:
+ private:
   static void RecursiveItemLoader(resource::Entry const &folder,
                                   BlockBaseMap &blocks, ItemBaseMap &items,
                                   std::string current_string = "") {
@@ -86,4 +85,4 @@ bool ends_with(std::string str, std::string suffix) {
   return true;
 }
 
-} // namespace minecraft::core
+}  // namespace minecraft::core

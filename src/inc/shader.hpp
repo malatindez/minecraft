@@ -12,7 +12,7 @@
 
 #include "resources/entry.hpp"
 class Shader {
-public:
+ public:
   // constructor generates the shader on the fly
   // ------------------------------------------------------------------------
   Shader(std::string const &vertex_shader_code,
@@ -112,6 +112,6 @@ public:
   void set_mat(std::string const &name, glm::mat4x2 const &value) const;
   void set_mat(std::string const &name, glm::mat4x3 const &value) const;
 
-private:
+ private:
   std::shared_ptr<uint32_t> id_;
 };

@@ -1,13 +1,13 @@
 #include "entry.hpp"
 
 namespace resource {
-[[nodiscard]] bool
-Entry::FileExists(std::string_view const key) const noexcept {
+[[nodiscard]] bool Entry::FileExists(
+    std::string_view const key) const noexcept {
   auto opt = GetIfExists(key);
   return opt.has_value() && (*opt).get().is_file();
 }
-[[nodiscard]] bool
-Entry::DirectoryExists(std::string_view const key) const noexcept {
+[[nodiscard]] bool Entry::DirectoryExists(
+    std::string_view const key) const noexcept {
   auto opt = GetIfExists(key);
   return opt.has_value() && (*opt).get().is_dir();
 }
@@ -26,8 +26,8 @@ Entry::DirectoryExists(std::string_view const key) const noexcept {
   }
   return t;
 }
-[[nodiscard]] Entry const &
-Entry::GetDirectory(std::string_view const key) const {
+[[nodiscard]] Entry const &Entry::GetDirectory(
+    std::string_view const key) const {
   Entry const &t = operator[](key);
   if (t.is_file()) {
     throw std::invalid_argument("The value behind the key is a file!");
@@ -88,8 +88,8 @@ Entry::GetIfExists(std::string_view const key) const noexcept {
 }
 
 // returns nullptr if the entry is a folder
-[[nodiscard]] std::shared_ptr<std::vector<char>>
-Entry::content() const noexcept {
+[[nodiscard]] std::shared_ptr<std::vector<char>> Entry::content()
+    const noexcept {
   return data();
 }
 
@@ -106,8 +106,8 @@ Entry::content() const noexcept {
 }
 [[nodiscard]] std::string Entry::string() const noexcept { return ToString(); }
 
-[[nodiscard]] std::shared_ptr<std::vector<char>>
-Entry::data_internal() const noexcept {
+[[nodiscard]] std::shared_ptr<std::vector<char>> Entry::data_internal()
+    const noexcept {
   if (data_->expired()) {
     if (auto lock = resource_file_ptr_.TryLock()) {
       lock->seekg(data_begin_);
@@ -123,8 +123,8 @@ Entry::data_internal() const noexcept {
   return data_->lock();
 }
 
-static constexpr uint64_t BytesToUint64(const char *sbuf) {
-  auto buf = std::bit_cast<const unsigned char *>(sbuf);
+static inline uint64_t BytesToUint64(const char *sbuf) {
+  auto buf = reinterpret_cast<const unsigned char *>(sbuf);
   return (uint64_t(buf[0]) << 0) | (uint64_t(buf[1]) << 8) |
          (uint64_t(buf[2]) << 16) | (uint64_t(buf[3]) << 24) |
          (uint64_t(buf[4]) << 32) | (uint64_t(buf[5]) << 40) |
@@ -141,7 +141,8 @@ uint64_t Entry::CalculateDirSize() const noexcept {
 
 Entry::Entry(uint64_t begin, AtomicIfstreamPointer const &resource_file_ptr,
              bool is_file)
-    : data_begin_(begin), resource_file_ptr_(resource_file_ptr),
+    : data_begin_(begin),
+      resource_file_ptr_(resource_file_ptr),
       is_file_(is_file) {
   entries_holder_ = std::make_shared<std::vector<std::unique_ptr<Entry>>>();
   data_ = std::make_shared<std::weak_ptr<std::vector<char>>>();
@@ -195,4 +196,4 @@ Entry::Entry(uint64_t begin, AtomicIfstreamPointer const &resource_file_ptr,
   }
   size_ = CalculateDirSize() + size_;
 }
-} // namespace resource
+}  // namespace resource

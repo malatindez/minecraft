@@ -1,7 +1,7 @@
 #include "pack.hpp"
 
-[[nodiscard]] static inline std::vector<char>
-Uint64ToBytes(uint64_t const &integer) {
+[[nodiscard]] static inline std::vector<char> Uint64ToBytes(
+    uint64_t const &integer) {
   auto return_value = std::vector<char>(8);
   return_value[0] = (unsigned char)((integer >> 0x00) & 0xff);
   return_value[1] = (unsigned char)((integer >> 0x08) & 0xff);
@@ -13,8 +13,8 @@ Uint64ToBytes(uint64_t const &integer) {
   return_value[7] = (unsigned char)((integer >> 0x38) & 0xff);
   return return_value;
 }
-[[nodiscard]] static inline std::vector<char>
-Uint16ToBytes(uint16_t const &integer) {
+[[nodiscard]] static inline std::vector<char> Uint16ToBytes(
+    uint16_t const &integer) {
   auto return_value = std::vector<char>(2);
   return_value[0] = (unsigned char)((integer >> 0x00) & 0xff);
   return_value[1] = (unsigned char)((integer >> 0x08) & 0xff);
@@ -47,7 +47,7 @@ static inline uint64_t min(uint64_t const &a, uint64_t const &b) {
 
 static inline void ReserveBytes(std::ofstream &file, uint64_t amount) {
   static const char nullbyte = 0;
-  for (int i = 0; i < amount; i++) {
+  for (uint64_t i = 0; i < amount; i++) {
     file.write(&nullbyte, 1);
   }
 }
@@ -109,7 +109,9 @@ static inline uint64_t ProcessFolder(std::ofstream &output_file,
     auto buf = Uint64ToBytes(entry);
     data.insert(data.end(), buf.begin(), buf.end());
   }
-  _ASSERT(data.size() == folder_size);
+  if (data.size() != folder_size) {
+    throw std::runtime_error("data.size() != folder_size");
+  }
 
   output_file.seekp(folder_begin);
   output_file.write(data.data(), data.size());

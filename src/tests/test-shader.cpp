@@ -2,7 +2,6 @@
 #include <glad/glad.h>
 
 #include <filesystem>
-
 #include <resources/pack.hpp>
 #include <resources/resources.hpp>
 #include <shader.hpp>
@@ -28,7 +27,7 @@ void initOpenGL(int major = 3, int minor = 3) {
 }
 
 class TestShader : public ::testing::Test {
-protected:
+ protected:
   static void SetUpTestSuite() {
     shader_pack = fs::temp_directory_path() / "TestShader.pack";
     auto vec = std::vector<fs::path>(

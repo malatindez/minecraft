@@ -10,12 +10,12 @@
 
 namespace resource {
 class InvalidPathException : public std::runtime_error {
-public:
+ public:
   using std::runtime_error::runtime_error;
 };
 // abstract resource class
 class Entry final {
-public:
+ public:
   [[nodiscard]] inline std::string name() const noexcept { return name_; }
   [[nodiscard]] constexpr uint64_t size() const noexcept { return size_; }
   [[nodiscard]] AtomicIfstreamPointer resource_file_ptr() const noexcept {
@@ -66,8 +66,8 @@ public:
 
   [[nodiscard]] bool operator==(Entry const &other) const noexcept;
 
-  [[nodiscard]] std::optional<std::reference_wrapper<const Entry>>
-  GetIfExists(std::string_view const key) const noexcept;
+  [[nodiscard]] std::optional<std::reference_wrapper<const Entry>> GetIfExists(
+      std::string_view const key) const noexcept;
   // returns nullptr if the entry is a folder
   [[nodiscard]] std::shared_ptr<std::vector<char>> data() const noexcept;
   // returns nullptr if the entry is a folder
@@ -82,9 +82,9 @@ public:
   Entry(uint64_t begin, AtomicIfstreamPointer const &resource_file_ptr)
       : Entry(begin, resource_file_ptr, false) {}
 
-private:
-  [[nodiscard]] std::shared_ptr<std::vector<char>>
-  data_internal() const noexcept;
+ private:
+  [[nodiscard]] std::shared_ptr<std::vector<char>> data_internal()
+      const noexcept;
   uint64_t CalculateDirSize() const noexcept;
 
   Entry(uint64_t begin, AtomicIfstreamPointer const &resource_file_ptr,
@@ -104,4 +104,4 @@ private:
   std::shared_ptr<std::vector<std::unique_ptr<Entry>>> entries_holder_;
   std::shared_ptr<std::weak_ptr<std::vector<char>>> data_;
 };
-} // namespace resource
+}  // namespace resource

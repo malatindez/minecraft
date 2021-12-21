@@ -42,4 +42,4 @@ void UnloadResources(std::filesystem::path const &path_to_file) {
     resource_handles_.erase(it);
   }
 }
-} // namespace resource
+}  // namespace resource

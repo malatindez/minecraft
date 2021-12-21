@@ -21,8 +21,9 @@ struct InsertStatus {
   };
 };
 
-template <typename GeomT = int> class RectPacker {
-public:
+template <typename GeomT = int>
+class RectPacker {
+ public:
   struct Spacing {
     GeomT x;
     GeomT y;
@@ -77,7 +78,7 @@ public:
 
   InsertResult insert(GeomT width, GeomT height);
 
-private:
+ private:
   struct Size {
     GeomT w;
     GeomT h;
@@ -87,7 +88,7 @@ private:
 
   struct Context;
   class Page {
-  public:
+   public:
     Page() : nodes(), rootSize(0, 0), growDownRootBottomIdx(0) {}
 
     Size getSize(const Context &ctx) const {
@@ -97,7 +98,7 @@ private:
 
     bool insert(Context &ctx, const Size &rect, Position &pos);
 
-  private:
+   private:
     struct Node {
       Position pos;
       Size size;
@@ -134,8 +135,8 @@ private:
 };
 
 template <typename GeomT>
-typename RectPacker<GeomT>::InsertResult
-RectPacker<GeomT>::insert(GeomT width, GeomT height) {
+typename RectPacker<GeomT>::InsertResult RectPacker<GeomT>::insert(
+    GeomT width, GeomT height) {
   InsertResult result;
 
   if (width < 0 || height < 0) {
@@ -244,16 +245,14 @@ void RectPacker<GeomT>::Page::subdivideNode(Context &ctx, std::size_t nodeIdx,
                    Node(bottomX, node.pos.y + rect.h + ctx.spacing.y, bottomW,
                         bottomH - ctx.spacing.y));
 
-      if (nodeIdx <= growDownRootBottomIdx)
-        ++growDownRootBottomIdx;
+      if (nodeIdx <= growDownRootBottomIdx) ++growDownRootBottomIdx;
     }
   } else if (hasSpaceBelow) {
     node.pos.y += rect.h + ctx.spacing.y;
     node.size.h = bottomH - ctx.spacing.y;
   } else {
     nodes.erase(nodes.begin() + nodeIdx);
-    if (nodeIdx < growDownRootBottomIdx)
-      --growDownRootBottomIdx;
+    if (nodeIdx < growDownRootBottomIdx) --growDownRootBottomIdx;
   }
 }
 
@@ -301,10 +300,10 @@ void RectPacker<GeomT>::Page::growDown(Context &ctx, const Size &rect,
 
   if (rootSize.w < rect.w) {
     if (rect.w - rootSize.w > ctx.spacing.x) {
-      nodes.insert(nodes.begin(),
-                   Node(ctx.padding.left + rootSize.w + ctx.spacing.x,
-                        ctx.padding.top, rect.w - rootSize.w - ctx.spacing.x,
-                        rootSize.h));
+      nodes.insert(
+          nodes.begin(),
+          Node(ctx.padding.left + rootSize.w + ctx.spacing.x, ctx.padding.top,
+               rect.w - rootSize.w - ctx.spacing.x, rootSize.h));
       ++growDownRootBottomIdx;
     }
 
@@ -333,10 +332,10 @@ void RectPacker<GeomT>::Page::growRight(Context &ctx, const Size &rect,
   if (rootSize.h < rect.h) {
     if (rect.h - rootSize.h > ctx.spacing.y)
 
-      nodes.insert(nodes.end(),
-                   Node(ctx.padding.left,
-                        ctx.padding.top + rootSize.h + ctx.spacing.y,
-                        rootSize.w, rect.h - rootSize.h - ctx.spacing.y));
+      nodes.insert(
+          nodes.end(),
+          Node(ctx.padding.left, ctx.padding.top + rootSize.h + ctx.spacing.y,
+               rootSize.w, rect.h - rootSize.h - ctx.spacing.y));
 
     rootSize.h = rect.h;
   } else if (rootSize.h - rect.h > ctx.spacing.y) {
@@ -353,17 +352,14 @@ template <typename GeomT>
 RectPacker<GeomT>::Context::Context(GeomT maxPageWidth, GeomT maxPageHeight,
                                     const Spacing &rectsSpacing,
                                     const Padding &pagePadding)
-    : maxSize(maxPageWidth, maxPageHeight), spacing(rectsSpacing),
+    : maxSize(maxPageWidth, maxPageHeight),
+      spacing(rectsSpacing),
       padding(pagePadding) {
-  if (maxSize.w < 0)
-    maxSize.w = 0;
-  if (maxSize.h < 0)
-    maxSize.h = 0;
+  if (maxSize.w < 0) maxSize.w = 0;
+  if (maxSize.h < 0) maxSize.h = 0;
 
-  if (spacing.x < 0)
-    spacing.x = 0;
-  if (spacing.y < 0)
-    spacing.y = 0;
+  if (spacing.x < 0) spacing.x = 0;
+  if (spacing.y < 0) spacing.y = 0;
 
   subtractPadding(padding.top, maxSize.h);
   subtractPadding(padding.bottom, maxSize.h);
@@ -383,6 +379,6 @@ void RectPacker<GeomT>::Context::subtractPadding(GeomT &padding, GeomT &size) {
   }
 }
 
-} // namespace utils
+}  // namespace utils
 
 #endif

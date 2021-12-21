@@ -78,11 +78,12 @@ void print_list(std::ostream &os, const std::string &indent,
 
 void print_compound(std::ostream &os, const std::string &indent,
                     const TagCompound &map);
-} // namespace detail
+}  // namespace detail
 
 struct TagList {
   TagList() = default;
-  template <typename T> TagList(const std::vector<T> &base) : base{base} {}
+  template <typename T>
+  TagList(const std::vector<T> &base) : base{base} {}
   template <typename T>
   TagList(std::initializer_list<T> lst)
       : base{std::in_place_type<std::vector<T>>, lst} {}
@@ -100,22 +101,25 @@ struct TagList {
 
   size_t index() const { return base.index(); }
 
-  template <typename T> TagList &operator=(const std::vector<T> &other) {
+  template <typename T>
+  TagList &operator=(const std::vector<T> &other) {
     base = other;
     return *this;
   }
 
-private:
+ private:
   friend std::ostream &operator<<(std::ostream &os, const TagList &tag) {
     detail::print_list(os, "", tag);
     return os;
   }
 };
 
-template <typename T> const std::vector<T> &get_list(const TagList &list) {
+template <typename T>
+const std::vector<T> &get_list(const TagList &list) {
   return std::get<std::vector<T>>(list.base);
 }
-template <typename T> std::vector<T> &get_list(TagList &list) {
+template <typename T>
+std::vector<T> &get_list(TagList &list) {
   return std::get<std::vector<T>>(list.base);
 }
 
@@ -133,11 +137,12 @@ struct TagCompound {
   Tag &at(const std::string &key) { return base.at(key); }
   const Tag &at(const std::string &key) const { return base.at(key); }
 
-  template <typename T> T &at(const std::string &key) {
+  template <typename T>
+  T &at(const std::string &key) {
     return std::get<T>(base.at(key));
   }
 
-private:
+ private:
   friend std::ostream &operator<<(std::ostream &os, const TagCompound &tag) {
     detail::print_compound(os, "", tag);
     return os;
@@ -163,7 +168,7 @@ struct NBT : public TagCompound {
 
   operator bool() const { return !name && base.empty(); }
 
-private:
+ private:
   friend std::ostream &operator<<(std::ostream &os, const NBT &val) {
     os << "\"" << (val.name ? *val.name : "") << "\"\n";
     detail::print_compound(os, "", val);
@@ -185,7 +190,7 @@ inline auto bswap(std::uint64_t v) noexcept { return __builtin_bswap64(v); }
 inline auto bswap(std::uint32_t v) noexcept { return __builtin_bswap32(v); }
 inline auto bswap(std::uint16_t v) noexcept { return __builtin_bswap16(v); }
 
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
 inline auto byteswap(std::integral auto val) noexcept {
   if constexpr (sizeof(val) == 1)
@@ -195,37 +200,41 @@ inline auto byteswap(std::integral auto val) noexcept {
 }
 
 inline auto nbeswap(std::integral auto val) noexcept {
-  if constexpr (std::endian::native == std::endian::big)
-    return val;
+  if constexpr (std::endian::native == std::endian::big) return val;
   return byteswap(val);
 }
 
-template <std::integral T> T decode(std::istream &buf) {
+template <std::integral T>
+T decode(std::istream &buf) {
   T val;
   buf.read(reinterpret_cast<char *>(&val), sizeof(val));
   return nbeswap(val);
 }
 
-template <std::integral T> void encode(std::ostream &buf, const T val) {
+template <std::integral T>
+void encode(std::ostream &buf, const T val) {
   std::make_unsigned_t<T> out{nbeswap(val)};
   buf.write(reinterpret_cast<char *>(&out), sizeof(out));
 }
 
-template <std::floating_point T> T decode(std::istream &buf) {
+template <std::floating_point T>
+T decode(std::istream &buf) {
   std::conditional_t<sizeof(T) <= sizeof(TagInt), TagInt, TagLong> in;
   buf.read(reinterpret_cast<char *>(&in), sizeof(in));
   in = nbeswap(in);
   return std::bit_cast<T, decltype(in)>(in);
 }
 
-template <std::floating_point T> void encode(std::ostream &buf, const T val) {
+template <std::floating_point T>
+void encode(std::ostream &buf, const T val) {
   std::conditional_t<sizeof(T) <= sizeof(TagInt), TagInt, TagLong> out{
       std::bit_cast<decltype(out), T>(val)};
   out = nbeswap(out);
   buf.write(reinterpret_cast<char *>(&out), sizeof(out));
 }
 
-template <std::integral T> std::vector<T> decode_array(std::istream &buf) {
+template <std::integral T>
+std::vector<T> decode_array(std::istream &buf) {
   std::int32_t len;
   buf.read(reinterpret_cast<char *>(&len), sizeof(len));
   std::vector<T> vec(nbeswap(len));
@@ -250,10 +259,8 @@ void print_array(std::ostream &os, const auto &vec) {
   os << "{";
   if (const int size{static_cast<int>(vec.size())}; size) {
     os << +vec[0];
-    for (int i{1}; i < (size < 7 ? size : 3); i++)
-      os << ", " << +vec[i];
-    if (size > 7)
-      os << ", and " << size - 3 << " more";
+    for (int i{1}; i < (size < 7 ? size : 3); i++) os << ", " << +vec[i];
+    if (size > 7) os << ", and " << size - 3 << " more";
   }
   os << "}";
 }
@@ -299,45 +306,41 @@ void print_compound(std::ostream &os, const std::string &indent,
 inline TagList decode_list(std::istream &buf) {
   std::int8_t type{decode<TagByte>(buf)};
   std::int32_t len{decode<TagInt>(buf)};
-  if (len <= 0)
-    return {};
+  if (len <= 0) return {};
 
   switch (type) {
-  case TAG_END:
-    return {};
+    case TAG_END:
+      return {};
 
-#define X(enum, type)                                                          \
-  case (enum): {                                                               \
-    std::vector<type> vec(len);                                                \
-    for (auto &val : vec)                                                      \
-      val = decode<type>(buf);                                                 \
-    return vec;                                                                \
+#define X(enum, type)                              \
+  case (enum): {                                   \
+    std::vector<type> vec(len);                    \
+    for (auto &val : vec) val = decode<type>(buf); \
+    return vec;                                    \
   };
-    ALL_NUMERIC(X)
+      ALL_NUMERIC(X)
 #undef X
 
-#define X(enum, type, base_type)                                               \
-  case (enum): {                                                               \
-    std::vector<type> vec(len);                                                \
-    for (auto &val : vec)                                                      \
-      val = decode_array<base_type>(buf);                                      \
-    return vec;                                                                \
+#define X(enum, type, base_type)                              \
+  case (enum): {                                              \
+    std::vector<type> vec(len);                               \
+    for (auto &val : vec) val = decode_array<base_type>(buf); \
+    return vec;                                               \
   };
-    ALL_ARRAYS(X)
+      ALL_ARRAYS(X)
 #undef X
 
-#define X(enum, type, ext)                                                     \
-  case enum: {                                                                 \
-    std::vector<type> vec(len);                                                \
-    for (auto &val : vec)                                                      \
-      val = decode##ext(buf);                                                  \
-    return vec;                                                                \
+#define X(enum, type, ext)                        \
+  case enum: {                                    \
+    std::vector<type> vec(len);                   \
+    for (auto &val : vec) val = decode##ext(buf); \
+    return vec;                                   \
   };
-    ALL_OTHERS(X)
+      ALL_OTHERS(X)
 #undef X
 
-  default:
-    throw std::runtime_error{"invalid tag type"};
+    default:
+      throw std::runtime_error{"invalid tag type"};
   }
 }
 
@@ -348,38 +351,35 @@ inline void encode_list(std::ostream &buf, const TagList &list) {
   */
   encode<TagByte>(buf, static_cast<TagByte>(list.index()));
   switch (list.index()) {
-  case TAG_END:
-    encode<TagInt>(buf, 0);
-    break;
+    case TAG_END:
+      encode<TagInt>(buf, 0);
+      break;
 
-#define X(enum, type)                                                          \
-  case enum: {                                                                 \
-    auto &vec{get_list<type>(list)};                                           \
-    encode<TagInt>(buf, static_cast<TagInt>(vec.size()));                      \
-    for (const auto val : vec)                                                 \
-      encode<type>(buf, val);                                                  \
+#define X(enum, type)                                     \
+  case enum: {                                            \
+    auto &vec{get_list<type>(list)};                      \
+    encode<TagInt>(buf, static_cast<TagInt>(vec.size())); \
+    for (const auto val : vec) encode<type>(buf, val);    \
   } break;
-    ALL_NUMERIC(X)
+      ALL_NUMERIC(X)
 #undef X
 
-#define X(enum, type, base_type)                                               \
-  case enum: {                                                                 \
-    auto &vec{get_list<type>(list)};                                           \
-    encode<TagInt>(buf, static_cast<TagInt>(vec.size()));                      \
-    for (const auto &val : vec)                                                \
-      encode_array<base_type>(buf, val);                                       \
+#define X(enum, type, base_type)                                   \
+  case enum: {                                                     \
+    auto &vec{get_list<type>(list)};                               \
+    encode<TagInt>(buf, static_cast<TagInt>(vec.size()));          \
+    for (const auto &val : vec) encode_array<base_type>(buf, val); \
   } break;
-    ALL_ARRAYS(X)
+      ALL_ARRAYS(X)
 #undef X
 
-#define X(enum, type, ext)                                                     \
-  case enum: {                                                                 \
-    auto &vec{get_list<type>(list)};                                           \
-    encode<TagInt>(buf, static_cast<TagInt>(vec.size()));                      \
-    for (const auto &val : vec)                                                \
-      encode##ext(buf, val);                                                   \
+#define X(enum, type, ext)                                \
+  case enum: {                                            \
+    auto &vec{get_list<type>(list)};                      \
+    encode<TagInt>(buf, static_cast<TagInt>(vec.size())); \
+    for (const auto &val : vec) encode##ext(buf, val);    \
   } break;
-    ALL_OTHERS(X)
+      ALL_OTHERS(X)
 #undef X
   }
 }
@@ -390,74 +390,74 @@ inline void print_list(std::ostream &os, const std::string &indent,
   std::string next_indent{indent + indent_step};
 
   switch (list.index()) {
-  case TAG_END:
-    os << "TagEnd> {}";
-    break;
+    case TAG_END:
+      os << "TagEnd> {}";
+      break;
 
-#define X(enum, type)                                                          \
-  case enum: {                                                                 \
-    os << #type "> ";                                                          \
-    auto &vec{get_list<type>(list)};                                           \
-    print_array(os, vec);                                                      \
+#define X(enum, type)                \
+  case enum: {                       \
+    os << #type "> ";                \
+    auto &vec{get_list<type>(list)}; \
+    print_array(os, vec);            \
   } break;
-    ALL_NUMERIC(X)
+      ALL_NUMERIC(X)
 #undef X
 
-#define X(enum, type, base_type)                                               \
-  case enum: {                                                                 \
-    os << #type "> {";                                                         \
-    auto &vec{get_list<type>(list)};                                           \
-    if (size_t size{vec.size()}; size) {                                       \
-      os << "\n" << next_indent;                                               \
-      print_array(os, vec[0]);                                                 \
-      for (size_t i{1}; i < size; i++) {                                       \
-        os << ",\n" << next_indent;                                            \
-        print_array(os, vec[i]);                                               \
-      }                                                                        \
-      os << "\n" << indent << "}";                                             \
-    }                                                                          \
+#define X(enum, type, base_type)         \
+  case enum: {                           \
+    os << #type "> {";                   \
+    auto &vec{get_list<type>(list)};     \
+    if (size_t size{vec.size()}; size) { \
+      os << "\n" << next_indent;         \
+      print_array(os, vec[0]);           \
+      for (size_t i{1}; i < size; i++) { \
+        os << ",\n" << next_indent;      \
+        print_array(os, vec[i]);         \
+      }                                  \
+      os << "\n" << indent << "}";       \
+    }                                    \
   } break;
-    ALL_ARRAYS(X)
+      ALL_ARRAYS(X)
 #undef X
 
-  case TAG_STRING: {
-    os << "TagString> {";
-    auto &vec{get_list<TagString>(list)};
-    if (size_t size{vec.size()}; size) {
-      os << "\n" << next_indent << "\"" << vec[0] << "\"";
-      for (size_t i{1}; i < size; i++)
-        os << ",\n" << next_indent << "\"" << vec[i] << "\"";
-      os << "\n" << indent << "}";
-    }
-  } break;
-
-  case TAG_LIST: {
-    os << "TagList> {";
-    auto &vec{get_list<TagList>(list)};
-    if (size_t size{vec.size()}; size) {
-      os << "\n" << next_indent;
-      print_list(os, next_indent, vec[0]);
-      for (size_t i{1}; i < size; i++) {
-        os << ",\n" << next_indent;
-        print_list(os, next_indent, vec[i]);
+    case TAG_STRING: {
+      os << "TagString> {";
+      auto &vec{get_list<TagString>(list)};
+      if (size_t size{vec.size()}; size) {
+        os << "\n" << next_indent << "\"" << vec[0] << "\"";
+        for (size_t i{1}; i < size; i++)
+          os << ",\n" << next_indent << "\"" << vec[i] << "\"";
+        os << "\n" << indent << "}";
       }
-      os << "\n" << indent << "}";
-    }
-  } break;
+    } break;
 
-  case TAG_COMPOUND: {
-    os << "TagCompound> {";
-    auto &vec{get_list<TagCompound>(list)};
-    if (size_t size{vec.size()}; size) {
-      os << "\n" << next_indent;
-      print_compound(os, next_indent, vec[0]);
-      for (size_t i{1}; i < size; i++) {
-        os << ",\n" << next_indent;
-        print_compound(os, next_indent, vec[i]);
+    case TAG_LIST: {
+      os << "TagList> {";
+      auto &vec{get_list<TagList>(list)};
+      if (size_t size{vec.size()}; size) {
+        os << "\n" << next_indent;
+        print_list(os, next_indent, vec[0]);
+        for (size_t i{1}; i < size; i++) {
+          os << ",\n" << next_indent;
+          print_list(os, next_indent, vec[i]);
+        }
+        os << "\n" << indent << "}";
       }
-      os << "\n" << indent << "}";
-    }
-  } break;
+    } break;
+
+    case TAG_COMPOUND: {
+      os << "TagCompound> {";
+      auto &vec{get_list<TagCompound>(list)};
+      if (size_t size{vec.size()}; size) {
+        os << "\n" << next_indent;
+        print_compound(os, next_indent, vec[0]);
+        for (size_t i{1}; i < size; i++) {
+          os << ",\n" << next_indent;
+          print_compound(os, next_indent, vec[i]);
+        }
+        os << "\n" << indent << "}";
+      }
+    } break;
   }
 }
 
@@ -467,28 +467,28 @@ inline TagCompound decode_compound(std::istream &buf) {
   for (; type != TAG_END; type = decode<TagByte>(buf)) {
     std::string key{decode_string(buf)};
     switch (type) {
-#define X(enum, type)                                                          \
-  case enum:                                                                   \
-    tag.base[key] = decode<type>(buf);                                         \
+#define X(enum, type)                  \
+  case enum:                           \
+    tag.base[key] = decode<type>(buf); \
     break;
       ALL_NUMERIC(X)
 #undef X
 
-#define X(enum, type, base_type)                                               \
-  case enum:                                                                   \
-    tag.base[key] = decode_array<base_type>(buf);                              \
+#define X(enum, type, base_type)                  \
+  case enum:                                      \
+    tag.base[key] = decode_array<base_type>(buf); \
     break;
       ALL_ARRAYS(X)
 #undef X
 
-#define X(enum, type, ext)                                                     \
-  case enum:                                                                   \
-    tag.base[key] = decode##ext(buf);                                          \
+#define X(enum, type, ext)            \
+  case enum:                          \
+    tag.base[key] = decode##ext(buf); \
     break;
       ALL_OTHERS(X)
 #undef X
-    default:
-      throw std::runtime_error{"invalid tag type"};
+      default:
+        throw std::runtime_error{"invalid tag type"};
     }
   }
   return tag;
@@ -500,29 +500,29 @@ inline void encode_compound(std::ostream &buf, const TagCompound &map) {
     encode_string(buf, key);
 
     switch (tag.index()) {
-#define X(enum, type)                                                          \
-  case enum:                                                                   \
-    encode<type>(buf, std::get<type>(tag));                                    \
+#define X(enum, type)                       \
+  case enum:                                \
+    encode<type>(buf, std::get<type>(tag)); \
     break;
       ALL_NUMERIC(X)
 #undef X
 
-#define X(enum, type, base_type)                                               \
-  case enum:                                                                   \
-    encode_array<base_type>(buf, std::get<type>(tag));                         \
+#define X(enum, type, base_type)                       \
+  case enum:                                           \
+    encode_array<base_type>(buf, std::get<type>(tag)); \
     break;
       ALL_ARRAYS(X)
 #undef X
 
-#define X(enum, type, ext)                                                     \
-  case enum:                                                                   \
-    encode##ext(buf, std::get<type>(tag));                                     \
+#define X(enum, type, ext)                 \
+  case enum:                               \
+    encode##ext(buf, std::get<type>(tag)); \
     break;
       ALL_OTHERS(X)
 #undef X
 
-    default:
-      throw std::runtime_error{"invalid tag type"};
+      default:
+        throw std::runtime_error{"invalid tag type"};
     }
   }
   encode<TagByte>(buf, 0);
@@ -542,42 +542,41 @@ inline void print_compound(std::ostream &os, const std::string &indent,
     os << "\n" << next_indent << key << ": ";
 
     switch (tag.index()) {
-#define X(enum, type)                                                          \
-  case enum:                                                                   \
-    os << "<" #type "> " << +std::get<type>(tag);                              \
+#define X(enum, type)                             \
+  case enum:                                      \
+    os << "<" #type "> " << +std::get<type>(tag); \
     break;
       ALL_NUMERIC(X)
 #undef X
 
-#define X(enum, type, base_type)                                               \
-  case enum:                                                                   \
-    print_array(os, std::get<type>(tag));                                      \
+#define X(enum, type, base_type)          \
+  case enum:                              \
+    print_array(os, std::get<type>(tag)); \
     break;
       ALL_ARRAYS(X)
 #undef X
 
-    case TAG_STRING:
-      os << "\"" << std::get<TagString>(tag) << "\"";
-      break;
+      case TAG_STRING:
+        os << "\"" << std::get<TagString>(tag) << "\"";
+        break;
 
-    case TAG_LIST:
-      print_list(os, next_indent, std::get<TagList>(tag));
-      break;
+      case TAG_LIST:
+        print_list(os, next_indent, std::get<TagList>(tag));
+        break;
 
-    case TAG_COMPOUND:
-      print_compound(os, next_indent, std::get<TagCompound>(tag));
-      break;
+      case TAG_COMPOUND:
+        print_compound(os, next_indent, std::get<TagCompound>(tag));
+        break;
 
-    default:
-      throw std::runtime_error{"invalid tag"};
+      default:
+        throw std::runtime_error{"invalid tag"};
     }
   }
-  if (!map.base.empty())
-    os << "\n" << indent;
+  if (!map.base.empty()) os << "\n" << indent;
   os << "}";
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline void NBT::decode(std::istream &buf) {
   TagByte type{nbt::detail::decode<TagByte>(buf)};
@@ -598,6 +597,6 @@ inline void NBT::encode(std::ostream &buf) const {
   }
 }
 
-} // namespace nbt
+}  // namespace nbt
 
-#endif // NBT_HPP
+#endif  // NBT_HPP

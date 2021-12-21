@@ -12,22 +12,22 @@
 
 namespace ini {
 class InvalidSyntaxException : public std::invalid_argument {
-public:
+ public:
   using std::invalid_argument::invalid_argument;
 };
 
 class TypeConversionException : public std::runtime_error {
-public:
+ public:
   using std::runtime_error::runtime_error;
 };
 
 class KeyErrorException : public std::runtime_error {
-public:
+ public:
   using std::runtime_error::runtime_error;
 };
 
 class Entry {
-public:
+ public:
   enum class Type { kInt64, kLongDouble, kString, kNull };
   std::string const &to_string() const noexcept { return value_; }
   std::string const &str() const noexcept { return value_; }
@@ -51,13 +51,15 @@ public:
   Entry() = default;
   virtual ~Entry() = default;
 
-  template <std::integral T> constexpr Entry &operator=(T t) noexcept {
+  template <std::integral T>
+  constexpr Entry &operator=(T t) noexcept {
     value_ = std::to_string(t);
     type_ = Type::kInt64;
     data_ = (int64_t)t;
     return *this;
   }
-  template <std::floating_point T> constexpr Entry &operator=(T t) noexcept {
+  template <std::floating_point T>
+  constexpr Entry &operator=(T t) noexcept {
     value_ = std::to_string(t);
     type_ = Type::kLongDouble;
     data_ = (long double)t;
@@ -74,7 +76,8 @@ public:
     data_ = std::monostate{};
     return *this;
   }
-  template <typename T> [[nodiscard]] constexpr auto operator<=>(T t) const {
+  template <typename T>
+  [[nodiscard]] constexpr auto operator<=>(T t) const {
     if (type_ == Type::kString) {
       throw TypeConversionException("This entry is a string!");
     }
@@ -105,14 +108,14 @@ public:
     return type_ == t.type_ && value_ == t.value_;
   }
 
-private:
+ private:
   Type type_ = Type::kNull;
   std::string value_ = "";
   std::variant<std::monostate, int64_t, long double> data_;
 };
 
 class Section {
-public:
+ public:
   friend class Ini;
 
   template <typename T>
@@ -149,15 +152,15 @@ public:
   }
   [[nodiscard]] size_t size() const noexcept { return dict_.size(); }
 
-protected:
+ protected:
   Section() = default;
 
-private:
+ private:
   std::map<std::string, Entry, std::less<>> dict_;
 };
 
 class Ini {
-public:
+ public:
   Ini() = default;
   Ini(std::string_view const str);
   [[nodiscard]] Section &operator[](std::string_view key);
@@ -182,9 +185,9 @@ public:
   [[nodiscard]] auto cbegin() const noexcept { return dict_.begin(); }
   [[nodiscard]] auto cend() const noexcept { return dict_.end(); }
 
-private:
+ private:
   inline void DeserializeLine(std::string const &section, std::string &line);
   std::map<std::string, Section, std::less<>> dict_;
 };
 
-} // namespace ini
+}  // namespace ini

@@ -1,6 +1,5 @@
 #define minecraft_RESOURCE_PACKING
 #include <iostream>
-
 #include <resources/pack.hpp>
 /*
  * packer.exe can process only valid paths, otherwise it will throw an error.

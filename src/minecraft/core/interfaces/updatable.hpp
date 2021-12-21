@@ -6,4 +6,4 @@ struct Updatable {
 
   virtual void Update() = 0;
 };
-} // namespace minecraft::core
+}  // namespace minecraft::core

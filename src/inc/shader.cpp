@@ -55,14 +55,12 @@ Shader::Shader(std::string const &vertexShaderCode,
   id_ = std::make_shared<uint32_t>(glCreateProgram());
   glAttachShader(*id_, vertex);
   glAttachShader(*id_, fragment);
-  if (geometry != UINT32_MAX)
-    glAttachShader(*id_, geometry);
+  if (geometry != UINT32_MAX) glAttachShader(*id_, geometry);
   glLinkProgram(*id_);
   CheckCompileErrors(*id_, "PROGRAM");
   glDeleteShader(vertex);
   glDeleteShader(fragment);
-  if (geometry != UINT32_MAX)
-    glDeleteShader(geometry);
+  if (geometry != UINT32_MAX) glDeleteShader(geometry);
 }
 Shader::Shader(resource::Entry const &vertex_shader_file,
                resource::Entry const &fragment_shader_file)

@@ -13,7 +13,7 @@ class TileEntity : public Updatable {
 
   virtual void Update() = 0;
 
-protected:
+ protected:
   Core &core_;
   nbt::NBT &nbt;
   Block block_;

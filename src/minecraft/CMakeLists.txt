@@ -5,6 +5,7 @@ add_executable(minecraft ${INCLUDES} ${MINECRAFT_SOURCES})
 target_include_directories(minecraft PRIVATE "${INC_DIR}")
 target_include_directories(minecraft PRIVATE "${SRC_DIR}/minecraft")
 target_add_libraries(minecraft "glfw" "glad" "glm" "freetype" "stb" "spdlog")
+IF (WIN32)
 add_custom_target(
   pack_resources
   COMMAND
@@ -19,5 +20,17 @@ add_custom_target(
   COMMENT
     "Packing the resources folder to resources.pack @ ${CMAKE_BINARY_DIR}/runtime_directory/resource.pack"
   SOURCES ${PACKER_SOURCES})
+ELSE()
+add_custom_target(
+  pack_resources
+  COMMAND
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/packer"
+    "${CMAKE_BINARY_DIR}/runtime_directory/resources.pack"
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMENT
+    "Packing the resources folder to resources.pack @ ${CMAKE_BINARY_DIR}/runtime_directory/resource.pack"
+  SOURCES ${PACKER_SOURCES})
+ENDIF()
 add_dependencies(pack_resources packer)
 add_dependencies(minecraft pack_resources)

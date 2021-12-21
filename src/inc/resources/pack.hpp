@@ -22,6 +22,6 @@ namespace resource::packer {
  */
 void Pack(std::vector<std::filesystem::path> &folder_paths,
           std::filesystem::path const &output_path);
-} // namespace resource::packer
+}  // namespace resource::packer
 
 #endif

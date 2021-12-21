@@ -5,7 +5,7 @@ namespace utils {
 
 // wrapper around stbi image pointer
 class Image final {
-public:
+ public:
   static Image LoadFromMemory(const uint8_t *data, const size_t size) {
     int x, y, channels;
     uint8_t *img = stbi_load_from_memory(data, size, &x, &y, &channels, 0);
@@ -34,8 +34,8 @@ public:
     return width_ * height_ * channels_;
   }
 
-private:
+ private:
   std::shared_ptr<uint8_t> data_;
   size_t width_, height_, channels_;
 };
-} // namespace utils
+}  // namespace utils

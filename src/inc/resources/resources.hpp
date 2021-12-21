@@ -44,4 +44,4 @@ namespace resource {
  */
 Entry const &LoadResources(std::filesystem::path path_to_file);
 void UnloadResources(std::filesystem::path const &path_to_file);
-} // namespace resource
+}  // namespace resource

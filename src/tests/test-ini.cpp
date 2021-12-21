@@ -1,10 +1,9 @@
 ﻿
 #include <filesystem>
 #include <fstream>
+#include <parsers/ini.hpp>
 #include <queue>
 #include <set>
-
-#include <parsers/ini.hpp>
 
 #include "pch.h"
 #include "utils.hpp"
@@ -26,9 +25,9 @@ TEST(TEST_INI, TestSaving) {
              t.c_str(), t.size());
 }
 TEST(TEST_INI, TestLoading) {
-  std::ifstream ifs(fs::temp_directory_path() /
-                        "minecraft_test/test_ini/TestFile.ini",
-                    std::ios::in);
+  std::ifstream ifs(
+      fs::temp_directory_path() / "minecraft_test/test_ini/TestFile.ini",
+      std::ios::in);
   std::string value;
   char *const buffer = new char[1];
   ifs.read(buffer, 1);

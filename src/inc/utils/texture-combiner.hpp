@@ -43,4 +43,4 @@ inline std::vector<char> Bake(std::vector<Image> &images, size_t max_size_x,
   std::vector<char> return_value;
 }
 
-} // namespace utils::texture_combiner
+}  // namespace utils::texture_combiner

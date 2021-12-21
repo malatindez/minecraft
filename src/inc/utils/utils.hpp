@@ -42,14 +42,15 @@ inline std::string rtrim(std::string const &s) {
 // trim from both ends (in place)
 inline std::string trim(std::string const &s) { return ltrim(rtrim(s)); }
 
-template <typename T, typename U> class BaseIteratorWrapper {
-public:
+template <typename T, typename U>
+class BaseIteratorWrapper {
+ public:
   using iterator_category = std::forward_iterator_tag;
   using iterator_type = T;
   using value_type = U;
   using difference_type = std::ptrdiff_t;
-  using pointer = value_type *;   // or also value_type*
-  using reference = value_type &; // or also value_type&
+  using pointer = value_type *;    // or also value_type*
+  using reference = value_type &;  // or also value_type&
   [[nodiscard]] virtual reference operator*() {
     throw std::runtime_error("operator* wasn't overloaded");
   }
@@ -79,8 +80,8 @@ public:
 
   constexpr iterator_type const &base_iterator() const noexcept { return it; }
 
-private:
+ private:
   iterator_type it;
 };
 
-} // namespace utils
+}  // namespace utils

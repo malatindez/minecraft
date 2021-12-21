@@ -8,4 +8,4 @@ struct Initializable {
   virtual void Init() = 0;
   virtual void PostInit() = 0;
 };
-} // namespace minecraft::core
+}  // namespace minecraft::core

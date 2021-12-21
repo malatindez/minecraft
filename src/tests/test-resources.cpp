@@ -1,9 +1,8 @@
 
 #define minecraft_RESOURCE_PACKING
-#include <thread>
-
 #include <resources/pack.hpp>
 #include <resources/resources.hpp>
+#include <thread>
 
 #include "pch.h"
 #include "utils.hpp"
@@ -14,7 +13,7 @@ static const std::vector<std::string> kFixedTestfiles = {"a/b.txt", "a/b/c.txt",
                                                          "a/b/c/d.txt"};
 
 class TestResources : public ::testing::Test {
-protected:
+ protected:
   static void SetUpTestSuite() {
     static const std::pair<uint32_t, uint32_t> kAmountOfFiles{28, 34};
     static const std::pair<uint32_t, uint32_t> kStringSize{16, 24};

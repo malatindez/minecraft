@@ -3,9 +3,8 @@
 #include <glad/glad.h>
 
 #include <array>
-#include <shader.hpp>
-
 #include <parser/yaml/yaml.hpp>
+#include <shader.hpp>
 
 #include "core/interfaces/tile-entity.hpp"
 
@@ -13,11 +12,12 @@ namespace minecraft::core {
 // storage for block data,
 // holder for a TileEntity logic
 class BlockBase final {
-public:
+ public:
   BlockBase(std::array<uint32_t, 6> const &diffuse_textures,
             std::array<uint32_t, 6> const &specular_textures, uint8_t hardness)
       : diffuse_textures_(diffuse_textures),
-        specular_textures_(specular_textures), hardness_(hardness) {}
+        specular_textures_(specular_textures),
+        hardness_(hardness) {}
 
   BlockBase(BlockBase const &) = default;
   BlockBase(BlockBase &&) = default;
@@ -45,11 +45,11 @@ public:
 
   static BlockBase Load(yaml::Entry const &entry) {}
 
-private:
+ private:
   std::unique_ptr<TileEntity> tile_entity_ = nullptr;
   std::array<uint32_t, 6> diffuse_textures_;
   std::array<uint32_t, 6> specular_textures_;
   uint32_t hardness_;
 };
 
-} // namespace minecraft::core
+}  // namespace minecraft::core
