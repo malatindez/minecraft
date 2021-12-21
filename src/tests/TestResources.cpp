@@ -101,7 +101,8 @@ TEST_F(TestResources, TestMultithreadedRandomFileLoading) {
   using ptr_vec = std::vector<std::shared_ptr<std::vector<char>>>;
   ptr_vec pointers(kThreadAmount);
 
-  auto thread_function = [&m, &counter, &cv, &counter_mutex, &resources_](ptr_vec::iterator itr) {
+  auto thread_function = [&m, &counter, &cv, &counter_mutex,
+                          &resources_](ptr_vec::iterator itr) {
     for (std::filesystem::path const& file : TestResources::unicode_files_) {
       std::unique_lock lk(m);
       counter++;
