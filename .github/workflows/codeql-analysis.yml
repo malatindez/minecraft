@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt-get install libx11-dev xorg-dev libglu1-mesa-dev -y
+          sudo apt-get install libx11-dev xorg-dev libglu1-mesa-dev g++-10 gcc-10 -y
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v1
@@ -58,11 +58,8 @@ jobs:
 
       - name: Build
         run: |
-          mkdir build
-          cd build
-          cmake .. .
-          make
-          runtime_directory/bin/runUnitTests
+          chmod +x build.sh
+          ./build.sh
 
       # ℹ️ Command-line programs to run using the OS shell.
       # 📚 https://git.io/JvXDl
