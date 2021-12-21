@@ -3,4 +3,4 @@ mkdir build
 cd build
 cmake .. .
 make
-./runUnitTests
+runtime_directory/bin/runUnitTests
