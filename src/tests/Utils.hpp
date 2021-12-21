@@ -10,8 +10,8 @@
 
 namespace fs = std::filesystem;
 
-[[nodiscard]] constexpr std::string ExcludeString(std::string const &a,
-                                                  std::string const &b) {
+[[nodiscard]] inline std::string ExcludeString(std::string const &a,
+                                               std::string const &b) {
   std::string return_value{a};
   std::erase_if(return_value, [&b](char const &c) {
     return std::find(b.begin(), b.end(), c) != b.end();
@@ -33,7 +33,7 @@ const std::string kAsciiCharacters =
     "0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"
     "abcdefghijklmnopqrstuvwxyz{|}~";
 
-constexpr std::string AllBinaryCharacters() {
+inline std::string AllBinaryCharacters() {
   std::string return_value;
   for (char i = -128; i < 127; i++) {
     return_value.push_back(i);

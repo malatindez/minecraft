@@ -60,7 +60,7 @@ static std::mt19937 gen(rd());
   return dis(gen);
 }
 
-constexpr std::string ProhibitedCharactersInFilename() {
+inline std::string ProhibitedCharactersInFilename() {
   std::string return_value = "<>:\"/\\|?*";
   for (char i = 0; i < 32; i++) {
     return_value += i;
