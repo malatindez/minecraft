@@ -10,7 +10,7 @@ static std::vector<
     std::pair<std::filesystem::path, resource::AtomicIfstreamPointer>>
     resource_handles_;
 namespace resource {
-Entry const& LoadResources(std::filesystem::path path_to_file) {
+Entry const &LoadResources(std::filesystem::path path_to_file) {
   auto resource = AtomicIfstreamPointer(
       std::make_shared<std::ifstream>(path_to_file, std::ios::binary));
   if (!resource.Lock()->is_open()) {
@@ -23,11 +23,11 @@ Entry const& LoadResources(std::filesystem::path path_to_file) {
   resource_handles_.emplace_back(path_to_file, resource);
   return *dir;
 }
-void UnloadResources(std::filesystem::path const& path_to_file) {
+void UnloadResources(std::filesystem::path const &path_to_file) {
   std::unique_lock lock(resource_mutex_);
   {
     AtomicIfstreamPointer ref;
-    for (auto const& [path, pointer] : resource_handles_) {
+    for (auto const &[path, pointer] : resource_handles_) {
       if (path == path_to_file) {
         ref = pointer;
       }
@@ -47,4 +47,4 @@ void UnloadResources(std::filesystem::path const& path_to_file) {
     resource_handles_.erase(it);
   }
 }
-}  // namespace resource
+} // namespace resource

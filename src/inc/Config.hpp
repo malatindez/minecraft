@@ -5,8 +5,8 @@
 
 #include "parsers/Ini.hpp"
 class Config final : public ini::Ini {
- public:
-  static Config const& GetInstance() {
+public:
+  static Config const &GetInstance() {
     static std::mutex mutex;
     if (!config_) {
       std::lock_guard lock(mutex);
@@ -22,12 +22,12 @@ class Config final : public ini::Ini {
     }
     return *config_;
   }
-  Config(Config&&) = delete;
-  Config& operator=(Config&&) = delete;
-  Config(Config const&) = delete;
-  Config& operator=(Config const&) = delete;
+  Config(Config &&) = delete;
+  Config &operator=(Config &&) = delete;
+  Config(Config const &) = delete;
+  Config &operator=(Config const &) = delete;
 
- private:
+private:
   using ini::Ini::Ini;
   static std::unique_ptr<Config> config_;
 };

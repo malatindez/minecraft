@@ -1,8 +1,8 @@
 #version 430 core
-layout(location=0) in vec3 aPos;
-layout(location=1) in vec3 aNormal;
-layout(location=2) in vec2 aTexCoords;
-layout(location=3) in float aTextureSide;
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexCoords;
+layout(location = 3) in float aTextureSide;
 
 out vec2 vec2o;
 out vec3 vec3o;
@@ -13,7 +13,6 @@ uniform int int_v;
 uniform uint uint_v;
 uniform float float_v;
 uniform double double_v;
-
 
 uniform bool bvec1_v;
 uniform bvec2 bvec2_v;
@@ -50,22 +49,21 @@ uniform mat4x2 mat4x2_v;
 uniform mat4x3 mat4x3_v;
 uniform mat4x4 mat4x4_v;
 
-void main()
-{
-    float t = 0;
-    if(bool_v && bvec1_v && bvec2_v.x  && bvec3_v.y && bvec4_v.z){
-        t = vec1_v * float_v * uint_v * int_v;
-        t = t * float(double_v) * ivec1_v * uvec1_v;
-        t = t * ivec2_v.x * ivec3_v.y * ivec4_v.z;
-        t = t * uvec2_v.x * uvec3_v.y * uvec4_v.z;
-        t = t * float(dvec1_v.x *dvec2_v.x * dvec3_v.y * dvec4_v.z);
-    }
-    t = t * mat2x2_v[0][0] * mat2x3_v[1][2] * mat2x4_v[1][3] * 
-    mat3x2_v[2][0] * mat3x3_v[1][2] * mat3x4_v[2][0] * 
-    mat4x2_v[2][1] * mat4x3_v[3][0] * mat4x4_v[3][0];
+void main() {
+  float t = 0;
+  if (bool_v && bvec1_v && bvec2_v.x && bvec3_v.y && bvec4_v.z) {
+    t = vec1_v * float_v * uint_v * int_v;
+    t = t * float(double_v) * ivec1_v * uvec1_v;
+    t = t * ivec2_v.x * ivec3_v.y * ivec4_v.z;
+    t = t * uvec2_v.x * uvec3_v.y * uvec4_v.z;
+    t = t * float(dvec1_v.x * dvec2_v.x * dvec3_v.y * dvec4_v.z);
+  }
+  t = t * mat2x2_v[0][0] * mat2x3_v[1][2] * mat2x4_v[1][3] * mat3x2_v[2][0] *
+      mat3x3_v[1][2] * mat3x4_v[2][0] * mat4x2_v[2][1] * mat4x3_v[3][0] *
+      mat4x4_v[3][0];
 
-    vec2o = vec2_v * t;
-    vec3o = vec3_v * t;
-    vec4o = vec4_v * t;
-    gl_Position = vec4o + vec4(vec3o, t) - vec4(vec2o, t * t, t * 6);
+  vec2o = vec2_v * t;
+  vec3o = vec3_v * t;
+  vec4o = vec4_v * t;
+  gl_Position = vec4o + vec4(vec3o, t) - vec4(vec2o, t * t, t * 6);
 }

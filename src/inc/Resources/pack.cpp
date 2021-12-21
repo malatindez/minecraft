@@ -1,7 +1,7 @@
 #include "pack.hpp"
 
-[[nodiscard]] static inline std::vector<char> Uint64ToBytes(
-    uint64_t const& integer) {
+[[nodiscard]] static inline std::vector<char>
+Uint64ToBytes(uint64_t const &integer) {
   auto return_value = std::vector<char>(8);
   return_value[0] = (unsigned char)((integer >> 0x00) & 0xff);
   return_value[1] = (unsigned char)((integer >> 0x08) & 0xff);
@@ -13,17 +13,17 @@
   return_value[7] = (unsigned char)((integer >> 0x38) & 0xff);
   return return_value;
 }
-[[nodiscard]] static inline std::vector<char> Uint16ToBytes(
-    uint16_t const& integer) {
+[[nodiscard]] static inline std::vector<char>
+Uint16ToBytes(uint16_t const &integer) {
   auto return_value = std::vector<char>(2);
   return_value[0] = (unsigned char)((integer >> 0x00) & 0xff);
   return_value[1] = (unsigned char)((integer >> 0x08) & 0xff);
   return return_value;
 }
 
-[[nodiscard]] std::vector<char> PrepareHeader(std::string_view const& name,
-                                              uint64_t const& file_begin,
-                                              uint64_t const& file_size) {
+[[nodiscard]] std::vector<char> PrepareHeader(std::string_view const &name,
+                                              uint64_t const &file_begin,
+                                              uint64_t const &file_size) {
   if (name.size() > UINT16_MAX) {
     throw std::invalid_argument("name cannot be larger than uint16_t");
   }
@@ -41,19 +41,19 @@
   return header;
 }
 
-static inline uint64_t min(uint64_t const& a, uint64_t const& b) {
+static inline uint64_t min(uint64_t const &a, uint64_t const &b) {
   return (a < b) ? a : b;
 }
 
-static inline void ReserveBytes(std::ofstream& file, uint64_t amount) {
+static inline void ReserveBytes(std::ofstream &file, uint64_t amount) {
   static const char nullbyte = 0;
   for (int i = 0; i < amount; i++) {
     file.write(&nullbyte, 1);
   }
 }
 
-static inline void ProcessFile(std::ofstream& output_file,
-                               std::filesystem::path const& filepath) {
+static inline void ProcessFile(std::ofstream &output_file,
+                               std::filesystem::path const &filepath) {
   auto length = std::filesystem::file_size(filepath);
   auto data =
       PrepareHeader(filepath.filename().string(), output_file.tellp(), length);
@@ -70,11 +70,11 @@ static inline void ProcessFile(std::ofstream& output_file,
   file.close();
 }
 
-static inline uint64_t ProcessFolder(std::ofstream& output_file,
-                                     std::filesystem::path const& dir) {
+static inline uint64_t ProcessFolder(std::ofstream &output_file,
+                                     std::filesystem::path const &dir) {
   uint64_t folder_amount = 0;
   uint64_t file_amount = 0;
-  for (auto const& dir_entry : std::filesystem::directory_iterator{dir}) {
+  for (auto const &dir_entry : std::filesystem::directory_iterator{dir}) {
     if (dir_entry.is_regular_file()) {
       file_amount++;
     } else if (dir_entry.is_directory()) {
@@ -90,7 +90,7 @@ static inline uint64_t ProcessFolder(std::ofstream& output_file,
   std::vector<uint64_t> files;
   std::vector<uint64_t> folders;
 
-  for (auto const& dir_entry : std::filesystem::directory_iterator{dir}) {
+  for (auto const &dir_entry : std::filesystem::directory_iterator{dir}) {
     if (dir_entry.is_regular_file()) {
       files.push_back(output_file.tellp());
       ProcessFile(output_file, dir_entry.path());
@@ -105,7 +105,7 @@ static inline uint64_t ProcessFolder(std::ofstream& output_file,
   auto data =
       PrepareHeader(dir.filename().string(), folder_begin,
                     (folder_amount + file_amount + 1) * sizeof(uint64_t));
-  for (uint64_t const& entry : files) {
+  for (uint64_t const &entry : files) {
     auto buf = Uint64ToBytes(entry);
     data.insert(data.end(), buf.begin(), buf.end());
   }
@@ -117,12 +117,12 @@ static inline uint64_t ProcessFolder(std::ofstream& output_file,
   return folder_begin;
 }
 
-void resource::packer::Pack(std::vector<std::filesystem::path>& folder_paths,
-                            std::filesystem::path const& output_path) {
+void resource::packer::Pack(std::vector<std::filesystem::path> &folder_paths,
+                            std::filesystem::path const &output_path) {
   namespace fs = std::filesystem;
   std::sort(folder_paths.begin(), folder_paths.end());
   if (std::adjacent_find(folder_paths.begin(), folder_paths.end(),
-                         [](fs::path const& first, fs::path const& second) {
+                         [](fs::path const &first, fs::path const &second) {
                            return first.filename() == second.filename();
                          }) != folder_paths.end()) {
     throw std::invalid_argument(
@@ -136,10 +136,10 @@ void resource::packer::Pack(std::vector<std::filesystem::path>& folder_paths,
   std::ofstream output_file(output_path, std::ios::binary | std::ios::out);
   ReserveBytes(output_file,
                data.size() + (folder_paths.size() + 1) * sizeof(uint64_t));
-  for (auto const& folder : folder_paths) {
+  for (auto const &folder : folder_paths) {
     folders.push_back(ProcessFolder(output_file, fs::path(folder)));
   }
-  for (uint64_t const& entry : folders) {
+  for (uint64_t const &entry : folders) {
     auto buf = Uint64ToBytes(entry);
     data.insert(data.end(), buf.begin(), buf.end());
   }

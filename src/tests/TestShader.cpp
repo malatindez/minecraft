@@ -7,7 +7,7 @@
 #include "Resources/pack.hpp"
 #include "Shader.hpp"
 #include "TestConfig.h"
-#include "gtest/gtest.h"
+#include "pch.h"
 
 namespace fs = std::filesystem;
 using namespace resource;
@@ -18,7 +18,7 @@ void initOpenGL(int major = 3, int minor = 3) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-  GLFWwindow* window =
+  GLFWwindow *window =
       glfwCreateWindow(1000, 1000, "shader test", nullptr, nullptr);
   ASSERT_FALSE(window == NULL) << "Failed to create GLFW window" << std::endl;
   glfwMakeContextCurrent(window);
@@ -27,7 +27,7 @@ void initOpenGL(int major = 3, int minor = 3) {
 }
 
 class TestShader : public ::testing::Test {
- protected:
+protected:
   static void SetUpTestSuite() {
     shader_pack = fs::temp_directory_path() / "TestShader.pack";
     auto vec = std::vector<fs::path>(

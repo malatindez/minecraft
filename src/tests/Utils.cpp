@@ -55,7 +55,7 @@ static std::mt19937 gen(rd());
   return dis(gen);
 }
 
-[[nodiscard]] double RandomLongDouble(long double min, long double max) {
+[[nodiscard]] long double RandomLongDouble(long double min, long double max) {
   std::uniform_real_distribution dis{min, max};
   return dis(gen);
 }
@@ -69,13 +69,10 @@ constexpr std::string ProhibitedCharactersInFilename() {
 }
 const std::string kProhibitedCharacters = ProhibitedCharactersInFilename();
 
-[[nodiscard]] std::string Uint32ToUTF8(uint32_t const& value) {
+[[nodiscard]] std::string Uint32ToUTF8(uint32_t const &value) {
   if (value > 0x10FFFF) {
     throw std::invalid_argument("Invalid value provided.");
   }
-
-  static const std::vector<uint32_t> kUnicodeThresholds = {0x80, 0x800, 0x10000,
-                                                           UINT32_MAX};
 
   std::string return_value = "";
 
@@ -97,38 +94,37 @@ const std::string kProhibitedCharacters = ProhibitedCharactersInFilename();
   return return_value;
 }
 
-[[nodiscard]] inline std::string RandomUTF8Char(uint32_t const& from,
-                                                uint32_t const& to) {
+[[nodiscard]] inline std::string RandomUTF8Char(uint32_t const &from,
+                                                uint32_t const &to) {
   return Uint32ToUTF8(RandomUint32(from, to));
 }
 
-[[nodiscard]] std::string RandomUTF8String(size_t const& size) {
+[[nodiscard]] std::string RandomUTF8String(size_t const &size) {
   std::string return_value;
   for (size_t i = 0; i < size; i++) {
     return_value += RandomUTF8Char();
   }
   return return_value;
 }
-[[nodiscard]] std::string RandomUTF8Filename(size_t const& size) {
+[[nodiscard]] std::string RandomUTF8Filename(size_t const &size) {
   std::string return_value;
   for (size_t i = 0; i < size - 1; i++) {
     std::string temp = RandomUTF8Char(32);
 
     while (temp.size() == 1 &&
            std::find_if(kProhibitedCharacters.begin(),
-                        kProhibitedCharacters.end(), [&temp](char const& c) {
+                        kProhibitedCharacters.end(), [&temp](char const &c) {
                           return c == temp[0];
                         }) != kProhibitedCharacters.end()) {
       temp = RandomUTF8Char(32);
     }
     return_value += temp;
   }
-  std::string
-      final_char;  // files in windows cannot end with space nor with dot
+  std::string final_char; // files in windows cannot end with space nor with dot
   while (final_char.size() == 1 &&
          std::find_if(kProhibitedCharacters.begin(),
                       kProhibitedCharacters.end(),
-                      [&final_char](char const& c) {
+                      [&final_char](char const &c) {
                         return c == final_char[0] || final_char[0] == ' ' ||
                                final_char[0] == '.';
                       }) != kProhibitedCharacters.end()) {
@@ -137,12 +133,12 @@ const std::string kProhibitedCharacters = ProhibitedCharactersInFilename();
   return return_value + final_char;
 }
 
-[[nodiscard]] std::string RandomBinaryString(size_t const& size) {
+[[nodiscard]] std::string RandomBinaryString(size_t const &size) {
   return RandomString(size, kAllBinaryCharacters);
 }
 
-[[nodiscard]] std::string RandomString(size_t const& size,
-                                       std::string const& including) {
+[[nodiscard]] std::string RandomString(size_t const &size,
+                                       std::string const &including) {
   std::string return_value;
   return_value.reserve(size);
   const std::uniform_int_distribution<size_t> dis{0, including.size() - 1};
@@ -153,7 +149,7 @@ const std::string kProhibitedCharacters = ProhibitedCharactersInFilename();
   return return_value;
 }
 
-[[nodiscard]] std::string RandomFilename(size_t const& size) {
+[[nodiscard]] std::string RandomFilename(size_t const &size) {
   if (size == 0) {
     return "";
   }
@@ -166,7 +162,7 @@ const std::string kProhibitedCharacters = ProhibitedCharactersInFilename();
   return return_value;
 }
 
-void CreateFile(fs::path const& path, char const* data, const size_t size) {
+void CreateFile(fs::path const &path, char const *data, const size_t size) {
   fs::create_directories({path.parent_path()});
   std::ofstream ofs(path);
   ofs.write(data, size);

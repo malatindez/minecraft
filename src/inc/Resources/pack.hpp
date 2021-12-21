@@ -20,8 +20,8 @@ namespace resource::packer {
  * @param folder_paths vector, which contains paths to the target folders
  * @param output_path path to the output file.
  */
-void Pack(std::vector<std::filesystem::path>& folder_paths,
-          std::filesystem::path const& output_path);
-}  // namespace resource::packer
+void Pack(std::vector<std::filesystem::path> &folder_paths,
+          std::filesystem::path const &output_path);
+} // namespace resource::packer
 
 #endif

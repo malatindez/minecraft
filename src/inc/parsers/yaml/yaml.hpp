@@ -17,7 +17,7 @@
 #include "Utils/Utils.hpp"
 namespace yaml {
 class Entry {
- public:
+public:
   struct Iterator : public utils::BaseIteratorWrapper<
                         std::vector<std::unique_ptr<Entry>>::iterator, Entry> {
     using utils::BaseIteratorWrapper<
@@ -55,60 +55,60 @@ class Entry {
     kUInt
   };
   ~Entry() = default;
-  explicit Entry(Type type, Entry* parent = nullptr) noexcept;
-  explicit Entry(Entry&& entry, Entry* parent = nullptr) noexcept;
-  explicit Entry(Entry& entry, Entry* parent = nullptr);
+  explicit Entry(Type type, Entry *parent = nullptr) noexcept;
+  explicit Entry(Entry &&entry, Entry *parent = nullptr) noexcept;
+  explicit Entry(Entry &entry, Entry *parent = nullptr);
   explicit Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value,
-                 Entry* parent = nullptr) noexcept;
-  explicit Entry(std::string_view const& other,
-                 Entry* parent = nullptr) noexcept;
+                 Entry *parent = nullptr) noexcept;
+  explicit Entry(std::string_view const &other,
+                 Entry *parent = nullptr) noexcept;
   template <std::integral T>
-  explicit Entry(T const& other, Entry* parent = nullptr) noexcept
+  explicit Entry(T const &other, Entry *parent = nullptr) noexcept
       : parent_(parent) {
     operator=(other);
   }
   template <std::floating_point T>
-  explicit Entry(T const& other, Entry* parent = nullptr) noexcept
+  explicit Entry(T const &other, Entry *parent = nullptr) noexcept
       : parent_(parent) {
     operator=(other);
   }
-  explicit Entry(std::tm const& other, Entry* parent = nullptr) noexcept;
-  explicit Entry(std::chrono::year_month_day const& other,
-                 Entry* parent = nullptr) noexcept;
-  explicit Entry(std::chrono::hh_mm_ss<std::chrono::microseconds> const& other,
-                 Entry* parent = nullptr) noexcept;
+  explicit Entry(std::tm const &other, Entry *parent = nullptr) noexcept;
+  explicit Entry(std::chrono::year_month_day const &other,
+                 Entry *parent = nullptr) noexcept;
+  explicit Entry(std::chrono::hh_mm_ss<std::chrono::microseconds> const &other,
+                 Entry *parent = nullptr) noexcept;
   // Accepts only values that are convertible by std::string
   template <typename T>
-  explicit Entry(std::vector<T>&& other, Entry* parent = nullptr)
+  explicit Entry(std::vector<T> &&other, Entry *parent = nullptr)
       : parent_(parent) {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T1, typename T2>
-  explicit Entry(std::map<T1, T2>&& other, Entry* parent = nullptr)
+  explicit Entry(std::map<T1, T2> &&other, Entry *parent = nullptr)
       : parent_(parent) {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T>
-  explicit Entry(std::set<T>&& other, Entry* parent = nullptr)
+  explicit Entry(std::set<T> &&other, Entry *parent = nullptr)
       : parent_(parent) {
     operator=(other);
   }
   template <typename T>
-  explicit Entry(std::vector<T> const& other, Entry* parent = nullptr)
+  explicit Entry(std::vector<T> const &other, Entry *parent = nullptr)
       : parent_(parent) {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T1, typename T2>
-  explicit Entry(std::map<T1, T2> const& other, Entry* parent = nullptr)
+  explicit Entry(std::map<T1, T2> const &other, Entry *parent = nullptr)
       : parent_(parent) {
     operator=(other);
   }
   // Accepts only values that are convertible by std::string
   template <typename T>
-  explicit Entry(std::set<T> const& other, Entry* parent = nullptr)
+  explicit Entry(std::set<T> const &other, Entry *parent = nullptr)
       : parent_(parent) {
     operator=(other);
   }
@@ -171,24 +171,24 @@ class Entry {
     return type_ == Type::kUInt;
   }
 
-  [[nodiscard]] constexpr bool contains(std::string_view const& string) const {
+  [[nodiscard]] constexpr bool contains(std::string_view const &string) const {
     if (!is_sequence() && !is_map()) {
       throw std::invalid_argument("This entry is not a sequence nor a map");
     }
-    return std::any_of(
-        entries_.begin(), entries_.end(),
-        [&string](std::unique_ptr<Entry> const& entry) {
-          return (entry->is_string() && entry->to_string() == string) ||
-                 (entry->is_pair() && entry->key().is_string() &&
-                  entry->key().to_string() == string);
-        });
+    return std::any_of(entries_.begin(), entries_.end(),
+                       [&string](std::unique_ptr<Entry> const &entry) {
+                         return (entry->is_string() &&
+                                 entry->to_string() == string) ||
+                                (entry->is_pair() && entry->key().is_string() &&
+                                 entry->key().to_string() == string);
+                       });
   }
   [[nodiscard]] constexpr bool contains(int64_t integer) const {
     if (!is_sequence()) {
       throw std::invalid_argument("This entry is not a sequence");
     }
     return std::any_of(entries_.begin(), entries_.end(),
-                       [&integer](std::unique_ptr<Entry> const& entry) {
+                       [&integer](std::unique_ptr<Entry> const &entry) {
                          return *entry == integer;
                        });
   }
@@ -197,7 +197,7 @@ class Entry {
       throw std::invalid_argument("This entry is not a sequence");
     }
     return std::any_of(entries_.begin(), entries_.end(),
-                       [&integer](std::unique_ptr<Entry> const& entry) {
+                       [&integer](std::unique_ptr<Entry> const &entry) {
                          return *entry == integer;
                        });
   }
@@ -206,7 +206,7 @@ class Entry {
       throw std::invalid_argument("This entry is not a sequence");
     }
     return std::any_of(entries_.begin(), entries_.end(),
-                       [&integer](std::unique_ptr<Entry> const& entry) {
+                       [&integer](std::unique_ptr<Entry> const &entry) {
                          return *entry == integer;
                        });
   }
@@ -215,7 +215,7 @@ class Entry {
       throw std::invalid_argument("This entry is not a sequence");
     }
     return std::any_of(entries_.begin(), entries_.end(),
-                       [&integer](std::unique_ptr<Entry> const& entry) {
+                       [&integer](std::unique_ptr<Entry> const &entry) {
                          return *entry == integer;
                        });
   }
@@ -224,7 +224,7 @@ class Entry {
       throw std::invalid_argument("This entry is not a sequence");
     }
     return std::any_of(entries_.begin(), entries_.end(),
-                       [&integer](std::unique_ptr<Entry> const& entry) {
+                       [&integer](std::unique_ptr<Entry> const &entry) {
                          return *entry == integer;
                        });
   }
@@ -233,7 +233,7 @@ class Entry {
       throw std::invalid_argument("This entry is not a sequence");
     }
     return std::any_of(entries_.begin(), entries_.end(),
-                       [&integer](std::unique_ptr<Entry> const& entry) {
+                       [&integer](std::unique_ptr<Entry> const &entry) {
                          return *entry == integer;
                        });
   }
@@ -242,7 +242,7 @@ class Entry {
       throw std::invalid_argument("This entry is not a sequence");
     }
     return std::any_of(entries_.begin(), entries_.end(),
-                       [&real](std::unique_ptr<Entry> const& entry) {
+                       [&real](std::unique_ptr<Entry> const &entry) {
                          return *entry == real;
                        });
   }
@@ -251,7 +251,7 @@ class Entry {
       throw std::invalid_argument("This entry is not a sequence");
     }
     return std::any_of(entries_.begin(), entries_.end(),
-                       [&real](std::unique_ptr<Entry> const& entry) {
+                       [&real](std::unique_ptr<Entry> const &entry) {
                          return *entry == real;
                        });
   }
@@ -260,40 +260,39 @@ class Entry {
       throw std::invalid_argument("This entry is not a sequence");
     }
     return std::any_of(entries_.begin(), entries_.end(),
-                       [&real](std::unique_ptr<Entry> const& entry) {
+                       [&real](std::unique_ptr<Entry> const &entry) {
                          return *entry == real;
                        });
   }
 
-  [[nodiscard]] bool operator==(Entry const& other) const noexcept;
-  [[nodiscard]] bool operator==(std::string_view const& other) const noexcept;
+  [[nodiscard]] bool operator==(Entry const &other) const noexcept;
+  [[nodiscard]] bool operator==(std::string_view const &other) const noexcept;
 
   template <std::integral T>
-  [[nodiscard]] bool operator==(T const& other) const noexcept {
-    return is_int() && to_int() == other;
+  [[nodiscard]] bool operator==(T const &other) const noexcept {
+    return is_int() && to_int() == (int64_t)other;
   }
   template <std::floating_point T>
-  [[nodiscard]] bool operator==(T const& other) const noexcept {
+  [[nodiscard]] bool operator==(T const &other) const noexcept {
     return is_double() && to_double() == other;
   }
-  [[nodiscard]] bool operator==(std::tm const& other) const noexcept;
-  [[nodiscard]] bool operator==(
-      std::chrono::year_month_day const& other) const noexcept;
-  [[nodiscard]] bool operator==(
-      std::chrono::hh_mm_ss<std::chrono::microseconds> const& other)
+  [[nodiscard]] bool operator==(std::tm const &other) const noexcept;
+  [[nodiscard]] bool
+  operator==(std::chrono::year_month_day const &other) const noexcept;
+  [[nodiscard]] bool
+  operator==(std::chrono::hh_mm_ss<std::chrono::microseconds> const &other)
       const noexcept;
   // if the entry was not found, this function will create the new one with
   // value None
-  [[nodiscard]] Entry& operator[](std::string_view const& key);
-  [[nodiscard]] Entry& operator[](Entry& key);
-  [[nodiscard]] Entry& operator[](size_t const& i);
-  [[nodiscard]] Entry& operator[](Entry&& key);
-  [[nodiscard]] Entry& operator[](Entry const& key);
-  Entry& operator=(Entry& entry);
-  Entry& operator=(std::string_view const& other) noexcept;
-  Entry& operator=(bool const& other) noexcept;
-  template <std::integral T>
-  Entry& operator=(T const& other) noexcept {
+  [[nodiscard]] Entry &operator[](std::string_view const &key);
+  [[nodiscard]] Entry &operator[](Entry &key);
+  [[nodiscard]] Entry &operator[](size_t const &i);
+  [[nodiscard]] Entry &operator[](Entry &&key);
+  [[nodiscard]] Entry &operator[](Entry const &key);
+  Entry &operator=(Entry &entry);
+  Entry &operator=(std::string_view const &other) noexcept;
+  Entry &operator=(bool const &other) noexcept;
+  template <std::integral T> Entry &operator=(T const &other) noexcept {
     entries_.clear();
     type_ = Type::kInt;
     str_ = std::to_string(other);
@@ -301,8 +300,7 @@ class Entry {
     tag_.clear();
     return *this;
   }
-  template <std::floating_point T>
-  Entry& operator=(T const& other) noexcept {
+  template <std::floating_point T> Entry &operator=(T const &other) noexcept {
     entries_.clear();
     type_ = Type::kDouble;
     str_ = std::to_string(other);
@@ -310,17 +308,16 @@ class Entry {
     tag_.clear();
     return *this;
   }
-  Entry& operator=(std::tm const& other) noexcept;
-  Entry& operator=(std::chrono::year_month_day const& other) noexcept;
-  Entry& operator=(
-      std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) noexcept;
+  Entry &operator=(std::tm const &other) noexcept;
+  Entry &operator=(std::chrono::year_month_day const &other) noexcept;
+  Entry &operator=(
+      std::chrono::hh_mm_ss<std::chrono::microseconds> const &other) noexcept;
   // TODO
   // figure out how to move assignments below to the .cpp file
-  template <typename T>
-  Entry& operator=(std::vector<T>&& other) noexcept {
+  template <typename T> Entry &operator=(std::vector<T> &&other) noexcept {
     entries_.clear();
     type_ = Type::kSequence;
-    for (auto& t : other) {
+    for (auto &t : other) {
       entries_.emplace_back(std::move(t), this);
     }
     tag_.clear();
@@ -328,25 +325,21 @@ class Entry {
     return *this;
   }
   template <typename T1, typename T2>
-  Entry& operator=(std::map<T1, T2>&& other) noexcept {
+  Entry &operator=(std::map<T1, T2> &&other) noexcept {
     entries_.clear();
     type_ = Type::kMap;
-    for (auto const& [t1, t2] : other) {
-      // Call an Entry() with two entries as parameters
-      auto const& test = entries_.emplace_back(std::make_unique<Entry>(
+    for (auto const &[t1, t2] : other) {
+      entries_.emplace_back(std::make_unique<Entry>(
           std::make_unique<Entry>(t1), std::make_unique<Entry>(t2), this));
-      bool a = test->key().parent() == test.get();
-      bool b = test->value().parent() == test.get();
     }
     tag_.clear();
     str_.clear();
     return *this;
   }
-  template <typename T>
-  Entry& operator=(std::set<T>&& other) noexcept {
+  template <typename T> Entry &operator=(std::set<T> &&other) noexcept {
     entries_.clear();
     type_ = Type::kSet;
-    for (auto const& t : other) {
+    for (auto const &t : other) {
       // Call an Entry() with two entries as parameters, the value is set to be
       // Null
       entries_.emplace_back(Entry(t), Entry(Type::kNull, nullptr), this);
@@ -356,11 +349,10 @@ class Entry {
     return *this;
   }
 
-  template <typename T>
-  Entry& operator=(std::vector<T> const& other) noexcept {
+  template <typename T> Entry &operator=(std::vector<T> const &other) noexcept {
     entries_.clear();
     type_ = Type::kSequence;
-    for (auto const& t : other) {
+    for (auto const &t : other) {
       entries_.emplace_back(std::make_unique<Entry>(t, this));
     }
     tag_.clear();
@@ -368,10 +360,10 @@ class Entry {
     return *this;
   }
   template <typename T1, typename T2>
-  Entry& operator=(std::map<T1, T2> const& other) noexcept {
+  Entry &operator=(std::map<T1, T2> const &other) noexcept {
     entries_.clear();
     type_ = Type::kMap;
-    for (auto const& [t1, t2] : other) {
+    for (auto const &[t1, t2] : other) {
       // Call an Entry() with two entries as parameters
       entries_.emplace_back(std::make_unique<Entry>(std::move(t1)),
                             std::make_unique<Entry>(std::move(t2)), this);
@@ -380,11 +372,10 @@ class Entry {
     str_ = Serialize();
     return *this;
   }
-  template <typename T>
-  Entry& operator=(std::set<T> const& other) noexcept {
+  template <typename T> Entry &operator=(std::set<T> const &other) noexcept {
     entries_.clear();
     type_ = Type::kSet;
-    for (auto const& t : other) {
+    for (auto const &t : other) {
       // Call an Entry() with two entries as parameters, value is null
       entries_.emplace_back(Entry(t), Entry(Type::kNull, nullptr), this);
     }
@@ -393,11 +384,11 @@ class Entry {
     return *this;
   }
 
-  [[nodiscard]] Entry& key() const;
-  [[nodiscard]] Entry& value() const;
+  [[nodiscard]] Entry &key() const;
+  [[nodiscard]] Entry &value() const;
 
-  [[nodiscard]] std::chrono::hh_mm_ss<std::chrono::microseconds> to_time()
-      const;
+  [[nodiscard]] std::chrono::hh_mm_ss<std::chrono::microseconds>
+  to_time() const;
   [[nodiscard]] std::chrono::year_month_day to_date() const;
   [[nodiscard]] std::tm to_datetime() const;
   [[nodiscard]] std::tm to_time_point() const;
@@ -409,34 +400,34 @@ class Entry {
   [[nodiscard]] bool to_boolean() const;
   [[nodiscard]] std::string_view to_string() const noexcept;
 
-  [[nodiscard]] Type const& type() const { return type_; }
-  [[nodiscard]] std::string const& str() const { return str_; }
-  [[nodiscard]] std::string const& tag() const { return tag_; }
+  [[nodiscard]] Type const &type() const { return type_; }
+  [[nodiscard]] std::string const &str() const { return str_; }
+  [[nodiscard]] std::string const &tag() const { return tag_; }
 
-  void append(Entry&& entry);
+  void append(Entry &&entry);
   void append(std::unique_ptr<Entry> entry);
 
   [[nodiscard]] std::vector<std::string> Serialize() const noexcept;
 
-  [[nodiscard]] Entry* parent() const noexcept { return parent_; }
+  [[nodiscard]] Entry *parent() const noexcept { return parent_; }
 
-  [[nodiscard]] Entry const& link_value() const {
+  [[nodiscard]] Entry const &link_value() const {
     if (!is_link()) {
       throw std::invalid_argument("This entry is not a boolean");
     }
-    auto const& t = std::get<Entry*>(data_);
+    auto const &t = std::get<Entry *>(data_);
     if (t) {
       return *t;
     }
     throw std::runtime_error("The link is invalid!");
   }
 
- private:
+private:
   struct TimePoint final {
     std::tm datetime_;
     std::chrono::year_month_day date_;
     std::chrono::hh_mm_ss<std::chrono::microseconds> time_;
-    explicit TimePoint(std::tm const& tm) : datetime_(tm) {
+    explicit TimePoint(std::tm const &tm) : datetime_(tm) {
       using namespace std::chrono;
       date_ =
           year_month_day(year(tm.tm_year), month(tm.tm_mon), day(tm.tm_mday));
@@ -453,7 +444,7 @@ class Entry {
       datetime_.tm_sec = 0;
     }
     explicit TimePoint(
-        std::chrono::hh_mm_ss<std::chrono::microseconds> const& time)
+        std::chrono::hh_mm_ss<std::chrono::microseconds> const &time)
         : date_(std::chrono::local_days()), time_(time) {
       datetime_.tm_year = 0;
       datetime_.tm_mon = 0;
@@ -469,14 +460,14 @@ class Entry {
   std::string str_ = "";
   std::string tag_ = "";
   std::variant<std::monostate, Pair, int64_t, uint64_t, long double, bool,
-               TimePoint, Entry*>
+               TimePoint, Entry *>
       data_;
-  Entry* parent_ = nullptr;
+  Entry *parent_ = nullptr;
 };
 class InvalidSyntax : public std::invalid_argument {
- public:
+public:
   using std::invalid_argument::invalid_argument;
 };
-Entry Parse(std::string_view const& string);
-std::optional<Entry> ParseNoexcept(std::string_view const& string) noexcept;
-}  // namespace yaml
+Entry Parse(std::string_view const &string);
+std::optional<Entry> ParseNoexcept(std::string_view const &string) noexcept;
+} // namespace yaml

@@ -1,23 +1,25 @@
 
 #define minecraft_RESOURCE_PACKING
+
 #include "Resources/Resources.hpp"
 #include "Resources/pack.hpp"
 #include "Utils.hpp"
-#include "gtest/gtest.h"
+#include "pch.h"
+
 namespace fs = std::filesystem;
 using namespace resource;
 static const std::vector<std::string> kFixedTestfiles = {"a/b.txt", "a/b/c.txt",
                                                          "a/b/c/d.txt"};
 
 class TestResources : public ::testing::Test {
- protected:
+protected:
   static void SetUpTestSuite() {
     static const std::pair<uint32_t, uint32_t> kAmountOfFiles{28, 34};
     static const std::pair<uint32_t, uint32_t> kStringSize{16, 24};
     static const std::pair<uint32_t, uint32_t> kFileSize{10000, 100000};
     packing_succeded = false;
     dir_ = fs::temp_directory_path() / "minecraft_test/TestResources/";
-    for (std::string const& path : kFixedTestfiles) {
+    for (std::string const &path : kFixedTestfiles) {
       CreateFile(dir_ / path, path.c_str(), path.size());
     }
 
@@ -58,11 +60,11 @@ TEST_F(TestResources, TestLoading) {
 
 TEST_F(TestResources, FixedFileLoading) {
   auto resources_ = resource::LoadResources(dir_ / "test.pack");
-  for (std::string const& path : kFixedTestfiles) {
+  for (std::string const &path : kFixedTestfiles) {
     ASSERT_TRUE(resources_.FileExists(path))
         << "file " << path << " doesn't exist within the resource file";
   }
-  for (std::string const& path : kFixedTestfiles) {
+  for (std::string const &path : kFixedTestfiles) {
     ASSERT_TRUE(resources_.GetFile(path).ToString() == path)
         << "File content is broken";
   }
@@ -70,11 +72,11 @@ TEST_F(TestResources, FixedFileLoading) {
 }
 TEST_F(TestResources, RandomFileLoading) {
   auto resources_ = resource::LoadResources(dir_ / "test.pack");
-  for (std::filesystem::path const& file : TestResources::unicode_files_) {
+  for (std::filesystem::path const &file : TestResources::unicode_files_) {
     ASSERT_TRUE(resources_.FileExists(file.string()))
         << "file " << file << " doesn't exist within the resource file";
   }
-  for (std::filesystem::path const& file : TestResources::unicode_files_) {
+  for (std::filesystem::path const &file : TestResources::unicode_files_) {
     std::ifstream fileStream{TestResources::dir_ / file, std::ios::in};
     uint64_t size = std::filesystem::file_size(TestResources::dir_ / file);
     auto data_ptr = resources_.GetFile(file.string()).data();
@@ -86,7 +88,7 @@ TEST_F(TestResources, RandomFileLoading) {
         << "Content of the file" << file << "is broken";
     fileStream.close();
   }
-  for (Entry const& file : resources_ / "unicode_test") {
+  for (Entry const &file : resources_ / "unicode_test") {
     ASSERT_TRUE(file.is_file());
   }
   ASSERT_NO_THROW(resource::UnloadResources(dir_ / "test.pack"));
@@ -103,12 +105,13 @@ TEST_F(TestResources, TestMultithreadedRandomFileLoading) {
 
   auto thread_function = [&m, &counter, &cv, &counter_mutex,
                           &resources_](ptr_vec::iterator itr) {
-    for (std::filesystem::path const& file : TestResources::unicode_files_) {
+    for (std::filesystem::path const &file : TestResources::unicode_files_) {
       std::unique_lock lk(m);
       counter++;
       cv.wait(lk);
-      ASSERT_TRUE(*itr = resources_.GetFile(file.string()).data())
-          << "file " << file << " doesn't exist within the resource file";
+      *itr = resources_.GetFile(file.string()).data();
+      ASSERT_TRUE(*itr) << "file " << file
+                        << " doesn't exist within the resource file";
       std::unique_lock t(counter_mutex);
     }
   };
@@ -126,13 +129,13 @@ TEST_F(TestResources, TestMultithreadedRandomFileLoading) {
     counter = 0;
     bool eq = true;
     auto itr = pointers.begin();
-    while (eq && itr != pointers.end()) {
-      eq = (itr == ++itr);
+    while (eq && std::next(++itr) != pointers.end()) {
+      eq = *itr == *std::next(itr);
     }
     ASSERT_TRUE(eq);
     cv.notify_all();
   }
-  for (auto& thread : threads) {
+  for (auto &thread : threads) {
     thread.join();
   }
   ASSERT_NO_THROW(resource::UnloadResources(dir_ / "test.pack"));

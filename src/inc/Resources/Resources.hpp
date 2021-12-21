@@ -42,6 +42,6 @@ namespace resource {
  * local_path is used to modify folder, where loaded resources will be
  * located. the name of .res file should be unique.
  */
-Entry const& LoadResources(std::filesystem::path path_to_file);
-void UnloadResources(std::filesystem::path const& path_to_file);
-}  // namespace resource
+Entry const &LoadResources(std::filesystem::path path_to_file);
+void UnloadResources(std::filesystem::path const &path_to_file);
+} // namespace resource

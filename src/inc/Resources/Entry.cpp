@@ -1,13 +1,13 @@
 #include "Entry.hpp"
 
 namespace resource {
-[[nodiscard]] bool Entry::FileExists(
-    std::string_view const key) const noexcept {
+[[nodiscard]] bool
+Entry::FileExists(std::string_view const key) const noexcept {
   auto opt = GetIfExists(key);
   return opt.has_value() && (*opt).get().is_file();
 }
-[[nodiscard]] bool Entry::DirectoryExists(
-    std::string_view const key) const noexcept {
+[[nodiscard]] bool
+Entry::DirectoryExists(std::string_view const key) const noexcept {
   auto opt = GetIfExists(key);
   return opt.has_value() && (*opt).get().is_dir();
 }
@@ -16,30 +16,30 @@ namespace resource {
   return GetIfExists(key).has_value();
 }
 
-[[nodiscard]] Entry const& Entry::Get(std::string_view const key) const {
+[[nodiscard]] Entry const &Entry::Get(std::string_view const key) const {
   return operator[](key);
 }
-[[nodiscard]] Entry const& Entry::GetFile(std::string_view const key) const {
-  Entry const& t = operator[](key);
+[[nodiscard]] Entry const &Entry::GetFile(std::string_view const key) const {
+  Entry const &t = operator[](key);
   if (t.is_directory()) {
     throw std::invalid_argument("The value behind the key is a directory!");
   }
   return t;
 }
-[[nodiscard]] Entry const& Entry::GetDirectory(
-    std::string_view const key) const {
-  Entry const& t = operator[](key);
+[[nodiscard]] Entry const &
+Entry::GetDirectory(std::string_view const key) const {
+  Entry const &t = operator[](key);
   if (t.is_file()) {
     throw std::invalid_argument("The value behind the key is a file!");
   }
   return t;
 }
 
-[[nodiscard]] Entry const& Entry::operator/(std::string_view const key) const {
+[[nodiscard]] Entry const &Entry::operator/(std::string_view const key) const {
   return operator[](key);
 }
 
-[[nodiscard]] Entry const& Entry::operator[](std::string_view const key) const {
+[[nodiscard]] Entry const &Entry::operator[](std::string_view const key) const {
   auto opt = GetIfExists(key);
   if (!opt.has_value()) {
     throw resource::InvalidPathException("Invalid path specified: " +
@@ -47,16 +47,16 @@ namespace resource {
   }
   return *opt;
 }
-[[nodiscard]] bool Entry::operator==(Entry const& other) const {
-  return name == other.name_ && size_ == other.size_ &&
+[[nodiscard]] bool Entry::operator==(Entry const &other) const noexcept {
+  return name_ == other.name_ && size_ == other.size_ &&
          data_begin_ == other.data_begin_ &&
-         resource_file_ptr == other.resource_file_ptr_ &&
+         resource_file_ptr_ == other.resource_file_ptr_ &&
          is_file_ == other.is_file_;
 }
 [[nodiscard]] static constexpr std::pair<std::string_view, std::string_view>
-lcrop_path(std::string_view const& path) noexcept {
+lcrop_path(std::string_view const &path) noexcept {
   auto it = std::find_if(path.begin(), path.end(),
-                         [&](char const& c) { return c == '/' || c == '\\'; });
+                         [&](char const &c) { return c == '/' || c == '\\'; });
   auto it2 = it;
   if (it != path.end()) {
     it2++;
@@ -88,8 +88,8 @@ Entry::GetIfExists(std::string_view const key) const noexcept {
 }
 
 // returns nullptr if the entry is a folder
-[[nodiscard]] std::shared_ptr<std::vector<char>> Entry::content()
-    const noexcept {
+[[nodiscard]] std::shared_ptr<std::vector<char>>
+Entry::content() const noexcept {
   return data();
 }
 
@@ -106,8 +106,8 @@ Entry::GetIfExists(std::string_view const key) const noexcept {
 }
 [[nodiscard]] std::string Entry::string() const noexcept { return ToString(); }
 
-[[nodiscard]] std::shared_ptr<std::vector<char>> Entry::data_internal()
-    const noexcept {
+[[nodiscard]] std::shared_ptr<std::vector<char>>
+Entry::data_internal() const noexcept {
   if (data_->expired()) {
     if (auto lock = resource_file_ptr_.TryLock()) {
       lock->seekg(data_begin_);
@@ -117,14 +117,14 @@ Entry::GetIfExists(std::string_view const key) const noexcept {
       return file_content;
     }
     // wait until data_ is initialized in another thread
-    { auto lock = resource_file_ptr_.Lock(); }
+    { resource_file_ptr_.Lock(); }
     return data_internal();
   }
   return data_->lock();
 }
 
-static constexpr uint64_t BytesToUint64(const char* sbuf) {
-  auto buf = std::bit_cast<const unsigned char*>(sbuf);
+static constexpr uint64_t BytesToUint64(const char *sbuf) {
+  auto buf = std::bit_cast<const unsigned char *>(sbuf);
   return (uint64_t(buf[0]) << 0) | (uint64_t(buf[1]) << 8) |
          (uint64_t(buf[2]) << 16) | (uint64_t(buf[3]) << 24) |
          (uint64_t(buf[4]) << 32) | (uint64_t(buf[5]) << 40) |
@@ -132,18 +132,16 @@ static constexpr uint64_t BytesToUint64(const char* sbuf) {
 }
 
 uint64_t Entry::CalculateDirSize() const noexcept {
-  auto dl = [](uint64_t a, std::unique_ptr<Entry> const& b) {
+  auto dl = [](uint64_t a, std::unique_ptr<Entry> const &b) {
     return a + b->size();
   };
   return std::accumulate(entries_holder_->begin(), entries_holder_->end(),
                          (uint64_t)0, dl);
-  return 0;
 }
 
-Entry::Entry(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr,
+Entry::Entry(uint64_t begin, AtomicIfstreamPointer const &resource_file_ptr,
              bool is_file)
-    : data_begin_(begin),
-      resource_file_ptr_(resource_file_ptr),
+    : data_begin_(begin), resource_file_ptr_(resource_file_ptr),
       is_file_(is_file) {
   entries_holder_ = std::make_shared<std::vector<std::unique_ptr<Entry>>>();
   data_ = std::make_shared<std::weak_ptr<std::vector<char>>>();
@@ -197,4 +195,4 @@ Entry::Entry(uint64_t begin, AtomicIfstreamPointer const& resource_file_ptr,
   }
   size_ = CalculateDirSize() + size_;
 }
-}  // namespace resource
+} // namespace resource

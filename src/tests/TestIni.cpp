@@ -5,13 +5,13 @@
 #include <set>
 
 #include "Utils.hpp"
-#include "gtest/gtest.h"
 #include "parsers/Ini.hpp"
+#include "pch.h"
 namespace fs = std::filesystem;
 TEST(TEST_INI, TestSaving) {
   ini::Ini conf;
   conf.CreateSection("Graphics");
-  ini::Section& graphics = conf["Graphics"];
+  ini::Section &graphics = conf["Graphics"];
 
   graphics.SetValue("ResolutionX", 3200);
   graphics.SetValue("ResolutionY", 3200);
@@ -24,14 +24,15 @@ TEST(TEST_INI, TestSaving) {
              t.c_str(), t.size());
 }
 TEST(TEST_INI, TestLoading) {
-  std::ifstream ifs(
-      fs::temp_directory_path() / "minecraft_test/test_ini/TestFile.ini",
-      std::ios::in);
+  std::ifstream ifs(fs::temp_directory_path() /
+                        "minecraft_test/test_ini/TestFile.ini",
+                    std::ios::in);
   std::string value;
-  auto* const buffer = new char[1];
+  char *const buffer = new char[1];
+  ifs.read(buffer, 1);
   while (ifs.good()) {
-    ifs.read(buffer, 1);
     value += buffer[0];
+    ifs.read(buffer, 1);
   }
   delete[] buffer;
   ifs.close();
@@ -69,32 +70,31 @@ static const std::string kKeyCharacters =
     ExcludeString(kAsciiCharacters, "[]=#;\\");
 TEST(TEST_INI, RandomTest) {
   auto conf = ini::Ini();
-  std::vector<std::string> random_sections;
   for (size_t i = 0; i < kRandomSectionsSize; i++) {
     auto t = utils::trim(RandomString(kSectionKeySize, kSectionKeyCharacters));
-    ini::Section& section = conf[t];
-    for (size_t i = 0; i < kRandomIntegerKeysSize; i++) {
+    ini::Section &section = conf[t];
+    for (size_t j = 0; j < kRandomIntegerKeysSize; j++) {
       section[utils::trim(RandomString(kKeySize, kKeyCharacters))] =
           RandomInteger();
     }
-    for (size_t i = 0; i < kRandomDoubleKeysSize; i++) {
+    for (size_t j = 0; j < kRandomDoubleKeysSize; j++) {
       section[utils::trim(RandomString(kKeySize, kKeyCharacters))] =
           RandomLongDouble();
     }
-    for (size_t i = 0; i < kRandomStringKeysSize; i++) {
+    for (size_t j = 0; j < kRandomStringKeysSize; j++) {
       section[utils::trim(RandomString(kKeySize, kKeyCharacters))] =
           utils::trim(RandomString(kStringValueSize, kSectionKeyCharacters));
     }
   }
   auto conf2 = ini::Ini::Deserialize(conf.Serialize());
   ASSERT_EQ(conf2.size(), conf.size());
-  for (auto const& [section_key, section] : conf) {
+  for (auto const &[section_key, section] : conf) {
     ASSERT_TRUE(conf2.SectionExists(section_key)) << section_key;
-    ini::Section const& section2 = conf2[section_key];
+    ini::Section const &section2 = conf2[section_key];
 
     ASSERT_EQ(section.size(), section2.size());
 
-    for (auto const& [key, entry] : section) {
+    for (auto const &[key, entry] : section) {
       ASSERT_TRUE(section2.Contains(key))
           << section_key << "    " << key << "    " << entry.str();
       ASSERT_EQ(section2.at(key), entry);
