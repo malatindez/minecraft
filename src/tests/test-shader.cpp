@@ -53,6 +53,7 @@ std::shared_ptr<Entry> TestShader::shaders_;
 TEST_F(TestShader, TestLoading) {
   if (!initOpenGL(3, 3)) {
     std::cout << "Failed to initialize GLFW. Skipping this test.";
+    return;
   }
   std::shared_ptr<Shader> shader;
   ASSERT_NO_THROW(
@@ -64,6 +65,7 @@ TEST_F(TestShader, TestLoading) {
 TEST_F(TestShader, TestSettersExceptions) {
   if (!initOpenGL(3, 3)) {
     std::cout << "Failed to initialize GLFW. Skipping this test.";
+    return;
   }
   std::shared_ptr<Shader> shader;
   ASSERT_NO_THROW(
@@ -112,6 +114,7 @@ TEST_F(TestShader, TestSettersExceptions) {
 TEST_F(TestShader, TestSetters) {
   if (!initOpenGL(4, 3)) {
     std::cout << "Failed to initialize GLFW. Skipping this test.";
+    return;
   }
   std::shared_ptr<Shader> shader;
   ASSERT_NO_THROW(shader = std::make_shared<Shader>(
