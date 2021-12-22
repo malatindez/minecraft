@@ -308,9 +308,11 @@ template <std::floating_point T>
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
-  return std::any_of(
-      entries_.begin(), entries_.end(),
-      [&real](std::unique_ptr<Entry> const &entry) { return *entry == real; });
+  return std::any_of(entries_.begin(), entries_.end(),
+                     [&real](std::unique_ptr<Entry> const &entry) {
+                       return (*entry - real) <
+                              std::numeric_limits<long double>::epsilon();
+                     });
 }
 template <std::signed_integral T>
 [[nodiscard]] constexpr bool Entry::operator==(T const other) const noexcept {
@@ -319,7 +321,8 @@ template <std::signed_integral T>
 }
 template <std::floating_point T>
 [[nodiscard]] constexpr bool Entry::operator==(T const other) const noexcept {
-  return is_double() && (std::get<long double>(data_) - other) < std::numeric_limits<long double>::epsilon();
+  return is_double() && (std::get<long double>(data_) - other) <
+                            std::numeric_limits<long double>::epsilon();
 }
 
 template <std::integral T>

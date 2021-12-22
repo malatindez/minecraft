@@ -60,7 +60,8 @@ rbi: 147   # Runs Batted In)");
   ASSERT_TRUE(entry["avg"].is_double());
   ASSERT_TRUE(entry["rbi"].is_int());
   ASSERT_EQ(entry["hr"].to_int(), 65);
-  ASSERT_EQ(entry["avg"].to_double(), 0.278);
+  ASSERT_TRUE((entry["avg"].to_double() - 0.278) <
+              std::numeric_limits<long double>::epsilon());
   ASSERT_EQ(entry["rbi"], 147);  // operator== implicitly calls to_int()
 }
 
@@ -101,11 +102,13 @@ TEST(TestYamlParser, TestCollections_SequenceOfMappings) {
   ASSERT_TRUE(entry[0].is_map());
   ASSERT_EQ(entry[0]["name"].str(), "Mark McGwire");
   ASSERT_EQ(entry[0]["hr"].to_int(), 65);
-  ASSERT_EQ(entry[0]["avg"].to_double(), 0.278);
+  ASSERT_TRUE((entry[0]["avg"].to_double() - 0.278) <
+              std::numeric_limits<long double>::epsilon());
   ASSERT_TRUE(entry[1].is_map());
   ASSERT_EQ(entry[1]["name"].str(), "Sammy Sosa");
   ASSERT_EQ(entry[1]["hr"].to_int(), 63);
-  ASSERT_EQ(entry[1]["avg"].to_double(), 0.288);
+  ASSERT_TRUE((entry[1]["avg"].to_double() - 0.288) <
+              std::numeric_limits<long double>::epsilon());
 }
 
 TEST(TestYamlParser, TestCollections_SequenceOfSequences) {
@@ -136,10 +139,12 @@ Sammy Sosa: {
   ASSERT_TRUE(entry.is_map());
   ASSERT_TRUE(entry["Mark McGwire"].is_map());
   ASSERT_EQ(entry["Mark McGwire"]["hr"].to_int(), 65);
-  ASSERT_EQ(entry["Mark McGwire"]["avg"].to_double(), 0.278);
+  ASSERT_TRUE((entry["Mark McGwire"]["avg"].to_double() - 0.278) <
+              std::numeric_limits<long double>::epsilon());
   ASSERT_TRUE(entry["Sammy Sosa"].is_map());
   ASSERT_EQ(entry["Sammy Sosa"]["hr"].to_int(), 63);
-  ASSERT_EQ(entry["Sammy Sosa"]["avg"].to_double(), 0.288);
+  ASSERT_TRUE((entry["Sammy Sosa"]["avg"].to_double() - 0.288) <
+              std::numeric_limits<long double>::epsilon());
 }
 #ifndef SKIP_FAILING_TESTS
 TEST(TestYamlParser, TestStructures_TwoDocuments) {
