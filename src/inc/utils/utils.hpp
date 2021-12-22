@@ -60,14 +60,14 @@ class BaseIteratorWrapper {
 
   constexpr explicit BaseIteratorWrapper(iterator_type it) : it(it) {}
   // Prefix increment
-  BaseIteratorWrapper &operator++() {
+  constexpr BaseIteratorWrapper &operator++() {
     it++;
     return *this;
   }
   virtual ~BaseIteratorWrapper() = default;
 
   // Postfix increment
-  BaseIteratorWrapper operator++(int) {
+  constexpr BaseIteratorWrapper operator++(int) {
     BaseIteratorWrapper tmp = *this;
     ++(*this);
     return tmp;
