@@ -85,10 +85,10 @@ class Entry {
   explicit Entry(std::map<T1, T2> const &other, Entry *parent = nullptr);
   template <typename T>
   explicit Entry(std::set<T> const &other, Entry *parent = nullptr);
-  [[nodiscard]] inline Iterator begin() noexcept;
-  [[nodiscard]] inline Iterator end() noexcept;
-  [[nodiscard]] inline ConstIterator begin() const noexcept;
-  [[nodiscard]] inline ConstIterator end() const noexcept;
+  [[nodiscard]] inline impl::Iterator begin() noexcept;
+  [[nodiscard]] inline impl::Iterator end() noexcept;
+  [[nodiscard]] inline impl::ConstIterator begin() const noexcept;
+  [[nodiscard]] inline impl::ConstIterator end() const noexcept;
   [[nodiscard]] constexpr size_t size() const noexcept;
   [[nodiscard]] constexpr bool is_simple_type() const noexcept;
   [[nodiscard]] constexpr bool is_bool() const noexcept;
@@ -225,16 +225,16 @@ Entry::Entry(std::set<T> const &other, Entry *parent) : parent_(parent) {
   operator=(other);
 }
 
-[[nodiscard]] inline auto Entry::begin() noexcept {
+[[nodiscard]] inline impl::Iterator Entry::begin() noexcept {
   return impl::Iterator(entries_.begin());
 }
-[[nodiscard]] inline auto Entry::end() noexcept {
+[[nodiscard]] inline impl::Iterator Entry::end() noexcept {
   return impl::Iterator(entries_.end());
 }
-[[nodiscard]] inline auto Entry::begin() const noexcept {
+[[nodiscard]] inline impl::ConstIterator Entry::begin() const noexcept {
   return impl::ConstIterator(entries_.begin());
 }
-[[nodiscard]] inline auto Entry::end() const noexcept {
+[[nodiscard]] inline impl::ConstIterator Entry::end() const noexcept {
   return impl::ConstIterator(entries_.end());
 }
 
