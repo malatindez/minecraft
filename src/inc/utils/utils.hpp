@@ -84,7 +84,7 @@ class BaseIteratorWrapper {
   iterator_type it;
 };
 
-inline bool ends_with(std::string str, std::string suffix) {
+inline bool ends_with(std::string &str, std::string &suffix) {
   if (suffix.size() > str.size()) {
     return false;
   }
