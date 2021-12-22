@@ -148,7 +148,7 @@ class Entry {
   [[nodiscard]] inline Entry &key() const;
   [[nodiscard]] inline Entry &value() const;
 
-  [[nodiscard]] inline long double to_double() const;
+  [[nodiscard]] inline double to_double() const;
   [[nodiscard]] inline int64_t to_int() const;
   [[nodiscard]] inline uint64_t to_uint() const;
   [[nodiscard]] inline bool to_bool() const;
@@ -183,8 +183,7 @@ class Entry {
   Type type_ = Type::kNull;
   std::string str_ = "";
   std::string tag_ = "";
-  std::variant<std::monostate, Pair, int64_t, uint64_t, long double, bool,
-               Entry *>
+  std::variant<std::monostate, Pair, int64_t, uint64_t, double, bool, Entry *>
       data_;
   Entry *parent_ = nullptr;
 };
@@ -319,8 +318,8 @@ template <std::signed_integral T>
 }
 template <std::floating_point T>
 [[nodiscard]] constexpr bool Entry::operator==(T const other) const noexcept {
-  return is_double() && (std::get<long double>(data_) - other) <
-                            std::numeric_limits<long double>::epsilon();
+  return is_double() && (std::get<double>(data_) - other) <
+                            std::numeric_limits<double>::epsilon();
 }
 
 template <std::integral T>
@@ -337,7 +336,7 @@ Entry &Entry::operator=(T const other) noexcept {
   entries_.clear();
   type_ = Type::kDouble;
   str_ = std::to_string(other);
-  data_ = (long double)other;
+  data_ = (double)other;
   tag_.clear();
   return *this;
 }
@@ -429,11 +428,11 @@ inline Entry &Entry::value() const {
   return *std::get<Pair>(data_).second;
 }
 
-inline long double Entry::to_double() const {
+inline double Entry::to_double() const {
   if (!is_double()) {
     throw std::invalid_argument("This entry is not a double");
   }
-  return std::get<long double>(data_);
+  return std::get<double>(data_);
 }
 inline int64_t Entry::to_int() const {
   if (!is_int()) {
