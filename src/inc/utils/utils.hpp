@@ -58,7 +58,7 @@ class BaseIteratorWrapper {
     throw std::runtime_error("operator-> wasn't overloaded");
   }
 
-  constexpr explicit BaseIteratorWrapper(iterator_type it) : it(it) {}
+  inline explicit BaseIteratorWrapper(iterator_type it) : it(it) {}
   // Prefix increment
   constexpr BaseIteratorWrapper &operator++() {
     it++;
