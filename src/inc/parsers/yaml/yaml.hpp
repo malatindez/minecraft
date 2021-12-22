@@ -319,7 +319,7 @@ template <std::signed_integral T>
 }
 template <std::floating_point T>
 [[nodiscard]] constexpr bool Entry::operator==(T const other) const noexcept {
-  return is_double() && std::get<long double>(data_) == other;
+  return is_double() && (std::get<long double>(data_) - other) < std::numeric_limits<long double>::epsilon();
 }
 
 template <std::integral T>
