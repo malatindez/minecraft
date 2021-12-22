@@ -89,7 +89,7 @@ class Entry {
   [[nodiscard]] inline impl::Iterator end() noexcept;
   [[nodiscard]] inline impl::ConstIterator begin() const noexcept;
   [[nodiscard]] inline impl::ConstIterator end() const noexcept;
-  [[nodiscard]] constexpr size_t size() const noexcept;
+  [[nodiscard]] inline size_t size() const noexcept;
   [[nodiscard]] constexpr bool is_simple_type() const noexcept;
   [[nodiscard]] constexpr bool is_bool() const noexcept;
   [[nodiscard]] constexpr bool is_directive() const noexcept;
@@ -103,11 +103,11 @@ class Entry {
   [[nodiscard]] constexpr bool is_set() const noexcept;
   [[nodiscard]] constexpr bool is_string() const noexcept;
   [[nodiscard]] constexpr bool is_uint() const noexcept;
-  [[nodiscard]] constexpr bool contains(std::string_view const string) const;
+  [[nodiscard]] inline bool contains(std::string_view const string) const;
   template <std::integral T>
-  [[nodiscard]] constexpr bool contains(T const integer) const;
+  [[nodiscard]] inline bool contains(T const integer) const;
   template <std::floating_point T>
-  [[nodiscard]] constexpr bool contains(T const real) const;
+  [[nodiscard]] inline bool contains(T const real) const;
 
   [[nodiscard]] bool operator==(Entry const &other) const noexcept;
   [[nodiscard]] bool operator==(std::string_view const other) const noexcept;
@@ -238,7 +238,7 @@ Entry::Entry(std::set<T> const &other, Entry *parent) : parent_(parent) {
   return impl::ConstIterator(entries_.end());
 }
 
-[[nodiscard]] constexpr size_t Entry::size() const noexcept {
+[[nodiscard]] inline size_t Entry::size() const noexcept {
   return entries_.size();
 }
 [[nodiscard]] constexpr bool Entry::is_simple_type() const noexcept {
@@ -280,8 +280,7 @@ Entry::Entry(std::set<T> const &other, Entry *parent) : parent_(parent) {
 [[nodiscard]] constexpr bool Entry::is_uint() const noexcept {
   return type_ == Type::kUInt;
 }
-[[nodiscard]] constexpr bool Entry::contains(
-    std::string_view const string) const {
+[[nodiscard]] inline bool Entry::contains(std::string_view const string) const {
   if (!is_sequence() && !is_map()) {
     throw std::invalid_argument("This entry is not a sequence nor a map");
   }
@@ -295,7 +294,7 @@ Entry::Entry(std::set<T> const &other, Entry *parent) : parent_(parent) {
 }
 
 template <std::integral T>
-[[nodiscard]] constexpr bool Entry::contains(T const integer) const {
+[[nodiscard]] inline bool Entry::contains(T const integer) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
@@ -305,7 +304,7 @@ template <std::integral T>
                      });
 }
 template <std::floating_point T>
-[[nodiscard]] constexpr bool Entry::contains(T const real) const {
+[[nodiscard]] inline bool Entry::contains(T const real) const {
   if (!is_sequence()) {
     throw std::invalid_argument("This entry is not a sequence");
   }
