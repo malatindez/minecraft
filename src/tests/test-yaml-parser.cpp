@@ -10,7 +10,7 @@ using namespace yaml;
 #define SKIP_FAILING_TESTS
 TEST(TestYamlParser, BasicTest) {
   using namespace std::chrono;
-  Entry entry(Entry::Type::kMap, nullptr);
+  Entry entry(Type::kMap, nullptr);
 
   std::vector<int> t{1024, 768, 123};
   entry["Resolution"]["Seq"] = t;
@@ -20,25 +20,6 @@ TEST(TestYamlParser, BasicTest) {
       {"first", 1}, {"second", 2}, {"third", 3}, {"fourth", 4}};
 
   entry["data"]["thing"] = std::move(map);
-
-  auto now = system_clock::now();
-
-  auto const ld = floor<days>(now);
-  const year_month_day ymd{ld};
-  hh_mm_ss hms{duration_cast<microseconds>(now - ld)};
-  std::tm tm = {0};
-  auto cast = duration_cast<seconds>(now.time_since_epoch());
-  tm.tm_sec = floor<seconds>(cast).count() % 60;
-  tm.tm_min = floor<minutes>(cast).count() % 60;
-  tm.tm_hour = floor<hours>(cast).count() % 24;
-  year_month_day ymd2 = floor<days>(sys_seconds(cast));
-  tm.tm_year = (int)ymd2.year();
-  tm.tm_mon = (unsigned)ymd2.month();
-  tm.tm_mday = (unsigned)ymd2.day();
-  tm.tm_isdst = -1;
-  entry["data"]["timestamp"] = tm;
-  entry["data"]["date"] = ymd;
-  entry["data"]["time"] = hms;
   entry["data"]["thing"]["first"] = entry["data"]["timestamp"];
   std::string str;
   for (std::string const& i : entry.Serialize()) {
@@ -57,7 +38,7 @@ TEST(TestYamlParser, TestCollections_SequenceOfScalars) {
 - Sammy Sosa
 - Ken Griffey)");
   ASSERT_EQ(entry.size(), 3);
-  ASSERT_EQ(entry.type(), Entry::Type::kSequence);
+  ASSERT_EQ(entry.type(), Type::kSequence);
   ASSERT_EQ(entry[0].str(), "Mark McGwire");
   ASSERT_EQ(entry[1].str(), "Sammy Sosa");
   ASSERT_EQ(entry[2].str(), "Ken Griffey");
@@ -65,7 +46,7 @@ TEST(TestYamlParser, TestCollections_SequenceOfScalars) {
   ASSERT_TRUE(entry.contains("Sammy Sosa"));
   ASSERT_TRUE(entry.contains("Ken Griffey"));
   for (Entry const& sub_entry : entry) {
-    ASSERT_EQ(sub_entry.type(), Entry::Type::kString);
+    ASSERT_EQ(sub_entry.type(), Type::kString);
   }
 }
 TEST(TestYamlParser, TestCollections_MappingOfScalarsToScalars) {
@@ -197,12 +178,12 @@ action: grand slam
 ...)");
   ASSERT_TRUE(entry.is_sequence());
   ASSERT_TRUE(entry[0].is_directive());
-  ASSERT_EQ(entry[0][0]["time"].type(), Entry::Type::kTime);
+  ASSERT_EQ(entry[0][0]["time"].type(), Type::kTime);
   ASSERT_EQ(entry[0][0]["time"].str(), "20:03:47");
   ASSERT_EQ(entry[0][0]["player"].str(), "Sammy Sosa");
   ASSERT_EQ(entry[0][0]["action"].str(), "strike (miss)");
   ASSERT_TRUE(entry[1].is_directive());
-  ASSERT_EQ(entry[1][0]["time"].type(), Entry::Type::kTime);
+  ASSERT_EQ(entry[1][0]["time"].type(), Type::kTime);
   ASSERT_EQ(entry[1][0]["time"].str(), "20:03:47");
   ASSERT_EQ(entry[1][0]["player"].str(), "Sammy Sosa");
   ASSERT_EQ(entry[1][0]["action"].str(), "grand slam");

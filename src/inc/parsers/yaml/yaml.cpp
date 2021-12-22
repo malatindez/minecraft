@@ -24,51 +24,23 @@ Entry::Entry(Entry& entry, Entry* parent) : parent_(entry.parent_) {
 Entry::Entry(std::unique_ptr<Entry> key, std::unique_ptr<Entry> value,
              Entry* parent) noexcept
     : parent_(parent) {
-  type_ = Entry::Type::kPair;
+  type_ = Type::kPair;
   key->parent_ = this;
   value->parent_ = this;
   data_ = Pair{std::move(key), std::move(value)};
   str_.clear();
 }
-Entry::Entry(std::string_view const& other, Entry* parent) noexcept
-    : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(std::tm const& other, Entry* parent) noexcept : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(std::chrono::year_month_day const& other, Entry* parent) noexcept
-    : parent_(parent) {
-  operator=(other);
-}
-Entry::Entry(std::chrono::hh_mm_ss<std::chrono::microseconds> const& other,
-             Entry* parent) noexcept
+Entry::Entry(std::string_view const other, Entry* parent) noexcept
     : parent_(parent) {
   operator=(other);
 }
 bool Entry::operator==(Entry const& other) const noexcept {
   return other.type_ == type_ && str_ == other.str_;
 }
-bool Entry::operator==(std::string_view const& other) const noexcept {
+bool Entry::operator==(std::string_view const other) const noexcept {
   return is_string() && str_ == other;
 }
-bool Entry::operator==(std::tm const& other) const noexcept {
-  auto t = to_datetime();
-  return is_timestamp() && t.tm_year == other.tm_year &&
-         t.tm_wday == other.tm_wday && t.tm_yday == other.tm_yday &&
-         t.tm_mon == other.tm_mon && t.tm_mday == other.tm_mday &&
-         t.tm_hour == other.tm_hour && t.tm_min == other.tm_min &&
-         t.tm_sec == other.tm_sec;
-}
-bool Entry::operator==(
-    std::chrono::year_month_day const& other) const noexcept {
-  return is_date() && to_date() == other;
-}
-bool Entry::operator==(std::chrono::hh_mm_ss<std::chrono::microseconds> const&
-                           other) const noexcept {
-  return is_time() && to_time().to_duration() == other.to_duration();
-}
-Entry& Entry::operator[](std::string_view const& key) {
+Entry& Entry::operator[](std::string_view const key) {
   if (!is_null() && !is_map()) {
     throw std::invalid_argument("This entry is not a map");
   }
@@ -158,150 +130,21 @@ Entry& Entry::operator=(Entry& entry) {
   return *this;
 }
 
-Entry& Entry::operator=(std::string_view const& other) noexcept {
+Entry& Entry::operator=(std::string_view const other) noexcept {
   entries_.clear();
-  type_ = Entry::Type::kString;
+  type_ = Type::kString;
   str_ = other;
   tag_.clear();
   return *this;
 }
 Entry& Entry::operator=(bool const& other) noexcept {
   entries_.clear();
-  type_ = Entry::Type::kBool;
+  type_ = Type::kBool;
   str_ = other ? "true" : "false";
   data_ = other;
   tag_.clear();
   return *this;
 }
-std::string format_time(std::tm const& other) {
-  std::ostringstream buf;
-  buf << other.tm_year << "-" << std::setfill('0') << std::setw(2)
-      << other.tm_mon << "-" << std::setw(2) << other.tm_mday << " "
-      << std::setw(2) << other.tm_hour << ":" << std::setw(2) << other.tm_min
-      << ":" << std::setw(2) << other.tm_sec;
-  return buf.str();
-}
-std::string format_time(std::chrono::year_month_day const& other) {
-  std::ostringstream buf;
-  buf << (int32_t)other.year() << "-" << std::setfill('0') << std::setw(2)
-      << (uint32_t)other.month() << "-" << std::setw(2)
-      << (uint32_t)other.day();
-  return buf.str();
-}
-std::string format_time(
-    std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) {
-  std::ostringstream buf;
-  buf << std::setfill('0') << std::setw(2) << (uint32_t)other.hours().count()
-      << ":" << std::setw(2) << (uint32_t)other.minutes().count() << ":"
-      << std::setw(2) << (uint32_t)other.seconds().count();
-  return buf.str();
-}
-Entry& Entry::operator=(std::tm const& other) noexcept {
-  entries_.clear();
-  type_ = Entry::Type::kTimestamp;
-
-  str_ = format_time(other);
-  data_ = TimePoint{other};
-  tag_.clear();
-  return *this;
-}
-Entry& Entry::operator=(std::chrono::year_month_day const& other) noexcept {
-  if (is_pair()) {
-    value() = other;
-    return *this;
-  }
-  entries_.clear();
-  type_ = Entry::Type::kDate;
-  str_ = format_time(other);
-  data_ = TimePoint{other};
-  tag_.clear();
-  return *this;
-}
-Entry& Entry::operator=(
-    std::chrono::hh_mm_ss<std::chrono::microseconds> const& other) noexcept {
-  if (is_pair()) {
-    value() = other;
-    return *this;
-  }
-  entries_.clear();
-  type_ = Entry::Type::kDate;
-  str_ = format_time(other);
-  data_ = TimePoint{other};
-  tag_.clear();
-  return *this;
-}
-
-Entry& Entry::key() const {
-  if (!is_pair()) {
-    throw std::invalid_argument("This entry is not a pair");
-  }
-  return *std::get<Pair>(data_).first;
-}
-
-Entry& Entry::value() const {
-  if (!is_pair()) {
-    throw std::invalid_argument("This entry is not a pair");
-  }
-  return *std::get<Pair>(data_).second;
-}
-
-inline std::chrono::hh_mm_ss<std::chrono::microseconds> Entry::to_time() const {
-  if (!is_time() && !is_timestamp()) {
-    throw std::invalid_argument("This entry is not a time");
-  }
-  return std::get<TimePoint>(data_).time_;
-}
-inline std::chrono::year_month_day Entry::to_date() const {
-  if (!is_date() && !is_timestamp()) {
-    throw std::invalid_argument("This entry is not date");
-  }
-  return std::get<TimePoint>(data_).date_;
-}
-inline std::tm Entry::to_datetime() const {
-  if (!is_timestamp()) {
-    throw std::invalid_argument("This entry is not a timestamp");
-  }
-  return std::get<TimePoint>(data_).datetime_;
-}
-inline std::tm Entry::to_time_point() const {
-  if (!is_timestamp()) {
-    throw std::invalid_argument("This entry is not a timestamp");
-  }
-  return std::get<TimePoint>(data_).datetime_;
-}
-
-inline long double Entry::to_double() const {
-  if (!is_double()) {
-    throw std::invalid_argument("This entry is not a double");
-  }
-  return std::get<long double>(data_);
-}
-inline int64_t Entry::to_int() const {
-  if (!is_int()) {
-    throw std::invalid_argument("This entry is not an integer");
-  }
-  return std::get<int64_t>(data_);
-}
-inline uint64_t Entry::to_uint() const {
-  if (!is_uint()) {
-    throw std::invalid_argument("This entry is not an unsigned integer");
-  }
-  return std::get<uint64_t>(data_);
-}
-
-inline bool Entry::to_bool() const {
-  if (!is_bool()) {
-    throw std::invalid_argument("This entry is not a boolean");
-  }
-  return std::get<bool>(data_);
-}
-inline bool Entry::to_boolean() const {
-  if (!is_bool()) {
-    throw std::invalid_argument("This entry is not a boolean");
-  }
-  return std::get<bool>(data_);
-}
-inline std::string_view Entry::to_string() const noexcept { return str_; }
 
 void Entry::append(Entry&& entry) {
   append(std::make_unique<Entry>(std::move(entry), this));
@@ -425,12 +268,6 @@ std::vector<std::string> Entry::Serialize() const noexcept {
     return_value = std::vector<std::string>{std::to_string(to_double())};
   } else if (is_null()) {
     return_value = std::vector<std::string>{""};
-  } else if (is_time()) {
-    return_value = std::vector<std::string>{std::string(to_string())};
-  } else if (is_timestamp()) {
-    return_value = std::vector<std::string>{std::string(to_string())};
-  } else if (is_date()) {
-    return_value = std::vector<std::string>{std::string(to_string())};
   } else if (is_string()) {
     return_value = std::vector<std::string>{std::string(to_string())};
   } else if (is_link()) {
@@ -443,7 +280,7 @@ std::vector<std::string> Entry::Serialize() const noexcept {
 }
 
 // trim from start (in place)
-constexpr std::string_view ltrim(std::string_view const& s) {
+constexpr std::string_view ltrim(std::string_view const s) {
   return std::string_view(
       std::find_if(s.begin(), s.end(),
                    [](unsigned char ch) { return !std::isspace(ch); }),
@@ -451,7 +288,7 @@ constexpr std::string_view ltrim(std::string_view const& s) {
 }
 
 // trim from end (in place)
-constexpr std::string_view rtrim(std::string_view const& s) {
+constexpr std::string_view rtrim(std::string_view const s) {
   return std::string_view(
       s.begin(), std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
                    return !std::isspace(ch);
@@ -459,27 +296,27 @@ constexpr std::string_view rtrim(std::string_view const& s) {
 }
 
 // trim from both ends (in place)
-constexpr std::string_view trim(std::string_view const& s) {
+constexpr std::string_view trim(std::string_view const s) {
   return ltrim(rtrim(s));
 }
 
-constexpr bool beginswith(std::string_view const& target,
-                          std::string_view const& begin) {
+constexpr bool beginswith(std::string_view const target,
+                          std::string_view const begin) {
   return target.rfind(begin, 0) != std::string::npos;
 }
-constexpr bool endswith(std::string_view const& target,
-                        std::string_view const& end) {
+constexpr bool endswith(std::string_view const target,
+                        std::string_view const end) {
   if (target.size() > end.size()) {
     return false;
   }
   return target.find(end, target.size() - end.size()) != std::string::npos;
 }
-constexpr bool contains(std::string_view const& target,
-                        std::string_view const& contains) {
+constexpr bool contains(std::string_view const target,
+                        std::string_view const contains) {
   return target.find(contains) != std::string::npos;
 }
 // remove all characters before first c
-constexpr std::string_view lskip(std::string_view const& s, char c) {
+constexpr std::string_view lskip(std::string_view const s, char c) {
   size_t t = s.find(c);
   if (t == std::string::npos) {
     return s.substr(0, 0);
@@ -487,7 +324,7 @@ constexpr std::string_view lskip(std::string_view const& s, char c) {
   return s.substr(t + 1);
 }
 // get all characters before first c
-constexpr std::string_view lget(std::string_view const& s, char c) {
+constexpr std::string_view lget(std::string_view const s, char c) {
   size_t t = s.find(c);
   if (t == std::string::npos) {
     return s.substr(0, 0);
@@ -537,7 +374,7 @@ std::unique_ptr<Entry> ParseLine(std::string_view input_line) {
 std::unique_ptr<Entry> Parse(std::span<std::string_view> const& span);
 
 void remove_empty_strings(std::vector<std::string_view>& vec) {
-  std::erase_if(vec, [](std::string_view const& s) { return s.empty(); });
+  std::erase_if(vec, [](std::string_view const s) { return s.empty(); });
 }
 
 std::unique_ptr<Entry> ParsePair(std::span<std::string_view> const& span) {
@@ -551,7 +388,7 @@ std::unique_ptr<Entry> ParsePair(std::span<std::string_view> const& span) {
 }
 
 std::unique_ptr<Entry> ParseMap(std::span<std::string_view> const& span) {
-  auto return_value = std::make_unique<Entry>(Entry::Type::kMap);
+  auto return_value = std::make_unique<Entry>(Type::kMap);
   auto map_vec = std::vector<std::string_view>(span.begin(), span.end());
   remove_empty_strings(map_vec);
 
@@ -657,7 +494,7 @@ std::unique_ptr<Entry> ParseMap(std::span<std::string_view> const& span) {
   return return_value;
 }
 std::unique_ptr<Entry> ParseSet(std::span<std::string_view> const& span) {
-  auto return_value = std::make_unique<Entry>(Entry::Type::kMap);
+  auto return_value = std::make_unique<Entry>(Type::kMap);
 
   auto begin = span.begin();
   do {
@@ -673,14 +510,14 @@ std::unique_ptr<Entry> ParseSet(std::span<std::string_view> const& span) {
     }
     std::unique_ptr<Entry> key = Parse(vec);
     return_value->append(std::make_unique<Entry>(
-        std::move(key), std::make_unique<Entry>(Entry::Type::kNull),
+        std::move(key), std::make_unique<Entry>(Type::kNull),
         return_value.get()));
     begin = it;
   } while (begin != span.end());
   return return_value;
 }
 std::unique_ptr<Entry> ParseSequence(std::span<std::string_view> const& span) {
-  auto return_value = std::make_unique<Entry>(Entry::Type::kSequence);
+  auto return_value = std::make_unique<Entry>(Type::kSequence);
   auto seq_vec = std::vector<std::string_view>(span.begin(), span.end());
   remove_empty_strings(seq_vec);
 
@@ -765,8 +602,8 @@ std::unique_ptr<Entry> ParseSequence(std::span<std::string_view> const& span) {
 }
 std::unique_ptr<Entry> Parse(std::span<std::string_view> const& span) {
   auto it = span.begin();
-  auto type = Entry::Type::kNull;
-  while (it != span.end() && type == Entry::Type::kNull) {
+  auto type = Type::kNull;
+  while (it != span.end() && type == Type::kNull) {
     if (it->size() < 1) {
       ++it;
       continue;
@@ -774,16 +611,16 @@ std::unique_ptr<Entry> Parse(std::span<std::string_view> const& span) {
     if (beginswith(*it, "?")) {
       auto itr = std::find_if(
           span.begin(), span.end(),
-          [](std::string_view const& str) { return beginswith(str, ":"); });
-      type = (itr == span.end()) ? Entry::Type::kSet : Entry::Type::kMap;
+          [](std::string_view const str) { return beginswith(str, ":"); });
+      type = (itr == span.end()) ? Type::kSet : Type::kMap;
     } else if (it->size() >= 2 && (*it)[1] != ' ' && contains(*it, ":")) {
-      type = Entry::Type::kMap;
+      type = Type::kMap;
     } else if (beginswith(*it, "-")) {
-      type = Entry::Type::kSequence;
+      type = Type::kSequence;
     } else if (beginswith(ltrim(*it), "[")) {
-      type = Entry::Type::kSequence;
+      type = Type::kSequence;
     } else if (beginswith(ltrim(*it), "{")) {
-      type = Entry::Type::kMap;
+      type = Type::kMap;
     }
     ++it;
   }
@@ -792,11 +629,11 @@ std::unique_ptr<Entry> Parse(std::span<std::string_view> const& span) {
     throw yaml::InvalidSyntax("The syntax of the provided string is invalid!");
   }
 
-  if (type == Entry::Type::kMap) {
+  if (type == Type::kMap) {
     return_value = ParseMap(span);
-  } else if (type == Entry::Type::kSet) {
+  } else if (type == Type::kSet) {
     return_value = ParseSet(span);
-  } else if (type == Entry::Type::kSequence) {
+  } else if (type == Type::kSequence) {
     return_value = ParseSequence(span);
   } else if (span[0].empty()) {
     throw yaml::InvalidSyntax("The syntax of the provided string is invalid!");
@@ -826,7 +663,7 @@ std::unique_ptr<Entry> Parse(std::span<std::string_view> const& span) {
   }
   return return_value;
 }
-Entry Parse(std::string_view const& string) {
+Entry Parse(std::string_view const string) {
   std::vector<std::string_view> lines;
 
   auto i = (size_t)(-1);
@@ -840,7 +677,7 @@ Entry Parse(std::string_view const& string) {
   std::unique_ptr<Entry> t = Parse(lines);
   return Entry(std::move(*t.get()));
 }
-std::optional<Entry> ParseNoexcept(std::string_view const& string) noexcept {
+std::optional<Entry> ParseNoexcept(std::string_view const string) noexcept {
   try {
     return std::optional<Entry>{Parse(string)};
   } catch (...) {
