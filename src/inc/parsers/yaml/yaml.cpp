@@ -361,12 +361,12 @@ std::unique_ptr<Entry> ParseLine(std::string_view input_line) {
   } else if (end == line.data() + line.size()) {
     return std::make_unique<Entry>((uint64_t)ull);
   }
-  double ld = std::strtold(line.data(), &end);
+  long double ld = std::strtold(line.data(), &end);
 
   if (errno == ERANGE) {
     errno = 0;
   } else if (end == line.data() + line.size()) {
-    return std::make_unique<Entry>((double)ld);
+    return std::make_unique<Entry>((long double)ld);
   }
 
   return std::make_unique<Entry>(line);
